@@ -1,0 +1,427 @@
+import { useEffect, useState } from 'react'
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import './App.css'
+
+const listings = [
+  {
+    id: 1,
+    title: 'Residência perto da praça',
+    type: 'venda',
+    price: 'R$ 320.000',
+    location: 'Centro de Ipuã-SP',
+    address: 'Rua 15 de Novembro, Centro, Ipuã-SP',
+    coordinates: [-20.4388, -48.0124],
+    bedrooms: 3,
+    area: '120 m²',
+    description: 'Casa confortável próxima à praça, com ambientes bem iluminados, cozinha planejada e espaço para a família.',
+    neighborhood: 'Centro',
+    status: 'Disponível',
+    advertiser: 'Maria Silva',
+    phone: '(16) 99999-1234',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 2,
+    title: 'Casa com área de lazer',
+    type: 'venda',
+    price: 'R$ 420.000',
+    location: 'Jardim das Flores, Ipuã',
+    address: 'Rua das Acácias, Jardim das Flores, Ipuã-SP',
+    coordinates: [-20.4354, -48.0079],
+    bedrooms: 4,
+    area: '180 m²',
+    description: 'Casa ampla com área de lazer, quintal e espaços ideais para receber a família nos fins de semana.',
+    neighborhood: 'Jardim das Flores',
+    status: 'Disponível',
+    advertiser: 'João Oliveira',
+    phone: '(16) 98888-4567',
+    image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 3,
+    title: 'Apartamento para alugar',
+    type: 'aluguel',
+    price: 'R$ 1.800/mês',
+    location: 'Vila Nova, Ipuã',
+    address: 'Avenida Carlos Roberto, Vila Nova, Ipuã-SP',
+    coordinates: [-20.4421, -48.0172],
+    bedrooms: 2,
+    area: '85 m²',
+    description: 'Apartamento prático, bem localizado e próximo aos principais serviços e comércios de Ipuã.',
+    neighborhood: 'Vila Nova',
+    status: 'Disponível',
+    advertiser: 'Ana Costa',
+    phone: '(16) 97777-8910',
+    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 4,
+    title: 'Terreno pronto para construir',
+    type: 'terreno',
+    price: 'R$ 180.000',
+    location: 'Zona Norte de Ipuã',
+    address: 'Rua Projetada 4, Zona Norte, Ipuã-SP',
+    coordinates: [-20.4307, -48.0161],
+    bedrooms: 0,
+    area: '600 m²',
+    description: 'Terreno pronto para construir, com acesso fácil e espaço para um novo projeto residencial.',
+    neighborhood: 'Zona Norte',
+    status: 'Disponível',
+    advertiser: 'Carlos Mendes',
+    phone: '(16) 96666-2345',
+    image: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 5,
+    title: 'Casa térrea com garagem',
+    type: 'venda',
+    price: 'R$ 285.000',
+    location: 'Jardim Primavera, Ipuã',
+    address: 'Rua das Palmeiras, Jardim Primavera, Ipuã-SP',
+    coordinates: [-20.4412, -48.0096],
+    bedrooms: 2,
+    area: '96 m²',
+    description: 'Casa térrea com garagem, dois quartos e quintal, pronta para receber uma nova família.',
+    neighborhood: 'Jardim Primavera',
+    status: 'Disponível',
+    advertiser: 'Marcos Lima',
+    phone: '(16) 95555-3456',
+    image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 6,
+    title: 'Apartamento central mobiliado',
+    type: 'aluguel',
+    price: 'R$ 1.450/mês',
+    location: 'Centro de Ipuã-SP',
+    address: 'Rua Sete de Setembro, Centro, Ipuã-SP',
+    coordinates: [-20.4371, -48.0148],
+    bedrooms: 1,
+    area: '58 m²',
+    description: 'Apartamento mobiliado no centro, com fácil acesso a mercados, farmácias e serviços.',
+    neighborhood: 'Centro',
+    status: 'Disponível',
+    advertiser: 'Fernanda Alves',
+    phone: '(16) 94444-7890',
+    image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 7,
+    title: 'Lote residencial plano',
+    type: 'terreno',
+    price: 'R$ 95.000',
+    location: 'Residencial Santana, Ipuã',
+    address: 'Rua Um, Residencial Santana, Ipuã-SP',
+    coordinates: [-20.4462, -48.0117],
+    bedrooms: 0,
+    area: '250 m²',
+    description: 'Lote plano em bairro residencial, ideal para construir a casa própria.',
+    neighborhood: 'Residencial Santana',
+    status: 'Disponível',
+    advertiser: 'Paulo Ribeiro',
+    phone: '(16) 93333-1234',
+    image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85',
+  },
+  {
+    id: 8,
+    title: 'Casa nova com varanda',
+    type: 'venda',
+    price: 'R$ 365.000',
+    location: 'Vila Nova, Ipuã',
+    address: 'Rua das Flores, Vila Nova, Ipuã-SP',
+    coordinates: [-20.4445, -48.0205],
+    bedrooms: 3,
+    area: '132 m²',
+    description: 'Casa nova com varanda, acabamento moderno e ambientes integrados.',
+    neighborhood: 'Vila Nova',
+    status: 'Disponível',
+    advertiser: 'Juliana Martins',
+    phone: '(16) 92222-5678',
+    image: 'https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=1200&q=85',
+  },
+]
+
+const typeColors = {
+  venda: '#22c55e',
+  aluguel: '#16a34a',
+  terreno: '#f59e0b',
+}
+
+const mapCenter = [-20.438, -48.012]
+
+const createMarkerIcon = (color) => L.divIcon({
+  className: 'property-marker-wrapper',
+  html: `<span class="property-marker" style="--marker-color: ${color}"><span></span></span>`,
+  iconSize: [24, 32],
+  iconAnchor: [12, 30],
+  popupAnchor: [0, -28],
+})
+
+function App() {
+  const [selectedListing, setSelectedListing] = useState(null)
+  const [draftFilters, setDraftFilters] = useState({
+    type: 'Todos os imóveis',
+    bedrooms: 'Qualquer',
+    price: 'Qualquer faixa',
+    neighborhood: 'Qualquer bairro',
+  })
+  const [appliedFilters, setAppliedFilters] = useState(draftFilters)
+  const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
+
+  const filteredListings = listings.filter((item) => {
+    const typeMatches = appliedFilters.type === 'Todos os imóveis'
+      || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
+      || (appliedFilters.type === 'Venda' && item.type === 'venda')
+      || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
+    const categoryMatches = activeCategory === 'Todos os imóveis'
+      || (activeCategory === 'Casas' && item.bedrooms > 0 && item.type === 'venda')
+      || (activeCategory === 'Apartamentos' && item.bedrooms > 0 && item.type === 'aluguel')
+      || (activeCategory === 'Terrenos' && item.type === 'terreno')
+    const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
+      || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
+    const priceMatches = appliedFilters.price === 'Qualquer faixa'
+      || (appliedFilters.price === 'Até R$ 200 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 200000)
+      || (appliedFilters.price === 'Até R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 500000)
+      || (appliedFilters.price === 'Acima de R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) > 500000)
+    const neighborhoodMatches = appliedFilters.neighborhood === 'Qualquer bairro'
+      || item.neighborhood === appliedFilters.neighborhood
+
+    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches
+  })
+
+  const summaryCards = [
+    {
+      label: 'Apartamentos',
+      value: filteredListings.filter((item) => item.type === 'aluguel' && item.bedrooms > 0).length,
+      details: 'Disponíveis',
+    },
+    {
+      label: 'Casas',
+      value: filteredListings.filter((item) => item.type === 'venda' && item.bedrooms > 0).length,
+      details: 'Disponíveis',
+    },
+    {
+      label: 'Aluguel',
+      value: filteredListings.filter((item) => item.type === 'aluguel').length,
+      details: 'Ativos',
+    },
+    {
+      label: 'Terrenos',
+      value: filteredListings.filter((item) => item.type === 'terreno').length,
+      details: 'Prontos',
+    },
+  ]
+
+  const openDetails = (listing) => setSelectedListing(listing)
+  const closeDetails = () => setSelectedListing(null)
+  
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') closeDetails()
+    }
+    
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [])
+
+  return (
+    <div className="real-estate-shell">
+      <header className="top-header">
+        <div className="brand-group">
+          <div className="brand-mark" aria-hidden="true">
+            <span>M</span>
+            <i />
+          </div>
+          <div>
+            <h1>Mora Fácil</h1>
+            <small>Seu próximo endereço começa aqui.</small>
+          </div>
+        </div>
+
+        <div className="header-actions">
+          <span className="availability-note"><b /> 32 oportunidades abertas</span>
+          <button type="button" className="announce-btn">
+            <span className="announce-plus">+</span> Anunciar imóvel
+          </button>
+        </div>
+      </header>
+
+      <nav className="category-nav" aria-label="Categorias">
+        {['Todos os imóveis', 'Casas', 'Apartamentos', 'Terrenos'].map((category) => (
+          <button
+            key={category}
+            className={`nav-item ${activeCategory === category ? 'active' : ''}`}
+            type="button"
+            onClick={() => setActiveCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </nav>
+
+      <section className="filters-bar">
+        <div className="field">
+          <label>Tipo</label>
+          <select value={draftFilters.type} onChange={(event) => setDraftFilters({ ...draftFilters, type: event.target.value })}>
+            <option>Todos os imóveis</option>
+            <option>Venda</option>
+            <option>Aluguel</option>
+            <option>Terrenos</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Quartos</label>
+          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
+            <option>Qualquer</option>
+            <option>1+</option>
+            <option>2+</option>
+            <option>3+</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Preço</label>
+          <select value={draftFilters.price} onChange={(event) => setDraftFilters({ ...draftFilters, price: event.target.value })}>
+            <option>Qualquer faixa</option>
+            <option>Até R$ 200 mil</option>
+            <option>Até R$ 500 mil</option>
+            <option>Acima de R$ 500 mil</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Bairro</label>
+          <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
+            <option>Qualquer bairro</option>
+            <option>Centro</option>
+            <option>Jardim das Flores</option>
+            <option>Zona Norte</option>
+            <option>Jardim Primavera</option>
+            <option>Residencial Santana</option>
+          </select>
+        </div>
+
+        <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
+      </section>
+
+      <div className="map-label-row">
+        <span className="map-label">Mapa de Ipuã-SP</span>
+      </div>
+
+      <section className="map-panel" aria-label="Mapa com imóveis disponíveis">
+        <MapContainer center={mapCenter} zoom={14} className="map-box" scrollWheelZoom>
+          <TileLayer
+            attribution='&copy; Esri &copy; OpenStreetMap contributors'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
+          />
+
+          {filteredListings.map((item) => (
+            <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(typeColors[item.type])}>
+              <Popup>
+                <div className="map-detail-card">
+                  <h3>{item.title}</h3>
+                  <p className="detail-price">{item.price}</p>
+                  <p className="detail-meta">{item.address}</p>
+                  <p className="detail-meta">
+                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'} · {item.area}
+                  </p>
+                  <button type="button" className="detail-button" onClick={() => openDetails(item)}>Saiba mais →</button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </section>
+
+      <div className="summary-grid">
+        {summaryCards.map((card) => (
+          <div key={card.label} className="summary-card">
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
+            <small>{card.details}</small>
+          </div>
+        ))}
+      </div>
+
+      <section className="properties-section">
+        <h2>Imóveis cadastrados pela comunidade</h2>
+
+        <div className="properties-grid">
+          {filteredListings.map((item) => (
+            <article key={item.id} className="property-card">
+              <div className="property-thumb">
+                <img src={item.image} alt={item.title} className="property-card-image" />
+                <span className="thumb-badge">{item.type}</span>
+              </div>
+
+              <div className="property-content">
+                <div className="content-top">
+                  <span className="property-tag">{item.type}</span>
+                  <strong>{item.price}</strong>
+                </div>
+
+                <h3>{item.title}</h3>
+                <p>{item.location}</p>
+
+                <div className="meta-row">
+                  <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
+                  <span>{item.area}</span>
+                </div>
+                <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
+                  Saiba mais
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {selectedListing && (
+        <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) closeDetails()
+        }}>
+          <section className="property-modal" role="dialog" aria-modal="true" aria-labelledby="property-modal-title">
+            <button type="button" className="modal-close" aria-label="Fechar detalhes" onClick={closeDetails}>×</button>
+            <div className="modal-image-wrap">
+              <img src={selectedListing.image} alt={selectedListing.title} className="modal-image" />
+            </div>
+            <div className="modal-content">
+              <div className="modal-badges">
+                <span className="modal-badge available">{selectedListing.status}</span>
+                <span className="modal-badge">{selectedListing.type}</span>
+              </div>
+              <h2 id="property-modal-title">{selectedListing.title}</h2>
+              <p className="modal-price">{selectedListing.price}</p>
+
+              <div className="property-facts">
+                <div><strong>{selectedListing.bedrooms || '-'}</strong><span>Quartos</span></div>
+                <div><strong>{selectedListing.area}</strong><span>Área</span></div>
+                <div><strong>{selectedListing.neighborhood}</strong><span>Bairro</span></div>
+                <div><strong>{selectedListing.type}</strong><span>Tipo</span></div>
+              </div>
+
+              <h3>Descrição</h3>
+              <p className="modal-description">{selectedListing.description}</p>
+              <div className="contact-box">
+                <h3>Contato do anunciante</h3>
+                <div className="contact-details">
+                  <span>♙ {selectedListing.advertiser}</span>
+                  <span>⌕ {selectedListing.phone}</span>
+                </div>
+                <a className="contact-button" href={`tel:${selectedListing.phone.replace(/\D/g, '')}`}>☎&nbsp; Entrar em contato</a>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App
