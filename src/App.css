@@ -32,7 +32,7 @@
 .brand-mark {
   position: absolute;
   top: 27px;
-  left: 24px;
+  left: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -40,29 +40,29 @@
   height: 72px;
   overflow: hidden;
   border-radius: 15px;
-  border: 3px solid #8bea45;
-  background: #f8fbff;
-  color: #132033;
+  border: 0;
+  background: linear-gradient(145deg, #123d61 0%, #071d34 72%);
+  color: #b8f36b;
   font-size: 1.3rem;
   font-weight: 700;
-  box-shadow: 0 8px 0 #071d34, 0 12px 26px rgba(1, 10, 20, 0.35);
+  box-shadow: 0 10px 22px rgba(1, 10, 20, 0.35);
 }
 
 .brand-mark::after {
   content: '';
   position: absolute;
-  right: -7px;
-  bottom: -9px;
-  width: 33px;
-  height: 33px;
+  right: -8px;
+  bottom: -12px;
+  width: 34px;
+  height: 34px;
   border: 3px solid #b8f36b;
   border-radius: 50%;
 }
 
 .brand-mark i {
   position: absolute;
-  top: 12px;
-  right: 11px;
+  top: 10px;
+  right: 9px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -953,14 +953,14 @@
   }
 
   .brand-group {
-    padding-left: 58px;
+    padding-left: 110px;
   }
 
   .brand-mark {
     top: 70px;
-    left: 18px;
-    width: 62px;
-    height: 62px;
+    left: 34px;
+    width: 72px;
+    height: 72px;
   }
 
   .top-header h1 {
