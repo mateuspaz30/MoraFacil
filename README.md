@@ -1,16 +1,29 @@
-# React + Vite
+# Mora Fácil
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Portal imobiliário de Ipuã-SP com mapa, filtros e anúncios.
 
-Currently, two official plugins are available:
+## Desenvolvimento
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+Sem Supabase configurado, o modo local usa o armazenamento do navegador para testar o fluxo.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Ativar contas e anúncios permanentes
 
-## Expanding the Oxlint configuration
+1. Crie um projeto em [Supabase](https://supabase.com).
+2. No SQL Editor, execute [`supabase/schema.sql`](supabase/schema.sql).
+3. Copie `.env.example` para `.env` e preencha a URL e a chave `anon` do projeto.
+4. No GitHub Pages, adicione as mesmas variáveis em `Settings > Secrets and variables > Actions > Variables`.
+5. No Vercel, adicione-as em `Settings > Environment Variables`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Os visitantes continuam navegando sem conta. O login só é solicitado ao publicar ou gerenciar anúncios.
+
+## Verificação
+
+```bash
+npm run lint
+npm run build
+```

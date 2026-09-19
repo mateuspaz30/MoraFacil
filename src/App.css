@@ -119,6 +119,16 @@
   text-transform: none;
 }
 
+.account-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 0.72rem 0.9rem;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .announce-plus {
   font-size: 1.1rem;
   font-weight: 400;
@@ -760,6 +770,13 @@
   font-size: 1.3rem;
 }
 
+.announcement-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .announcement-form {
   display: grid;
   gap: 18px;
@@ -822,6 +839,30 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 6px;
+}
+
+.auth-modal {
+  width: min(460px, 100%);
+}
+
+.auth-message {
+  margin: 0;
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.auth-switch {
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: #047857;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .cancel-form-btn {

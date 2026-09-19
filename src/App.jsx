@@ -3,6 +3,7 @@ import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
+import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const sampleListings = [
   {
@@ -196,6 +197,12 @@ function App() {
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
+  const [authUser, setAuthUser] = useState(null)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('login')
+  const [authForm, setAuthForm] = useState({ email: '', password: '' })
+  const [authMessage, setAuthMessage] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
   const [draftFilters, setDraftFilters] = useState({
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
@@ -208,8 +215,53 @@ function App() {
   const listings = [...sampleListings, ...userListings]
 
   useEffect(() => {
-    localStorage.setItem('morafacil-user-listings', JSON.stringify(userListings))
+    if (!isSupabaseConfigured) {
+      localStorage.setItem('morafacil-user-listings', JSON.stringify(userListings))
+    }
   }, [userListings])
+
+  useEffect(() => {
+    if (!supabase) return undefined
+
+    let mounted = true
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) setAuthUser(session?.user || null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user || null)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser) return
+
+    const loadUserListings = async () => {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('created_at', { ascending: false })
+
+      if (!error) {
+        setUserListings((data || []).map((item) => ({
+          ...item,
+          id: item.id,
+          coordinates: [item.latitude, item.longitude],
+          location: `${item.neighborhood}, Ipuã-SP`,
+          area: `${item.area} m²`,
+          owner: true,
+        })))
+      }
+    }
+
+    loadUserListings()
+  }, [authUser])
 
   const filteredListings = listings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
@@ -259,6 +311,12 @@ function App() {
   const closeDetails = () => setSelectedListing(null)
 
   const openAnnouncementForm = (listing = null) => {
+    if (isSupabaseConfigured && !authUser) {
+      setAuthMessage('Entre ou crie sua conta para publicar e acompanhar seus anúncios.')
+      setAuthOpen(true)
+      return
+    }
+
     setEditingListingId(listing?.id || null)
     setAnnouncement(listing ? {
       ...emptyAnnouncement,
@@ -277,7 +335,7 @@ function App() {
     setAnnouncement(emptyAnnouncement)
   }
 
-  const handleAnnouncementSubmit = (event) => {
+  const handleAnnouncementSubmit = async (event) => {
     event.preventDefault()
     const coordinates = neighborhoodCoordinates[announcement.neighborhood] || mapCenter
     const listing = {
@@ -293,17 +351,75 @@ function App() {
       owner: true,
     }
 
-    setUserListings((current) => editingListingId
-      ? current.map((item) => item.id === editingListingId ? listing : item)
-      : [...current, listing])
+    if (isSupabaseConfigured && authUser) {
+      const databaseListing = {
+        user_id: authUser.id,
+        title: listing.title,
+        type: listing.type,
+        status: listing.status,
+        price: listing.price,
+        bedrooms: listing.bedrooms,
+        bathrooms: Number.parseInt(announcement.bathrooms, 10) || 0,
+        area: Number.parseInt(announcement.area, 10) || 0,
+        neighborhood: listing.neighborhood,
+        address: listing.address,
+        description: listing.description,
+        image: listing.image,
+        advertiser: listing.advertiser,
+        phone: listing.phone,
+        latitude: coordinates[0],
+        longitude: coordinates[1],
+      }
+      const query = editingListingId
+        ? supabase.from('listings').update(databaseListing).eq('id', editingListingId).eq('user_id', authUser.id)
+        : supabase.from('listings').insert(databaseListing)
+      const { error } = await query
+      if (error) {
+        setAuthMessage(`Não foi possível salvar o anúncio: ${error.message}`)
+        return
+      }
+      const { data } = await supabase.from('listings').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false })
+      setUserListings((data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, Ipuã-SP`, area: `${item.area} m²`, owner: true })))
+    } else {
+      setUserListings((current) => editingListingId
+        ? current.map((item) => item.id === editingListingId ? listing : item)
+        : [...current, listing])
+    }
     closeAnnouncementForm()
   }
 
-  const removeUserListing = (id) => {
+  const removeUserListing = async (id) => {
     if (window.confirm('Excluir este anúncio?')) {
+      if (isSupabaseConfigured && authUser) {
+        await supabase.from('listings').delete().eq('id', id).eq('user_id', authUser.id)
+      }
       setUserListings((current) => current.filter((item) => item.id !== id))
       if (selectedListing?.id === id) closeDetails()
     }
+  }
+
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault()
+    setAuthLoading(true)
+    setAuthMessage('')
+    const result = authMode === 'login'
+      ? await supabase.auth.signInWithPassword(authForm)
+      : await supabase.auth.signUp(authForm)
+
+    if (result.error) {
+      setAuthMessage(result.error.message)
+    } else if (authMode === 'signup' && !result.data.session) {
+      setAuthMessage('Conta criada. Confira seu e-mail para confirmar o cadastro.')
+    } else {
+      setAuthOpen(false)
+      setAuthForm({ email: '', password: '' })
+    }
+    setAuthLoading(false)
+  }
+
+  const handleLogout = async () => {
+    await supabase?.auth.signOut()
+    setUserListings([])
   }
   
   useEffect(() => {
@@ -331,6 +447,11 @@ function App() {
 
         <div className="header-actions">
           <span className="availability-note"><b /> 32 oportunidades abertas</span>
+          {isSupabaseConfigured && (authUser ? (
+            <button type="button" className="account-btn" onClick={handleLogout}>Sair</button>
+          ) : (
+            <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
+          ))}
           <button type="button" className="announce-btn" onClick={() => openAnnouncementForm()}>
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
@@ -587,6 +708,38 @@ function App() {
                 <button type="button" className="cancel-form-btn" onClick={closeAnnouncementForm}>Cancelar</button>
                 <button type="submit" className="submit-form-btn">Publicar anúncio</button>
               </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {authOpen && (
+        <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setAuthOpen(false)
+        }}>
+          <section className="property-modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+            <div className="announcement-header">
+              <h2 id="auth-title">{authMode === 'login' ? 'Entrar para anunciar' : 'Criar conta de anunciante'}</h2>
+              <p>Você pode continuar navegando sem cadastro. A conta só é necessária para publicar e acompanhar seus imóveis.</p>
+            </div>
+            <form className="announcement-form" onSubmit={handleAuthSubmit}>
+              <div className="form-group">
+                <label htmlFor="auth-email">E-mail</label>
+                <input id="auth-email" type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="voce@email.com" required />
+              </div>
+              <div className="form-group">
+                <label htmlFor="auth-password">Senha</label>
+                <input id="auth-password" type="password" minLength="6" value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} placeholder="Mínimo de 6 caracteres" required />
+              </div>
+              {authMessage && <p className="auth-message" role="alert">{authMessage}</p>}
+              {!isSupabaseConfigured && <p className="auth-message">A autenticação ainda precisa ser configurada no Supabase antes de ficar disponível.</p>}
+              <div className="form-actions">
+                <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
+                <button type="submit" className="submit-form-btn" disabled={!isSupabaseConfigured || authLoading}>{authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Criar conta'}</button>
+              </div>
+              <button type="button" className="auth-switch" onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthMessage('') }}>
+                {authMode === 'login' ? 'Ainda não tenho conta' : 'Já tenho uma conta'}
+              </button>
             </form>
           </section>
         </div>
