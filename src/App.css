@@ -155,7 +155,7 @@
 
 .account-popover {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 44px;
   right: 2px;
   z-index: 1100;
   width: min(390px, calc(100vw - 28px));
@@ -1143,8 +1143,13 @@
   }
 
   .announce-btn {
-    padding: 0.7rem 0.82rem;
-    font-size: 0.78rem;
+    gap: 4px;
+    padding: 0.58rem 0.64rem;
+    font-size: 0.72rem;
+  }
+
+  .announce-plus {
+    font-size: 0.95rem;
   }
 
   .filters-bar,
