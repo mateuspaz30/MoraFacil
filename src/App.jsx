@@ -161,6 +161,11 @@ const neighborhoodCoordinates = {
   'Residencial Santana': [-20.4462, -48.0117],
 }
 
+const cityCoordinates = {
+  'Ipuã-SP': [-20.438, -48.012],
+  'Guaíra-SP': [-20.319, -48.312],
+}
+
 const emptyAnnouncement = {
   title: '',
   type: 'venda',
@@ -169,6 +174,10 @@ const emptyAnnouncement = {
   bedrooms: '0',
   bathrooms: '1',
   area: '',
+  city: 'Ipuã-SP',
+  cep: '',
+  number: '',
+  street: '',
   neighborhood: 'Centro',
   address: '',
   description: '',
@@ -205,6 +214,8 @@ function App() {
   const [authForm, setAuthForm] = useState({ email: '', password: '' })
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [addressMessage, setAddressMessage] = useState('')
   const [draftFilters, setDraftFilters] = useState({
     search: 'Ipuã-SP',
     type: 'Todos os imóveis',
@@ -256,7 +267,7 @@ function App() {
           ...item,
           id: item.id,
           coordinates: [item.latitude, item.longitude],
-          location: `${item.neighborhood}, Ipuã-SP`,
+          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
           area: `${item.area} m²`,
           owner: item.user_id === authUser?.id,
         }))
@@ -343,19 +354,66 @@ function App() {
     setAnnouncementOpen(false)
     setEditingListingId(null)
     setAnnouncement(emptyAnnouncement)
+    setAddressMessage('')
+  }
+
+  const lookupCep = async () => {
+    const cep = announcement.cep.replace(/\D/g, '')
+    if (cep.length !== 8) return
+
+    setAddressLoading(true)
+    setAddressMessage('Consultando CEP...')
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await response.json()
+      if (data.erro) {
+        setAddressMessage('CEP não encontrado. Confira os números.')
+        return
+      }
+      const city = data.localidade === 'Guaíra' ? 'Guaíra-SP' : 'Ipuã-SP'
+      setAnnouncement((current) => ({
+        ...current,
+        city,
+        street: data.logradouro || current.street,
+        neighborhood: data.bairro || current.neighborhood,
+      }))
+      setAddressMessage('Endereço encontrado. Confira o número da casa.')
+    } catch {
+      setAddressMessage('Não foi possível consultar o CEP agora.')
+    } finally {
+      setAddressLoading(false)
+    }
   }
 
   const handleAnnouncementSubmit = async (event) => {
     event.preventDefault()
-    const coordinates = neighborhoodCoordinates[announcement.neighborhood] || mapCenter
+    const cityCenter = cityCoordinates[announcement.city] || neighborhoodCoordinates[announcement.neighborhood] || mapCenter
+    let coordinates = cityCenter
+    let resolvedAddress = announcement.street
+
+    if (announcement.street && announcement.number) {
+      try {
+        const query = `${announcement.street}, ${announcement.number}, ${announcement.city}, São Paulo, Brasil`
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=${encodeURIComponent(query)}`)
+        const results = await response.json()
+        if (results[0]) {
+          coordinates = [Number(results[0].lat), Number(results[0].lon)]
+          resolvedAddress = results[0].display_name
+        }
+      } catch {
+        coordinates = cityCenter
+      }
+    }
+
     const listing = {
       ...announcement,
       id: editingListingId || `user-${Date.now()}`,
       price: announcement.type === 'aluguel' ? `R$ ${announcement.price}/mês` : `R$ ${announcement.price}`,
-      location: `${announcement.neighborhood}, Ipuã-SP`,
+      location: `${announcement.neighborhood}, ${announcement.city}`,
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
       area: `${announcement.area} m²`,
       coordinates,
+      address: resolvedAddress || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
       status: announcement.status || 'Disponível',
       owner: true,
@@ -364,6 +422,10 @@ function App() {
     if (isSupabaseConfigured && authUser) {
       const databaseListing = {
         user_id: authUser.id,
+        city: listing.city,
+        cep: listing.cep,
+        number: listing.number,
+        street: listing.street,
         title: listing.title,
         type: listing.type,
         status: listing.status,
@@ -389,7 +451,7 @@ function App() {
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
-      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, Ipuã-SP`, area: `${item.area} m²`, owner: item.user_id === authUser.id }))
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: `${item.area} m²`, owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
       setUserListings(normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
@@ -714,17 +776,33 @@ function App() {
                 </div>
               </div>
 
-              <div className="form-row two-columns">
+              <div className="form-row three-columns">
                 <div className="form-group">
-                  <label htmlFor="neighborhood">Bairro</label>
-                  <select id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })}>
-                    {Object.keys(neighborhoodCoordinates).map((neighborhood) => <option key={neighborhood}>{neighborhood}</option>)}
+                  <label htmlFor="city">Cidade</label>
+                  <select id="city" name="city" value={announcement.city} onChange={(event) => setAnnouncement({ ...announcement, city: event.target.value })}>
+                    <option>Ipuã-SP</option>
+                    <option>Guaíra-SP</option>
                   </select>
-                  <small>O mapa usará a localização aproximada do bairro.</small>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="address">Endereço ou ponto de referência</label>
-                  <input id="address" name="address" value={announcement.address} onChange={(event) => setAnnouncement({ ...announcement, address: event.target.value })} placeholder="Rua, número ou referência" required />
+                  <label htmlFor="cep">CEP</label>
+                  <input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => setAnnouncement({ ...announcement, cep: event.target.value.replace(/\D/g, '').slice(0, 8) })} onBlur={lookupCep} placeholder="Ex.: 14610-000" required />
+                  <small>{addressLoading ? 'Consultando...' : addressMessage || 'Digite o CEP para localizar o endereço.'}</small>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="number">Número</label>
+                  <input id="number" name="number" inputMode="numeric" value={announcement.number} onChange={(event) => setAnnouncement({ ...announcement, number: event.target.value })} placeholder="Ex.: 120" required />
+                </div>
+              </div>
+
+              <div className="form-row two-columns">
+                <div className="form-group">
+                  <label htmlFor="street">Rua</label>
+                  <input id="street" name="street" value={announcement.street} onChange={(event) => setAnnouncement({ ...announcement, street: event.target.value })} placeholder="Preenchida pelo CEP" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="neighborhood">Bairro</label>
+                  <input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Preenchido pelo CEP" required />
                 </div>
               </div>
 
