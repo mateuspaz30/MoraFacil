@@ -406,12 +406,19 @@ function App() {
     event.preventDefault()
     setAuthLoading(true)
     setAuthMessage('')
-    const result = authMode === 'login'
-      ? await supabase.auth.signInWithPassword(authForm)
-      : await supabase.auth.signUp(authForm)
+    let result
+    try {
+      result = authMode === 'login'
+        ? await supabase.auth.signInWithPassword(authForm)
+        : await supabase.auth.signUp(authForm)
+    } catch (error) {
+      setAuthMessage(`Não foi possível conectar ao Supabase. Confira a URL do projeto e tente novamente. (${error.message})`)
+      setAuthLoading(false)
+      return
+    }
 
     if (result.error) {
-      setAuthMessage(result.error.message)
+      setAuthMessage(`Supabase: ${result.error.message}`)
     } else if (authMode === 'signup' && !result.data.session) {
       setAuthMessage('Conta criada. Confira seu e-mail para confirmar o cadastro.')
     } else {
