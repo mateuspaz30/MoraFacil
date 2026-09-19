@@ -214,6 +214,7 @@ function App() {
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
   const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
+  const [showAllListings, setShowAllListings] = useState(false)
 
   const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
 
@@ -290,6 +291,8 @@ function App() {
 
     return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
   })
+
+  const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
 
   const summaryCards = [
     {
@@ -632,11 +635,13 @@ function App() {
       <section className="properties-section">
         <div className="section-title-row">
           <h2><span className="section-star">★</span> Imóveis em destaque</h2>
-          <button type="button" className="view-all-btn" onClick={() => setActiveCategory('Todos os imóveis')}>Ver todos <span>›</span></button>
+          <button type="button" className="view-all-btn" onClick={() => setShowAllListings((current) => !current)}>
+            {showAllListings ? 'Mostrar destaques' : 'Ver todos'} <span>{showAllListings ? '‹' : '›'}</span>
+          </button>
         </div>
 
         <div className="properties-grid">
-          {filteredListings.map((item) => (
+          {featuredListings.map((item) => (
             <article key={item.id} className="property-card">
               <div className="property-thumb">
                 <img src={item.image} alt={item.title} className="property-card-image" />
