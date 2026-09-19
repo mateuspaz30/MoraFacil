@@ -636,7 +636,7 @@ function App() {
         <div className="section-title-row">
           <h2><span className="section-star">★</span> Imóveis em destaque</h2>
           <button type="button" className="view-all-btn" onClick={() => setShowAllListings((current) => !current)}>
-            {showAllListings ? 'Mostrar destaques' : 'Ver todos'} <span>{showAllListings ? '‹' : '›'}</span>
+            {showAllListings ? 'Voltar' : 'Ver todos'} <span>{showAllListings ? '‹' : '›'}</span>
           </button>
         </div>
 
