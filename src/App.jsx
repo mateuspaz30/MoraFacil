@@ -206,6 +206,7 @@ function App() {
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [draftFilters, setDraftFilters] = useState({
+    search: '',
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
     price: 'Qualquer faixa',
@@ -283,8 +284,11 @@ function App() {
       || (appliedFilters.price === 'Acima de R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) > 500000)
     const neighborhoodMatches = appliedFilters.neighborhood === 'Qualquer bairro'
       || item.neighborhood === appliedFilters.neighborhood
+    const searchValue = appliedFilters.search.trim().toLowerCase()
+    const searchMatches = !searchValue
+      || `${item.title} ${item.location} ${item.address} ${item.neighborhood}`.toLowerCase().includes(searchValue)
 
-    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches
+    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
   })
 
   const summaryCards = [
@@ -448,15 +452,16 @@ function App() {
 
   return (
     <div className="real-estate-shell">
-      <header className="top-header">
+      <header className="top-header hero-header">
         <div className="brand-group">
           <div className="brand-mark" aria-hidden="true">
             <span>M</span>
             <i />
           </div>
-          <div>
+          <div className="brand-copy">
             <h1>Mora Fácil</h1>
-            <small>Seu próximo endereço começa aqui.</small>
+            <strong>Encontre seu próximo lar.</strong>
+            <small>Imóveis do seu jeito, perto de você.</small>
           </div>
         </div>
 
@@ -525,7 +530,17 @@ function App() {
         ))}
       </nav>
 
-      <section className="filters-bar">
+      <section className="filters-bar search-panel">
+        <div className="filter-search field">
+          <label htmlFor="search-location">Onde você quer morar?</label>
+          <input
+            id="search-location"
+            type="search"
+            value={draftFilters.search}
+            onChange={(event) => setDraftFilters({ ...draftFilters, search: event.target.value })}
+            placeholder="Buscar por bairro, cidade ou região..."
+          />
+        </div>
         <div className="field">
           <label>Tipo</label>
           <select value={draftFilters.type} onChange={(event) => setDraftFilters({ ...draftFilters, type: event.target.value })}>
@@ -614,7 +629,10 @@ function App() {
       </div>
 
       <section className="properties-section">
-        <h2>Imóveis cadastrados pela comunidade</h2>
+        <div className="section-title-row">
+          <h2><span className="section-star">★</span> Imóveis em destaque</h2>
+          <button type="button" className="view-all-btn" onClick={() => setActiveCategory('Todos os imóveis')}>Ver todos <span>›</span></button>
+        </div>
 
         <div className="properties-grid">
           {filteredListings.map((item) => (
