@@ -200,6 +200,7 @@ function App() {
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [authOpen, setAuthOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
   const [authForm, setAuthForm] = useState({ email: '', password: '' })
   const [authMessage, setAuthMessage] = useState('')
@@ -421,6 +422,19 @@ function App() {
   const handleLogout = async () => {
     await supabase?.auth.signOut()
     setUserListings([])
+    setAccountOpen(false)
+  }
+
+  const removeUserListing = async (id) => {
+    if (!window.confirm('Excluir este anúncio?')) return
+
+    if (isSupabaseConfigured && authUser) {
+      await supabase.from('listings').delete().eq('id', id).eq('user_id', authUser.id)
+      setPublishedListings((current) => current.filter((item) => item.id !== id))
+    }
+
+    setUserListings((current) => current.filter((item) => item.id !== id))
+    if (selectedListing?.id === id) closeDetails()
   }
   
   useEffect(() => {
@@ -449,7 +463,10 @@ function App() {
         <div className="header-actions">
           <span className="availability-note"><b /> 32 oportunidades abertas</span>
           {isSupabaseConfigured && (authUser ? (
-            <button type="button" className="account-btn" onClick={handleLogout}>Sair</button>
+            <button type="button" className="account-btn account-trigger" onClick={() => setAccountOpen((current) => !current)} aria-expanded={accountOpen}>
+              <span className="account-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
+              <span>Minha conta</span>
+            </button>
           ) : (
             <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
           ))}
@@ -457,6 +474,43 @@ function App() {
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
         </div>
+
+        {accountOpen && authUser && (
+          <section className="account-popover" aria-label="Minha conta">
+            <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
+            <div className="account-profile">
+              <span className="account-profile-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
+              <div>
+                <strong>Anunciante Mora Fácil</strong>
+                <span>{authUser.email}</span>
+              </div>
+            </div>
+
+            <div className="account-divider" />
+            <div className="account-section-title">Meus imóveis</div>
+            {userListings.length === 0 ? (
+              <div className="account-empty">Você ainda não cadastrou imóveis.</div>
+            ) : (
+              <div className="account-listings">
+                {userListings.map((item) => (
+                  <div key={item.id} className="account-listing">
+                    <div>
+                      <strong>{item.title}</strong>
+                      <span>{item.location} · {item.price}</span>
+                    </div>
+                    <div className="account-listing-actions">
+                      <button type="button" onClick={() => { openDetails(item); setAccountOpen(false) }}>Ver</button>
+                      <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar</button>
+                      <button type="button" onClick={() => removeUserListing(item.id)} aria-label={`Excluir ${item.title}`}>Excluir</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button type="button" className="account-new-listing" onClick={() => { openAnnouncementForm(); setAccountOpen(false) }}>+ Anunciar outro imóvel</button>
+            <button type="button" className="account-logout" onClick={handleLogout}>↪&nbsp; Sair</button>
+          </section>
+        )}
       </header>
 
       <nav className="category-nav" aria-label="Categorias">
