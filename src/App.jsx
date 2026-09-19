@@ -4,7 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 
-const listings = [
+const sampleListings = [
   {
     id: 1,
     title: 'Residência perto da praça',
@@ -151,6 +151,31 @@ const typeColors = {
 
 const mapCenter = [-20.438, -48.012]
 
+const neighborhoodCoordinates = {
+  Centro: [-20.4388, -48.0124],
+  'Jardim das Flores': [-20.4354, -48.0079],
+  'Vila Nova': [-20.4421, -48.0172],
+  'Zona Norte': [-20.4307, -48.0161],
+  'Jardim Primavera': [-20.4412, -48.0096],
+  'Residencial Santana': [-20.4462, -48.0117],
+}
+
+const emptyAnnouncement = {
+  title: '',
+  type: 'venda',
+  status: 'Disponível',
+  price: '',
+  bedrooms: '0',
+  bathrooms: '1',
+  area: '',
+  neighborhood: 'Centro',
+  address: '',
+  description: '',
+  image: '',
+  advertiser: '',
+  phone: '',
+}
+
 const createMarkerIcon = (color) => L.divIcon({
   className: 'property-marker-wrapper',
   html: `<span class="property-marker" style="--marker-color: ${color}"><span></span></span>`,
@@ -161,6 +186,16 @@ const createMarkerIcon = (color) => L.divIcon({
 
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
+  const [userListings, setUserListings] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('morafacil-user-listings') || '[]')
+    } catch {
+      return []
+    }
+  })
+  const [announcement, setAnnouncement] = useState(emptyAnnouncement)
+  const [announcementOpen, setAnnouncementOpen] = useState(false)
+  const [editingListingId, setEditingListingId] = useState(null)
   const [draftFilters, setDraftFilters] = useState({
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
@@ -169,6 +204,12 @@ function App() {
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
   const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
+
+  const listings = [...sampleListings, ...userListings]
+
+  useEffect(() => {
+    localStorage.setItem('morafacil-user-listings', JSON.stringify(userListings))
+  }, [userListings])
 
   const filteredListings = listings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
@@ -216,6 +257,54 @@ function App() {
 
   const openDetails = (listing) => setSelectedListing(listing)
   const closeDetails = () => setSelectedListing(null)
+
+  const openAnnouncementForm = (listing = null) => {
+    setEditingListingId(listing?.id || null)
+    setAnnouncement(listing ? {
+      ...emptyAnnouncement,
+      ...listing,
+      bedrooms: String(listing.bedrooms || 0),
+      bathrooms: String(listing.bathrooms || 1),
+      price: String(listing.price || '').replace(/\D/g, ''),
+      area: String(listing.area || '').replace(/\D/g, ''),
+    } : emptyAnnouncement)
+    setAnnouncementOpen(true)
+  }
+
+  const closeAnnouncementForm = () => {
+    setAnnouncementOpen(false)
+    setEditingListingId(null)
+    setAnnouncement(emptyAnnouncement)
+  }
+
+  const handleAnnouncementSubmit = (event) => {
+    event.preventDefault()
+    const coordinates = neighborhoodCoordinates[announcement.neighborhood] || mapCenter
+    const listing = {
+      ...announcement,
+      id: editingListingId || `user-${Date.now()}`,
+      price: announcement.type === 'aluguel' ? `R$ ${announcement.price}/mês` : `R$ ${announcement.price}`,
+      location: `${announcement.neighborhood}, Ipuã-SP`,
+      bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
+      area: `${announcement.area} m²`,
+      coordinates,
+      image: announcement.image || sampleListings[0].image,
+      status: announcement.status || 'Disponível',
+      owner: true,
+    }
+
+    setUserListings((current) => editingListingId
+      ? current.map((item) => item.id === editingListingId ? listing : item)
+      : [...current, listing])
+    closeAnnouncementForm()
+  }
+
+  const removeUserListing = (id) => {
+    if (window.confirm('Excluir este anúncio?')) {
+      setUserListings((current) => current.filter((item) => item.id !== id))
+      if (selectedListing?.id === id) closeDetails()
+    }
+  }
   
   useEffect(() => {
     const handleEscape = (event) => {
@@ -242,7 +331,7 @@ function App() {
 
         <div className="header-actions">
           <span className="availability-note"><b /> 32 oportunidades abertas</span>
-          <button type="button" className="announce-btn">
+          <button type="button" className="announce-btn" onClick={() => openAnnouncementForm()}>
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
         </div>
@@ -349,6 +438,39 @@ function App() {
         ))}
       </div>
 
+      <section className="my-listings-panel">
+        <div className="section-header-row">
+          <div>
+            <h2>Meus anúncios</h2>
+            <p className="section-helper">Acompanhe os imóveis cadastrados neste navegador.</p>
+          </div>
+          <button type="button" className="small-submit-btn" onClick={() => openAnnouncementForm()}>+ Novo anúncio</button>
+        </div>
+
+        {userListings.length === 0 ? (
+          <div className="empty-state-box">
+            <span>Você ainda não cadastrou nenhum imóvel.</span>
+            <button type="button" className="empty-state-button" onClick={() => openAnnouncementForm()}>Cadastrar meu primeiro imóvel</button>
+          </div>
+        ) : (
+          <div className="my-listings-list">
+            {userListings.map((item) => (
+              <article key={item.id} className="my-listing-row">
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.location} · {item.price}</span>
+                </div>
+                <div className="my-listing-actions">
+                  <button type="button" onClick={() => openDetails(item)}>Ver</button>
+                  <button type="button" onClick={() => openAnnouncementForm(item)}>Editar</button>
+                  <button type="button" className="danger-action" onClick={() => removeUserListing(item.id)}>Excluir</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="properties-section">
         <h2>Imóveis cadastrados pela comunidade</h2>
 
@@ -381,6 +503,94 @@ function App() {
           ))}
         </div>
       </section>
+
+      {announcementOpen && (
+        <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) closeAnnouncementForm()
+        }}>
+          <section className="property-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
+            <div className="announcement-header">
+              <h2 id="announcement-title">{editingListingId ? 'Editar imóvel' : 'Cadastrar imóvel'}</h2>
+              <p>Preencha os dados para criar o anúncio e posicioná-lo no mapa de Ipuã.</p>
+            </div>
+            <form className="announcement-form" onSubmit={handleAnnouncementSubmit}>
+              <div className="form-row two-columns">
+                <div className="form-group">
+                  <label htmlFor="title">Título do anúncio</label>
+                  <input id="title" name="title" value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} placeholder="Ex.: Casa com quintal no Centro" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="type">Finalidade</label>
+                  <select id="type" name="type" value={announcement.type} onChange={(event) => setAnnouncement({ ...announcement, type: event.target.value })}>
+                    <option value="venda">Venda</option>
+                    <option value="aluguel">Aluguel</option>
+                    <option value="terreno">Terreno</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row four-columns">
+                <div className="form-group">
+                  <label htmlFor="price">Valor {announcement.type === 'aluguel' ? 'mensal' : ''}</label>
+                  <input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="Ex.: 320000" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bedrooms">Quartos</label>
+                  <input id="bedrooms" name="bedrooms" type="number" min="0" value={announcement.bedrooms} onChange={(event) => setAnnouncement({ ...announcement, bedrooms: event.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bathrooms">Banheiros</label>
+                  <input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="area">Área construída (m²)</label>
+                  <input id="area" name="area" type="number" min="1" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" required />
+                </div>
+              </div>
+
+              <div className="form-row two-columns">
+                <div className="form-group">
+                  <label htmlFor="neighborhood">Bairro</label>
+                  <select id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })}>
+                    {Object.keys(neighborhoodCoordinates).map((neighborhood) => <option key={neighborhood}>{neighborhood}</option>)}
+                  </select>
+                  <small>O mapa usará a localização aproximada do bairro.</small>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="address">Endereço ou ponto de referência</label>
+                  <input id="address" name="address" value={announcement.address} onChange={(event) => setAnnouncement({ ...announcement, address: event.target.value })} placeholder="Rua, número ou referência" required />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description">Descrição completa</label>
+                <textarea id="description" name="description" value={announcement.description} onChange={(event) => setAnnouncement({ ...announcement, description: event.target.value })} placeholder="Conte detalhes importantes do imóvel" required />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="image">Foto do imóvel (opcional)</label>
+                <input id="image" name="image" type="url" value={announcement.image} onChange={(event) => setAnnouncement({ ...announcement, image: event.target.value })} placeholder="Cole o link de uma imagem" />
+              </div>
+
+              <div className="form-row two-columns">
+                <div className="form-group">
+                  <label htmlFor="advertiser">Seu nome</label>
+                  <input id="advertiser" name="advertiser" value={announcement.advertiser} onChange={(event) => setAnnouncement({ ...announcement, advertiser: event.target.value })} placeholder="Nome do anunciante" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="phone">Telefone ou WhatsApp</label>
+                  <input id="phone" name="phone" type="tel" value={announcement.phone} onChange={(event) => setAnnouncement({ ...announcement, phone: event.target.value })} placeholder="(16) 99999-1234" required />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="cancel-form-btn" onClick={closeAnnouncementForm}>Cancelar</button>
+                <button type="submit" className="submit-form-btn">Publicar anúncio</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {selectedListing && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
