@@ -206,7 +206,7 @@ function App() {
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [draftFilters, setDraftFilters] = useState({
-    search: '',
+    search: 'Ipuã-SP',
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
     price: 'Qualquer faixa',
@@ -533,13 +533,14 @@ function App() {
       <section className="filters-bar search-panel">
         <div className="filter-search field">
           <label htmlFor="search-location">Onde você quer morar?</label>
-          <input
+          <select
             id="search-location"
-            type="search"
             value={draftFilters.search}
             onChange={(event) => setDraftFilters({ ...draftFilters, search: event.target.value })}
-            placeholder="Buscar por bairro, cidade ou região..."
-          />
+          >
+            <option>Ipuã-SP</option>
+            <option>Guaíra-SP</option>
+          </select>
         </div>
         <div className="field">
           <label>Tipo</label>
