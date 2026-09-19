@@ -194,6 +194,7 @@ function App() {
       return []
     }
   })
+  const [publishedListings, setPublishedListings] = useState([])
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
@@ -212,7 +213,7 @@ function App() {
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
   const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
 
-  const listings = [...sampleListings, ...userListings]
+  const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -239,24 +240,25 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !authUser) return
+    if (!isSupabaseConfigured) return
 
     const loadUserListings = async () => {
       const { data, error } = await supabase
         .from('listings')
         .select('*')
-        .eq('user_id', authUser.id)
         .order('created_at', { ascending: false })
 
       if (!error) {
-        setUserListings((data || []).map((item) => ({
+        const normalizedListings = (data || []).map((item) => ({
           ...item,
           id: item.id,
           coordinates: [item.latitude, item.longitude],
           location: `${item.neighborhood}, Ipuã-SP`,
           area: `${item.area} m²`,
-          owner: true,
-        })))
+          owner: item.user_id === authUser?.id,
+        }))
+        setPublishedListings(normalizedListings)
+        setUserListings(authUser ? normalizedListings.filter((item) => item.user_id === authUser.id) : [])
       }
     }
 
@@ -378,8 +380,10 @@ function App() {
         setAuthMessage(`Não foi possível salvar o anúncio: ${error.message}`)
         return
       }
-      const { data } = await supabase.from('listings').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false })
-      setUserListings((data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, Ipuã-SP`, area: `${item.area} m²`, owner: true })))
+      const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, Ipuã-SP`, area: `${item.area} m²`, owner: item.user_id === authUser.id }))
+      setPublishedListings(normalizedListings)
+      setUserListings(normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
       setUserListings((current) => editingListingId
         ? current.map((item) => item.id === editingListingId ? listing : item)
