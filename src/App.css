@@ -945,10 +945,10 @@
   }
 
   .top-header {
-    min-height: 156px;
+    min-height: 184px;
     align-items: flex-start;
     margin: 0 -14px 16px;
-    padding: 52px 20px 20px;
+    padding: 76px 20px 22px;
     border-radius: 0 0 30% 18px;
   }
 
@@ -957,7 +957,7 @@
   }
 
   .brand-mark {
-    top: 52px;
+    top: 74px;
     left: 34px;
     width: 72px;
     height: 72px;
@@ -972,8 +972,8 @@
   }
 
   .header-actions {
-    top: 64px;
-    right: 20px;
+    top: 12px;
+    right: 14px;
     gap: 6px;
   }
 
