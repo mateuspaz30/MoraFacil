@@ -461,7 +461,6 @@ function App() {
         </div>
 
         <div className="header-actions">
-          <span className="availability-note"><b /> 32 oportunidades abertas</span>
           {isSupabaseConfigured && (authUser ? (
             <button type="button" className="account-btn account-trigger" onClick={() => setAccountOpen((current) => !current)} aria-expanded={accountOpen}>
               <span className="account-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
