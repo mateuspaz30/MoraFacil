@@ -392,16 +392,6 @@ function App() {
     closeAnnouncementForm()
   }
 
-  const removeUserListing = async (id) => {
-    if (window.confirm('Excluir este anúncio?')) {
-      if (isSupabaseConfigured && authUser) {
-        await supabase.from('listings').delete().eq('id', id).eq('user_id', authUser.id)
-      }
-      setUserListings((current) => current.filter((item) => item.id !== id))
-      if (selectedListing?.id === id) closeDetails()
-    }
-  }
-
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
     setAuthLoading(true)
@@ -569,39 +559,6 @@ function App() {
           </div>
         ))}
       </div>
-
-      <section className="my-listings-panel">
-        <div className="section-header-row">
-          <div>
-            <h2>Meus anúncios</h2>
-            <p className="section-helper">Acompanhe os imóveis cadastrados neste navegador.</p>
-          </div>
-          <button type="button" className="small-submit-btn" onClick={() => openAnnouncementForm()}>+ Novo anúncio</button>
-        </div>
-
-        {userListings.length === 0 ? (
-          <div className="empty-state-box">
-            <span>Você ainda não cadastrou nenhum imóvel.</span>
-            <button type="button" className="empty-state-button" onClick={() => openAnnouncementForm()}>Cadastrar meu primeiro imóvel</button>
-          </div>
-        ) : (
-          <div className="my-listings-list">
-            {userListings.map((item) => (
-              <article key={item.id} className="my-listing-row">
-                <div>
-                  <strong>{item.title}</strong>
-                  <span>{item.location} · {item.price}</span>
-                </div>
-                <div className="my-listing-actions">
-                  <button type="button" onClick={() => openDetails(item)}>Ver</button>
-                  <button type="button" onClick={() => openAnnouncementForm(item)}>Editar</button>
-                  <button type="button" className="danger-action" onClick={() => removeUserListing(item.id)}>Excluir</button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
 
       <section className="properties-section">
         <h2>Imóveis cadastrados pela comunidade</h2>
