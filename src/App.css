@@ -1189,7 +1189,7 @@
   }
 
   .category-nav::-webkit-scrollbar {
-    height: 6px;
+    height: 5px;
   }
 
   .category-nav::-webkit-scrollbar-track {
@@ -1200,23 +1200,6 @@
   .category-nav::-webkit-scrollbar-thumb {
     background: #94a3b8;
     border-radius: 99px;
-  }
-
-  .category-nav::after {
-    content: '→';
-    position: sticky;
-    right: 0;
-    display: grid;
-    flex: 0 0 28px;
-    place-items: center;
-    align-self: stretch;
-    margin-left: -28px;
-    border-radius: 8px;
-    background: linear-gradient(90deg, rgba(248, 250, 252, 0), #f8fafc 45%);
-    color: #64748b;
-    font-size: 1rem;
-    font-weight: 800;
-    pointer-events: none;
   }
 
   .nav-item {

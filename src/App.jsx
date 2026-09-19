@@ -461,6 +461,9 @@ function App() {
         </div>
 
         <div className="header-actions">
+          <button type="button" className="announce-btn" onClick={() => openAnnouncementForm()}>
+            <span className="announce-plus">+</span> Anunciar imóvel
+          </button>
           {isSupabaseConfigured && (authUser ? (
             <button type="button" className="account-btn account-trigger" onClick={() => setAccountOpen((current) => !current)} aria-expanded={accountOpen}>
               <span className="account-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
@@ -469,9 +472,6 @@ function App() {
           ) : (
             <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
           ))}
-          <button type="button" className="announce-btn" onClick={() => openAnnouncementForm()}>
-            <span className="announce-plus">+</span> Anunciar imóvel
-          </button>
         </div>
 
         {accountOpen && authUser && (
