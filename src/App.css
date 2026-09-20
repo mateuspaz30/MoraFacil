@@ -110,8 +110,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid #8ac8ff;
-  background: transparent;
+  border: 1px solid #b8f36b;
+  background: #b8f36b;
   color: #fff;
   padding: 0.82rem 1.05rem;
   text-transform: none;
