@@ -632,7 +632,7 @@ function App() {
             onPointerDown={(event) => startHeaderDrag('mark', event)}
             onPointerMove={moveHeaderDrag}
             onPointerUp={stopHeaderDrag}
-            style={isDevelopment ? { transform: `translate(${headerPositions.mark.x}px, ${headerPositions.mark.y}px)` } : undefined}
+            style={isDevelopment ? { '--mobile-drag-x': `${headerPositions.mark.x}px`, '--mobile-drag-y': `${headerPositions.mark.y}px` } : undefined}
           >
             <span>M</span>
             <i />
@@ -643,7 +643,7 @@ function App() {
             onPointerDown={(event) => startHeaderDrag('copy', event)}
             onPointerMove={moveHeaderDrag}
             onPointerUp={stopHeaderDrag}
-            style={isDevelopment ? { transform: `translate(${headerPositions.copy.x}px, ${headerPositions.copy.y}px)` } : undefined}
+            style={isDevelopment ? { '--mobile-drag-x': `${headerPositions.copy.x}px`, '--mobile-drag-y': `${headerPositions.copy.y}px` } : undefined}
           >
             <h1>Mora Fácil</h1>
             <strong>Encontre seu próximo lar.</strong>
