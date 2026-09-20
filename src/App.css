@@ -1052,7 +1052,7 @@
   }
 
   .filters-bar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 3fr 2fr;
     gap: 10px;
     padding: 14px;
     border-radius: 16px;
