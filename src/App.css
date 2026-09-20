@@ -81,16 +81,6 @@
   font-size: 1.05rem;
 }
 
-.dev-draggable {
-  cursor: move;
-  touch-action: none;
-}
-
-.dev-draggable:hover {
-  outline: 1px dashed rgba(139, 234, 69, 0.85);
-  outline-offset: 6px;
-}
-
 .top-header small {
   display: block;
   margin-top: 2px;
@@ -1028,7 +1018,6 @@
 
   .brand-group {
     padding-left: 94px;
-    transform: translate(var(--mobile-drag-x, 0px), var(--mobile-drag-y, 0px));
   }
 
   .brand-mark {
@@ -1036,7 +1025,6 @@
     left: 18px;
     width: 72px;
     height: 72px;
-    transform: translate(var(--mobile-drag-x, 0px), var(--mobile-drag-y, 0px));
   }
 
   .top-header h1 {
