@@ -1067,6 +1067,11 @@
     grid-column: 1 / -1;
   }
 
+  .field select {
+    padding-right: 1.9rem;
+    background-position: calc(100% - 20px) calc(50% - 2px), calc(100% - 14px) calc(50% - 2px);
+  }
+
   .search-btn {
     width: 100%;
   }
