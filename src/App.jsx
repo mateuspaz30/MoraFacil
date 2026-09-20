@@ -218,6 +218,8 @@ function App() {
   const [addressMessage, setAddressMessage] = useState('')
   const [announcementCoordinates, setAnnouncementCoordinates] = useState(mapCenter)
   const [locationConfirmed, setLocationConfirmed] = useState(false)
+  const [imageLoading, setImageLoading] = useState(false)
+  const [imageMessage, setImageMessage] = useState('')
   const [draftFilters, setDraftFilters] = useState({
     search: 'Ipuã-SP',
     type: 'Todos os imóveis',
@@ -360,6 +362,48 @@ function App() {
     setAnnouncement(emptyAnnouncement)
     setAddressMessage('')
     setLocationConfirmed(false)
+    setImageMessage('')
+  }
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setImageMessage('Escolha um arquivo de imagem.')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setImageMessage('A imagem deve ter no máximo 8 MB.')
+      return
+    }
+
+    setImageLoading(true)
+    setImageMessage('Enviando foto...')
+
+    if (!isSupabaseConfigured || !authUser) {
+      setAnnouncement((current) => ({ ...current, image: URL.createObjectURL(file) }))
+      setImageMessage('Foto selecionada para este teste local.')
+      setImageLoading(false)
+      return
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`
+    const { error } = await supabase.storage.from('property-images').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    })
+
+    if (error) {
+      setImageMessage(`Não foi possível enviar a foto: ${error.message}`)
+    } else {
+      const { data } = supabase.storage.from('property-images').getPublicUrl(path)
+      setAnnouncement((current) => ({ ...current, image: data.publicUrl }))
+      setImageMessage('Foto anexada com sucesso.')
+    }
+    setImageLoading(false)
   }
 
   const lookupCep = async () => {
@@ -879,8 +923,12 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="image">Foto do imóvel (opcional)</label>
-                <input id="image" name="image" type="url" value={announcement.image} onChange={(event) => setAnnouncement({ ...announcement, image: event.target.value })} placeholder="Cole o link de uma imagem" />
+                <label htmlFor="image">Foto principal do imóvel (opcional)</label>
+                <input id="image" name="image" type="file" accept="image/*" onChange={handleImageChange} disabled={imageLoading} />
+                <small>{imageLoading ? 'Enviando foto...' : imageMessage || 'Escolha uma foto da galeria do celular ou do computador.'}</small>
+                {announcement.image && (
+                  <img src={announcement.image} alt="Prévia do imóvel" className="announcement-image-preview" />
+                )}
               </div>
 
               <div className="form-row two-columns">

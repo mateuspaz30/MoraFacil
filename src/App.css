@@ -882,6 +882,14 @@
   resize: vertical;
 }
 
+.announcement-image-preview {
+  width: 180px;
+  height: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #d7e1ec;
+}
+
 .location-confirmation {
   display: grid;
   gap: 10px;
