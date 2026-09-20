@@ -216,6 +216,8 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
   const [addressMessage, setAddressMessage] = useState('')
+  const [announcementCoordinates, setAnnouncementCoordinates] = useState(mapCenter)
+  const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [draftFilters, setDraftFilters] = useState({
     search: 'Ipuã-SP',
     type: 'Todos os imóveis',
@@ -347,6 +349,8 @@ function App() {
       price: String(listing.price || '').replace(/\D/g, ''),
       area: String(listing.area || '').replace(/\D/g, ''),
     } : emptyAnnouncement)
+    setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
+    setLocationConfirmed(Boolean(listing?.coordinates))
     setAnnouncementOpen(true)
   }
 
@@ -355,6 +359,7 @@ function App() {
     setEditingListingId(null)
     setAnnouncement(emptyAnnouncement)
     setAddressMessage('')
+    setLocationConfirmed(false)
   }
 
   const lookupCep = async () => {
@@ -385,23 +390,48 @@ function App() {
     }
   }
 
+  const locateAnnouncement = async () => {
+    if (!announcement.street || !announcement.number) {
+      setAddressMessage('Informe a rua e o número antes de localizar.')
+      return null
+    }
+
+    setAddressLoading(true)
+    setAddressMessage('Localizando endereço no mapa...')
+    try {
+      const query = `${announcement.street}, ${announcement.number}, ${announcement.city}, São Paulo, Brasil`
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=${encodeURIComponent(query)}`)
+      const results = await response.json()
+      if (!results[0]) {
+        setAddressMessage('Endereço não localizado. Arraste o marcador manualmente.')
+        return null
+      }
+      const coordinates = [Number(results[0].lat), Number(results[0].lon)]
+      setAnnouncementCoordinates(coordinates)
+      setAnnouncement((current) => ({ ...current, address: results[0].display_name }))
+      setLocationConfirmed(true)
+      setAddressMessage('Local encontrado. Você pode ajustar o marcador no mapa.')
+      return { coordinates, address: results[0].display_name }
+    } catch {
+      setAddressMessage('Não foi possível localizar. Ajuste o marcador manualmente.')
+      return null
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+
   const handleAnnouncementSubmit = async (event) => {
     event.preventDefault()
     const cityCenter = cityCoordinates[announcement.city] || neighborhoodCoordinates[announcement.neighborhood] || mapCenter
-    let coordinates = cityCenter
-    let resolvedAddress = announcement.street
+    let coordinates = announcementCoordinates || cityCenter
 
-    if (announcement.street && announcement.number) {
-      try {
-        const query = `${announcement.street}, ${announcement.number}, ${announcement.city}, São Paulo, Brasil`
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=${encodeURIComponent(query)}`)
-        const results = await response.json()
-        if (results[0]) {
-          coordinates = [Number(results[0].lat), Number(results[0].lon)]
-          resolvedAddress = results[0].display_name
-        }
-      } catch {
-        coordinates = cityCenter
+    if (!locationConfirmed) {
+      const located = await locateAnnouncement()
+      if (located) {
+        coordinates = located.coordinates
+      } else {
+        setAddressMessage('Confirme a localização no mapa antes de publicar.')
+        return
       }
     }
 
@@ -413,7 +443,7 @@ function App() {
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
       area: `${announcement.area} m²`,
       coordinates,
-      address: resolvedAddress || `${announcement.street}, ${announcement.number}`,
+      address: announcement.address || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
       status: announcement.status || 'Disponível',
       owner: true,
@@ -779,7 +809,12 @@ function App() {
               <div className="form-row three-columns">
                 <div className="form-group">
                   <label htmlFor="city">Cidade</label>
-                  <select id="city" name="city" value={announcement.city} onChange={(event) => setAnnouncement({ ...announcement, city: event.target.value })}>
+                  <select id="city" name="city" value={announcement.city} onChange={(event) => {
+                    const city = event.target.value
+                    setAnnouncement({ ...announcement, city })
+                    setAnnouncementCoordinates(cityCoordinates[city] || mapCenter)
+                    setLocationConfirmed(false)
+                  }}>
                     <option>Ipuã-SP</option>
                     <option>Guaíra-SP</option>
                   </select>
@@ -804,6 +839,38 @@ function App() {
                   <label htmlFor="neighborhood">Bairro</label>
                   <input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Preenchido pelo CEP" required />
                 </div>
+              </div>
+
+              <div className="location-confirmation">
+                <div className="location-confirmation-header">
+                  <div>
+                    <strong>Confirme a localização</strong>
+                    <small>{addressMessage || 'Localize o endereço e arraste o marcador até o ponto exato.'}</small>
+                  </div>
+                  <button type="button" className="locate-button" onClick={locateAnnouncement} disabled={addressLoading}>
+                    {addressLoading ? 'Localizando...' : 'Localizar no mapa'}
+                  </button>
+                </div>
+                <MapContainer center={announcementCoordinates} zoom={17} className="announcement-map" scrollWheelZoom>
+                  <TileLayer
+                    attribution='&copy; Esri &copy; OpenStreetMap contributors'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  />
+                  <Marker
+                    position={announcementCoordinates}
+                    draggable
+                    eventHandlers={{
+                      dragend: (event) => {
+                        const marker = event.target
+                        const position = marker.getLatLng()
+                        setAnnouncementCoordinates([position.lat, position.lng])
+                        setLocationConfirmed(true)
+                        setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.')
+                      },
+                    }}
+                    icon={createMarkerIcon(typeColors[announcement.type])}
+                  />
+                </MapContainer>
               </div>
 
               <div className="form-group">
