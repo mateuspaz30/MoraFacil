@@ -224,7 +224,6 @@ function App() {
     search: 'Ipuã-SP',
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
-    price: 'Qualquer faixa',
     neighborhood: 'Qualquer bairro',
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
@@ -289,17 +288,13 @@ function App() {
       || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
-    const priceMatches = appliedFilters.price === 'Qualquer faixa'
-      || (appliedFilters.price === 'Até R$ 200 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 200000)
-      || (appliedFilters.price === 'Até R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 500000)
-      || (appliedFilters.price === 'Acima de R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) > 500000)
     const neighborhoodMatches = appliedFilters.neighborhood === 'Qualquer bairro'
       || item.neighborhood === appliedFilters.neighborhood
     const searchValue = appliedFilters.search.trim().toLowerCase()
     const searchMatches = !searchValue
       || `${item.title} ${item.location} ${item.address} ${item.neighborhood}`.toLowerCase().includes(searchValue)
 
-    return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
+    return typeMatches && bedroomsMatches && neighborhoodMatches && searchMatches
   })
 
   const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
@@ -674,26 +669,6 @@ function App() {
         </div>
 
         <div className="field">
-          <label>Quartos</label>
-          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
-            <option>Qualquer</option>
-            <option>1+</option>
-            <option>2+</option>
-            <option>3+</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Preço</label>
-          <select value={draftFilters.price} onChange={(event) => setDraftFilters({ ...draftFilters, price: event.target.value })}>
-            <option>Qualquer faixa</option>
-            <option>Até R$ 200 mil</option>
-            <option>Até R$ 500 mil</option>
-            <option>Acima de R$ 500 mil</option>
-          </select>
-        </div>
-
-        <div className="field">
           <label>Bairro</label>
           <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
             <option>Qualquer bairro</option>
@@ -702,6 +677,16 @@ function App() {
             <option>Zona Norte</option>
             <option>Jardim Primavera</option>
             <option>Residencial Santana</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Quartos</label>
+          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
+            <option>Qualquer</option>
+            <option>1+</option>
+            <option>2+</option>
+            <option>3+</option>
           </select>
         </div>
 
