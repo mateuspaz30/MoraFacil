@@ -228,7 +228,6 @@ function App() {
     neighborhood: 'Qualquer bairro',
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
-  const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
 
   const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
@@ -288,10 +287,6 @@ function App() {
       || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
       || (appliedFilters.type === 'Venda' && item.type === 'venda')
       || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
-    const categoryMatches = activeCategory === 'Todos os imóveis'
-      || (activeCategory === 'Casas' && item.bedrooms > 0 && item.type === 'venda')
-      || (activeCategory === 'Apartamentos' && item.bedrooms > 0 && item.type === 'aluguel')
-      || (activeCategory === 'Terrenos' && item.type === 'terreno')
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
     const priceMatches = appliedFilters.price === 'Qualquer faixa'
@@ -304,7 +299,7 @@ function App() {
     const searchMatches = !searchValue
       || `${item.title} ${item.location} ${item.address} ${item.neighborhood}`.toLowerCase().includes(searchValue)
 
-    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
+    return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
   })
 
   const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
@@ -655,19 +650,6 @@ function App() {
           </section>
         )}
       </header>
-
-      <nav className="category-nav" aria-label="Categorias">
-        {['Todos os imóveis', 'Casas', 'Apartamentos', 'Terrenos'].map((category) => (
-          <button
-            key={category}
-            className={`nav-item ${activeCategory === category ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </nav>
 
       <section className="filters-bar search-panel">
         <div className="filter-search field">
