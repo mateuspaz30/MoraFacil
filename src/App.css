@@ -527,6 +527,8 @@
 }
 
 .property-card {
+  display: flex;
+  flex-direction: column;
   min-height: 260px;
   overflow: hidden;
   border: 1px solid #dbe5ef;
@@ -565,6 +567,9 @@
 }
 
 .property-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 12px;
 }
 
@@ -608,13 +613,14 @@
   justify-content: space-between;
   gap: 8px;
   margin-top: 12px;
+  margin-bottom: 12px;
   color: #374151;
   font-size: 0.72rem;
 }
 
 .card-detail-button {
   width: 100%;
-  margin-top: 12px;
+  margin-top: auto;
   border: 0;
   border-radius: 999px;
   background: #dffbd0;
@@ -1097,7 +1103,7 @@
   }
 
   .card-detail-button {
-    margin-top: 8px;
+    margin-top: auto;
     padding: 0.55rem 0.45rem;
     font-size: 0.72rem;
   }
