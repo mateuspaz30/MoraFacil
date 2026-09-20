@@ -195,6 +195,7 @@ const createMarkerIcon = (color) => L.divIcon({
 })
 
 function App() {
+  const isDevelopment = import.meta.env.DEV
   const [selectedListing, setSelectedListing] = useState(null)
   const [userListings, setUserListings] = useState(() => {
     try {
@@ -230,8 +231,39 @@ function App() {
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
   const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
+  const [headerPositions, setHeaderPositions] = useState(() => {
+    if (!import.meta.env.DEV) return { mark: { x: 0, y: 0 }, copy: { x: 0, y: 0 } }
+    try {
+      return JSON.parse(localStorage.getItem('morafacil-header-positions') || '{"mark":{"x":0,"y":0},"copy":{"x":0,"y":0}}')
+    } catch {
+      return { mark: { x: 0, y: 0 }, copy: { x: 0, y: 0 } }
+    }
+  })
+  const [dragState, setDragState] = useState(null)
 
   const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
+
+  const startHeaderDrag = (target, event) => {
+    if (!isDevelopment) return
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setDragState({ target, startX: event.clientX, startY: event.clientY, origin: headerPositions[target] })
+  }
+
+  const moveHeaderDrag = (event) => {
+    if (!dragState) return
+    const nextPositions = {
+      ...headerPositions,
+      [dragState.target]: {
+        x: dragState.origin.x + event.clientX - dragState.startX,
+        y: dragState.origin.y + event.clientY - dragState.startY,
+      },
+    }
+    setHeaderPositions(nextPositions)
+    localStorage.setItem('morafacil-header-positions', JSON.stringify(nextPositions))
+  }
+
+  const stopHeaderDrag = () => setDragState(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -593,11 +625,26 @@ function App() {
     <div className="real-estate-shell">
       <header className="top-header hero-header">
         <div className="brand-group">
-          <div className="brand-mark" aria-hidden="true">
+          <div
+            className={`brand-mark ${isDevelopment ? 'dev-draggable' : ''}`}
+            aria-hidden="true"
+            title={isDevelopment ? 'Arraste para ajustar a logo' : undefined}
+            onPointerDown={(event) => startHeaderDrag('mark', event)}
+            onPointerMove={moveHeaderDrag}
+            onPointerUp={stopHeaderDrag}
+            style={isDevelopment ? { transform: `translate(${headerPositions.mark.x}px, ${headerPositions.mark.y}px)` } : undefined}
+          >
             <span>M</span>
             <i />
           </div>
-          <div className="brand-copy">
+          <div
+            className={`brand-copy ${isDevelopment ? 'dev-draggable' : ''}`}
+            title={isDevelopment ? 'Arraste para ajustar as frases' : undefined}
+            onPointerDown={(event) => startHeaderDrag('copy', event)}
+            onPointerMove={moveHeaderDrag}
+            onPointerUp={stopHeaderDrag}
+            style={isDevelopment ? { transform: `translate(${headerPositions.copy.x}px, ${headerPositions.copy.y}px)` } : undefined}
+          >
             <h1>Mora Fácil</h1>
             <strong>Encontre seu próximo lar.</strong>
             <small>Imóveis do seu jeito, perto de você.</small>

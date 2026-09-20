@@ -81,6 +81,16 @@
   font-size: 1.05rem;
 }
 
+.dev-draggable {
+  cursor: move;
+  touch-action: none;
+}
+
+.dev-draggable:hover {
+  outline: 1px dashed rgba(139, 234, 69, 0.85);
+  outline-offset: 6px;
+}
+
 .top-header small {
   display: block;
   margin-top: 2px;
