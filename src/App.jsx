@@ -230,7 +230,7 @@ function App() {
     neighborhood: 'Qualquer bairro',
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
-  const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
+  const [activeCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
 
   const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
