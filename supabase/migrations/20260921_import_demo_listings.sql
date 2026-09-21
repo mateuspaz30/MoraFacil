@@ -19,7 +19,6 @@ cross join (values
   ('Lote residencial plano', 'terreno', 'R$ 95.000', 0, 0, 250, 'Residencial Santana', 'Rua Um, Residencial Santana, Ipuã-SP', 'Lote plano em bairro residencial, ideal para construir a casa própria.', 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85', 'Paulo Ribeiro', '(16) 93333-1234', -20.4462, -48.0117),
   ('Casa nova com varanda', 'venda', 'R$ 365.000', 3, 2, 132, 'Vila Nova', 'Rua das Flores, Vila Nova, Ipuã-SP', 'Casa nova com varanda, acabamento moderno e ambientes integrados.', 'https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=1200&q=85', 'Juliana Martins', '(16) 92222-5678', -20.4445, -48.0205)
 ) as demo(title, type, price, bedrooms, bathrooms, area, neighborhood, address, description, image, advertiser, phone, latitude, longitude)
-on true
 where u.email = 'mateus_ipua@hotmail.com'
   and not exists (
     select 1 from public.listings existing
