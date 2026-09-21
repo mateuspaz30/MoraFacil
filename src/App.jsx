@@ -234,7 +234,9 @@ function App() {
   const [activeCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
 
-  const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
+  const listings = isSupabaseConfigured
+    ? (publishedListings.length > 0 ? publishedListings : sampleListings)
+    : [...sampleListings, ...userListings]
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
