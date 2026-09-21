@@ -669,19 +669,6 @@ function App() {
         )}
       </header>
 
-      <nav className="category-nav" aria-label="Categorias">
-        {['Todos os imóveis', 'Casas', 'Apartamentos', 'Terrenos'].map((category) => (
-          <button
-            key={category}
-            className={`nav-item ${activeCategory === category ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </nav>
-
       <section className="filters-bar search-panel">
         <div className="filter-search field">
           <label htmlFor="search-location">Onde você quer morar?</label>
@@ -705,26 +692,6 @@ function App() {
         </div>
 
         <div className="field">
-          <label>Quartos</label>
-          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
-            <option>Qualquer</option>
-            <option>1+</option>
-            <option>2+</option>
-            <option>3+</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Preço</label>
-          <select value={draftFilters.price} onChange={(event) => setDraftFilters({ ...draftFilters, price: event.target.value })}>
-            <option>Qualquer faixa</option>
-            <option>Até R$ 200 mil</option>
-            <option>Até R$ 500 mil</option>
-            <option>Acima de R$ 500 mil</option>
-          </select>
-        </div>
-
-        <div className="field">
           <label>Bairro</label>
           <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
             <option>Qualquer bairro</option>
@@ -733,6 +700,16 @@ function App() {
             <option>Zona Norte</option>
             <option>Jardim Primavera</option>
             <option>Residencial Santana</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Quartos</label>
+          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
+            <option>Qualquer</option>
+            <option>1+</option>
+            <option>2+</option>
+            <option>3+</option>
           </select>
         </div>
 
