@@ -4,6 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import logo from './assets/logo.png'
 
 const sampleListings = [
   {
@@ -607,8 +608,7 @@ function App() {
       <header className="top-header hero-header">
         <div className="brand-group">
           <div className="brand-mark" aria-hidden="true">
-            <span>M</span>
-            <i />
+            <img src={logo} alt="" className="brand-mark-img" />
           </div>
           <div className="brand-copy">
             <h1>Mora Fácil</h1>
