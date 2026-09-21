@@ -291,7 +291,7 @@ function App() {
           id: item.id,
           coordinates: [item.latitude, item.longitude],
           location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
-          area: `${item.area} m²`,
+          area: item.area ? `${item.area} m²` : '',
           owner: item.user_id === authUser?.id,
         }))
         setPublishedListings(normalizedListings)
@@ -546,7 +546,7 @@ function App() {
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
-      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: `${item.area} m²`, owner: item.user_id === authUser.id }))
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: item.area ? `${item.area} m²` : '', owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
       setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
@@ -749,7 +749,7 @@ function App() {
                   <p className="detail-price">{item.price}</p>
                   <p className="detail-meta">{item.address}</p>
                   <p className="detail-meta">
-                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'} · {item.area}
+                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}{item.area ? ` · ${item.area}` : ''}
                   </p>
                   <button type="button" className="detail-button" onClick={() => openDetails(item)}>Saiba mais →</button>
                 </div>
@@ -796,7 +796,7 @@ function App() {
 
                 <div className="meta-row">
                   <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
-                  <span>{item.area}</span>
+                  {item.area && <span>{item.area}</span>}
                 </div>
                 <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
                   Saiba mais
@@ -832,7 +832,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="form-row four-columns">
+              <div className="form-row three-columns">
                 <div className="form-group">
                   <label htmlFor="price">Valor {announcement.type === 'aluguel' ? 'mensal' : ''}</label>
                   <input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="Ex.: 320000" required />
@@ -844,10 +844,6 @@ function App() {
                 <div className="form-group">
                   <label htmlFor="bathrooms">Banheiros</label>
                   <input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="area">Área construída (m²)</label>
-                  <input id="area" name="area" type="number" min="1" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" required />
                 </div>
               </div>
 
@@ -1003,7 +999,7 @@ function App() {
 
               <div className="property-facts">
                 <div><strong>{selectedListing.bedrooms || '-'}</strong><span>Quartos</span></div>
-                <div><strong>{selectedListing.area}</strong><span>Área</span></div>
+                {selectedListing.area && <div><strong>{selectedListing.area}</strong><span>Área</span></div>}
                 <div><strong>{selectedListing.neighborhood}</strong><span>Bairro</span></div>
                 <div><strong>{selectedListing.type}</strong><span>Tipo</span></div>
               </div>
