@@ -210,6 +210,7 @@ function App() {
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminCheckMessage, setAdminCheckMessage] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
@@ -262,8 +263,15 @@ function App() {
   useEffect(() => {
     if (!supabase || !authUser) return
 
-    supabase.from('admin_users').select('user_id').eq('user_id', authUser.id).maybeSingle()
-      .then(({ data }) => setIsAdmin(Boolean(data)))
+    supabase.rpc('is_admin').then(({ data, error }) => {
+      if (error) {
+        setIsAdmin(false)
+        setAdminCheckMessage('Execute a migração de administrador no Supabase para liberar a gestão de todos os anúncios.')
+        return
+      }
+      setIsAdmin(Boolean(data))
+      setAdminCheckMessage(data ? '' : 'Esta conta ainda não está registrada como administradora.')
+    })
   }, [authUser])
 
   useEffect(() => {
@@ -643,6 +651,7 @@ function App() {
             </div>
 
             <div className="account-divider" />
+            {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
             <div className="account-section-title">{isAdmin ? 'Todos os imóveis' : 'Meus imóveis'}</div>
             {userListings.length === 0 ? (
               <div className="account-empty">Você ainda não cadastrou imóveis.</div>

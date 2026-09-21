@@ -236,6 +236,16 @@
   background: #e5e7eb;
 }
 
+.admin-check-message {
+  margin: 0 0 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 0.65rem 0.7rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .account-section-title {
   margin-bottom: 8px;
   color: #334155;
