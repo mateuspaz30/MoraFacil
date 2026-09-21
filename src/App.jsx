@@ -4,7 +4,6 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
-import logo from './assets/logo.png'
 
 const sampleListings = [
   {
@@ -209,6 +208,7 @@ function App() {
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
@@ -225,9 +225,11 @@ function App() {
     search: 'Ipuã-SP',
     type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
+    price: 'Qualquer faixa',
     neighborhood: 'Qualquer bairro',
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
+  const [activeCategory, setActiveCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
 
   const listings = [...sampleListings, ...(isSupabaseConfigured ? publishedListings : userListings)]
@@ -257,6 +259,13 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (!supabase || !authUser) return
+
+    supabase.from('admin_users').select('user_id').eq('user_id', authUser.id).maybeSingle()
+      .then(({ data }) => setIsAdmin(Boolean(data)))
+  }, [authUser])
+
+  useEffect(() => {
     if (!isSupabaseConfigured) return
 
     const loadUserListings = async () => {
@@ -275,27 +284,37 @@ function App() {
           owner: item.user_id === authUser?.id,
         }))
         setPublishedListings(normalizedListings)
-        setUserListings(authUser ? normalizedListings.filter((item) => item.user_id === authUser.id) : [])
+        setUserListings(authUser
+          ? (isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
+          : [])
       }
     }
 
     loadUserListings()
-  }, [authUser])
+  }, [authUser, isAdmin])
 
   const filteredListings = listings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
       || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
       || (appliedFilters.type === 'Venda' && item.type === 'venda')
       || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
+    const categoryMatches = activeCategory === 'Todos os imóveis'
+      || (activeCategory === 'Casas' && item.bedrooms > 0 && item.type === 'venda')
+      || (activeCategory === 'Apartamentos' && item.bedrooms > 0 && item.type === 'aluguel')
+      || (activeCategory === 'Terrenos' && item.type === 'terreno')
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
+    const priceMatches = appliedFilters.price === 'Qualquer faixa'
+      || (appliedFilters.price === 'Até R$ 200 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 200000)
+      || (appliedFilters.price === 'Até R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 500000)
+      || (appliedFilters.price === 'Acima de R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) > 500000)
     const neighborhoodMatches = appliedFilters.neighborhood === 'Qualquer bairro'
       || item.neighborhood === appliedFilters.neighborhood
     const searchValue = appliedFilters.search.trim().toLowerCase()
     const searchMatches = !searchValue
       || `${item.title} ${item.location} ${item.address} ${item.neighborhood}`.toLowerCase().includes(searchValue)
 
-    return typeMatches && bedroomsMatches && neighborhoodMatches && searchMatches
+    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
   })
 
   const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
@@ -486,7 +505,7 @@ function App() {
 
     if (isSupabaseConfigured && authUser) {
       const databaseListing = {
-        user_id: authUser.id,
+        user_id: editingListingId && listing.user_id ? listing.user_id : authUser.id,
         city: listing.city,
         cep: listing.cep,
         number: listing.number,
@@ -508,7 +527,7 @@ function App() {
         longitude: coordinates[1],
       }
       const query = editingListingId
-        ? supabase.from('listings').update(databaseListing).eq('id', editingListingId).eq('user_id', authUser.id)
+        ? supabase.from('listings').update(databaseListing).eq('id', editingListingId)
         : supabase.from('listings').insert(databaseListing)
       const { error } = await query
       if (error) {
@@ -518,7 +537,7 @@ function App() {
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
       const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: `${item.area} m²`, owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
-      setUserListings(normalizedListings.filter((item) => item.user_id === authUser.id))
+      setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
       setUserListings((current) => editingListingId
         ? current.map((item) => item.id === editingListingId ? listing : item)
@@ -555,6 +574,7 @@ function App() {
 
   const handleLogout = async () => {
     await supabase?.auth.signOut()
+    setIsAdmin(false)
     setUserListings([])
     setAccountOpen(false)
   }
@@ -563,7 +583,9 @@ function App() {
     if (!window.confirm('Excluir este anúncio?')) return
 
     if (isSupabaseConfigured && authUser) {
-      await supabase.from('listings').delete().eq('id', id).eq('user_id', authUser.id)
+      const deleteQuery = supabase.from('listings').delete().eq('id', id)
+      if (!isAdmin) deleteQuery.eq('user_id', authUser.id)
+      await deleteQuery
       setPublishedListings((current) => current.filter((item) => item.id !== id))
     }
 
@@ -585,7 +607,8 @@ function App() {
       <header className="top-header hero-header">
         <div className="brand-group">
           <div className="brand-mark" aria-hidden="true">
-            <img src={logo} alt="" className="brand-mark-img" />
+            <span>M</span>
+            <i />
           </div>
           <div className="brand-copy">
             <h1>Mora Fácil</h1>
@@ -620,7 +643,7 @@ function App() {
             </div>
 
             <div className="account-divider" />
-            <div className="account-section-title">Meus imóveis</div>
+            <div className="account-section-title">{isAdmin ? 'Todos os imóveis' : 'Meus imóveis'}</div>
             {userListings.length === 0 ? (
               <div className="account-empty">Você ainda não cadastrou imóveis.</div>
             ) : (
@@ -646,6 +669,19 @@ function App() {
         )}
       </header>
 
+      <nav className="category-nav" aria-label="Categorias">
+        {['Todos os imóveis', 'Casas', 'Apartamentos', 'Terrenos'].map((category) => (
+          <button
+            key={category}
+            className={`nav-item ${activeCategory === category ? 'active' : ''}`}
+            type="button"
+            onClick={() => setActiveCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </nav>
+
       <section className="filters-bar search-panel">
         <div className="filter-search field">
           <label htmlFor="search-location">Onde você quer morar?</label>
@@ -669,6 +705,26 @@ function App() {
         </div>
 
         <div className="field">
+          <label>Quartos</label>
+          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
+            <option>Qualquer</option>
+            <option>1+</option>
+            <option>2+</option>
+            <option>3+</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Preço</label>
+          <select value={draftFilters.price} onChange={(event) => setDraftFilters({ ...draftFilters, price: event.target.value })}>
+            <option>Qualquer faixa</option>
+            <option>Até R$ 200 mil</option>
+            <option>Até R$ 500 mil</option>
+            <option>Acima de R$ 500 mil</option>
+          </select>
+        </div>
+
+        <div className="field">
           <label>Bairro</label>
           <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
             <option>Qualquer bairro</option>
@@ -677,16 +733,6 @@ function App() {
             <option>Zona Norte</option>
             <option>Jardim Primavera</option>
             <option>Residencial Santana</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Quartos</label>
-          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
-            <option>Qualquer</option>
-            <option>1+</option>
-            <option>2+</option>
-            <option>3+</option>
           </select>
         </div>
 
