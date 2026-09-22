@@ -714,6 +714,9 @@ function App() {
           <h2>Encontre seu<br /><span>próximo lar.</span></h2>
           <p>Imóveis do seu jeito, perto de você.</p>
         </div>
+      </section>
+
+      <section className="home-search-grid">
         <article className="hero-listing-card" onClick={() => openDetails(heroListing)}>
           <img src={heroListing.image} alt={heroListing.title} />
           <div className="hero-listing-info">
@@ -723,9 +726,8 @@ function App() {
             <button type="button" onClick={(event) => { event.stopPropagation(); openDetails(heroListing) }}>Ver detalhes <b>›</b></button>
           </div>
         </article>
-      </section>
 
-      <section className="filters-bar search-panel">
+        <section className="filters-bar search-panel">
         <div className="filter-search field">
           <label htmlFor="search-location">Onde você quer morar?</label>
           <select
@@ -770,6 +772,7 @@ function App() {
         </div>
 
         <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
+        </section>
       </section>
 
       <div className="map-label-row">
