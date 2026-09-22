@@ -1222,3 +1222,344 @@
     height: 190px;
   }
 }
+
+/* Reference-based home composition */
+.desktop-nav-brand,
+.menu-toggle,
+.mobile-menu-backdrop,
+.hero-content {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .top-header {
+    min-height: 58px;
+    margin: 0 -22px 0;
+    padding: 8px 48px;
+    border-bottom: 1px solid rgba(134, 206, 255, 0.28);
+    border-radius: 0;
+    background: #073353;
+  }
+
+  .desktop-nav-brand {
+    display: block;
+    color: #fff;
+    font-size: 1.45rem;
+    font-weight: 800;
+  }
+
+  .brand-group {
+    display: none;
+  }
+
+  .header-actions {
+    position: static;
+  }
+
+  .hero-content {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 22px;
+    align-items: end;
+    min-height: 158px;
+    margin: 0 -22px 20px;
+    padding: 22px 48px 20px;
+    border-bottom: 4px solid #8bea45;
+    border-radius: 0 0 50% 12px;
+    background: linear-gradient(140deg, #061d35 0%, #0a3658 64%, #0b2947 100%);
+  }
+
+  .hero-copy h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2.4rem, 4vw, 4.4rem);
+    line-height: 0.94;
+  }
+
+  .hero-copy h2 span {
+    color: #8bea45;
+  }
+
+  .hero-copy p {
+    margin: 10px 0 0;
+    color: #c6dded;
+    font-size: 1rem;
+  }
+
+  .hero-listing-card {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 16px;
+    cursor: pointer;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .hero-listing-card > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-listing-info {
+    position: absolute;
+    inset: auto 12px 12px 12px;
+    display: grid;
+    gap: 2px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .hero-listing-info span,
+  .hero-listing-info small {
+    color: #315573;
+    font-size: 0.68rem;
+  }
+
+  .hero-listing-info strong {
+    color: #142d4c;
+    font-size: 0.9rem;
+  }
+
+  .hero-listing-info button {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: #8bea45;
+    color: #06321f;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 640px) {
+  .top-header {
+    min-height: 58px;
+    margin-bottom: 0;
+    padding: 8px 14px;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(134, 206, 255, 0.28);
+    background: #073353;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    padding-left: 48px;
+  }
+
+  .brand-mark {
+    top: 8px;
+    left: 14px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-copy h1 {
+    font-size: 1.15rem;
+  }
+
+  .brand-copy strong,
+  .brand-copy small {
+    display: none;
+  }
+
+  .header-actions {
+    top: 10px;
+    right: 14px;
+  }
+
+  .header-actions .account-btn,
+  .header-actions .announce-btn {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #8ac8ff;
+    border-radius: 9px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.2rem;
+  }
+
+  .hero-content {
+    display: grid;
+    gap: 14px;
+    margin: 0 -14px 18px;
+    padding: 22px 20px 18px;
+    border-bottom: 4px solid #8bea45;
+    border-radius: 0 0 28% 18px;
+    background: linear-gradient(140deg, #061d35 0%, #0a3658 70%, #0b2947 100%);
+  }
+
+  .hero-copy h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 2.35rem;
+    line-height: 0.98;
+  }
+
+  .hero-copy h2 span {
+    color: #8bea45;
+  }
+
+  .hero-copy p {
+    margin: 8px 0 0;
+    color: #c6dded;
+    font-size: 0.9rem;
+  }
+
+  .hero-listing-card {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    border-radius: 16px;
+    cursor: pointer;
+  }
+
+  .hero-listing-card > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-listing-info {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    display: grid;
+    gap: 2px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .hero-listing-info span,
+  .hero-listing-info small {
+    color: #315573;
+    font-size: 0.68rem;
+  }
+
+  .hero-listing-info strong {
+    color: #142d4c;
+    font-size: 0.9rem;
+  }
+
+  .hero-listing-info button {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: #8bea45;
+    color: #06321f;
+    padding: 0.38rem 0.58rem;
+    cursor: pointer;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(3, 18, 31, 0.62);
+  }
+
+  .mobile-menu {
+    position: relative;
+    width: min(310px, 86vw);
+    min-height: 100%;
+    padding: 70px 20px 24px;
+    background: #062a49;
+    box-shadow: -16px 0 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .mobile-menu-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 2rem;
+  }
+
+  .mobile-menu-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 26px;
+    color: #fff;
+    font-size: 1.35rem;
+  }
+
+  .mobile-menu-brand img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .mobile-menu-brand span {
+    color: #8bea45;
+  }
+
+  .mobile-menu-item,
+  .mobile-menu-announce,
+  .mobile-menu-login {
+    width: 100%;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .mobile-menu-item {
+    border: 0;
+    background: transparent;
+    color: #fff;
+  }
+
+  .mobile-menu-item span {
+    display: inline-block;
+    width: 30px;
+    color: #fff;
+    font-size: 1.2rem;
+  }
+
+  .mobile-menu-item.active {
+    background: #0b5b91;
+  }
+
+  .mobile-menu-announce {
+    margin-top: 18px;
+    border: 0;
+    background: #8bea45;
+    color: #06321f;
+    text-align: center;
+  }
+
+  .mobile-menu-login {
+    border: 1px solid #46a9e8;
+    background: transparent;
+    color: #fff;
+    text-align: center;
+  }
+}

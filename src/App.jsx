@@ -233,6 +233,7 @@ function App() {
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
   const [activeCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publishedListings : sampleListings)
@@ -329,6 +330,7 @@ function App() {
   })
 
   const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
+  const heroListing = filteredListings[0] || sampleListings[0]
 
   const summaryCards = [
     {
@@ -616,6 +618,7 @@ function App() {
   return (
     <div className="real-estate-shell">
       <header className="top-header hero-header">
+        <div className="desktop-nav-brand">Mora Fácil</div>
         <div className="brand-group">
           <div className="brand-mark" aria-hidden="true">
             <img src={logo} alt="" className="brand-mark-img" />
@@ -639,6 +642,7 @@ function App() {
           ) : (
             <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
           ))}
+          <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
         </div>
 
         {accountOpen && authUser && (
@@ -679,6 +683,47 @@ function App() {
           </section>
         )}
       </header>
+
+      {mobileMenuOpen && (
+        <div className="mobile-menu-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setMobileMenuOpen(false)
+        }}>
+          <aside className="mobile-menu" aria-label="Menu principal">
+            <button type="button" className="mobile-menu-close" onClick={() => setMobileMenuOpen(false)}>×</button>
+            <div className="mobile-menu-brand">
+              <img src={logo} alt="" />
+              <strong>Mora <span>Fácil</span></strong>
+            </div>
+            {['Início', 'Imóveis', 'Mapa', 'Sobre', 'Contato'].map((item, index) => (
+              <button key={item} type="button" className={`mobile-menu-item ${index === 0 ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <span>{['⌂', '⌂', '⌖', 'ⓘ', '✉'][index]}</span>{item}
+              </button>
+            ))}
+            <button type="button" className="mobile-menu-announce" onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}>+ Anunciar imóvel</button>
+            {authUser ? (
+              <button type="button" className="mobile-menu-login" onClick={() => setMobileMenuOpen(false)}>Minha conta</button>
+            ) : (
+              <button type="button" className="mobile-menu-login" onClick={() => { setMobileMenuOpen(false); setAuthOpen(true) }}>Entrar</button>
+            )}
+          </aside>
+        </div>
+      )}
+
+      <section className="hero-content" aria-label="Encontre seu próximo lar">
+        <div className="hero-copy">
+          <h2>Encontre seu<br /><span>próximo lar.</span></h2>
+          <p>Imóveis do seu jeito, perto de você.</p>
+        </div>
+        <article className="hero-listing-card" onClick={() => openDetails(heroListing)}>
+          <img src={heroListing.image} alt={heroListing.title} />
+          <div className="hero-listing-info">
+            <span>{heroListing.type === 'aluguel' ? 'Aluguel' : 'Casa à venda'}</span>
+            <strong>{heroListing.title}</strong>
+            <small>{heroListing.location}</small>
+            <button type="button" onClick={(event) => { event.stopPropagation(); openDetails(heroListing) }}>Ver detalhes <b>›</b></button>
+          </div>
+        </article>
+      </section>
 
       <section className="filters-bar search-panel">
         <div className="filter-search field">
