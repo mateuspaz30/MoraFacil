@@ -1313,11 +1313,11 @@
 
   .hero-illustration {
     position: absolute;
-    right: 10%;
-    bottom: 0;
-    width: 420px;
+    right: 5%;
+    bottom: -5px;
+    width: 360px;
     height: auto;
-    opacity: 0.9;
+    opacity: 0.72;
     pointer-events: none;
   }
 
