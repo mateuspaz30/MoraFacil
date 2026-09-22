@@ -719,12 +719,8 @@ function App() {
       <section className="home-search-grid">
         <article className="hero-listing-card" onClick={() => openDetails(heroListing)}>
           <img src={heroListing.image} alt={heroListing.title} />
-          <div className="hero-listing-info">
-            <span>{heroListing.type === 'aluguel' ? 'Aluguel' : 'Casa à venda'}</span>
-            <strong>{heroListing.title}</strong>
-            <small>{heroListing.location}</small>
-            <button type="button" onClick={(event) => { event.stopPropagation(); openDetails(heroListing) }}>Ver detalhes <b>›</b></button>
-          </div>
+          <span className="hero-listing-badge">{heroListing.type === 'aluguel' ? 'Aluguel' : 'Venda'}</span>
+          <button type="button" className="hero-listing-cta" onClick={(event) => { event.stopPropagation(); openDetails(heroListing) }}>Ver detalhes <b>›</b></button>
         </article>
 
         <section className="filters-bar search-panel">
