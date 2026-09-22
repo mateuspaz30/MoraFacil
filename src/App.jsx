@@ -629,7 +629,10 @@ function App() {
   return (
     <div className="real-estate-shell">
       <header className="top-header hero-header">
-        <div className="desktop-nav-brand">Mora Fácil</div>
+        <div className="desktop-nav-brand">
+          <img src={logo} alt="" />
+          <span>Mora <b>Fácil</b></span>
+        </div>
         <div className="brand-group">
           <div className="brand-mark" aria-hidden="true">
             <img src={logo} alt="" className="brand-mark-img" />

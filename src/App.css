@@ -1243,10 +1243,23 @@
   }
 
   .desktop-nav-brand {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: #fff;
-    font-size: 1.45rem;
+    font-size: 1.55rem;
     font-weight: 800;
+  }
+
+  .desktop-nav-brand img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+  }
+
+  .desktop-nav-brand b {
+    color: #8bea45;
   }
 
   .brand-group {
@@ -1255,6 +1268,19 @@
 
   .header-actions {
     position: static;
+  }
+
+  .header-actions .menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.7rem;
+    line-height: 1;
   }
 
   .hero-content {
