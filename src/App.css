@@ -1293,7 +1293,7 @@
 
   .hero-listing-card {
     position: relative;
-    height: 150px;
+    min-height: 260px;
     overflow: hidden;
     border-radius: 16px;
     cursor: pointer;
@@ -1322,15 +1322,48 @@
   }
 
   .hero-listing-card > img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+
+  .hero-listing-card > img.active {
+    opacity: 1;
+  }
+
+  .hero-listing-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+  }
+
+  .hero-listing-dots button {
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .hero-listing-dots button.active {
+    background: #8bea45;
   }
 
   .hero-listing-badge {
     position: absolute;
     top: 12px;
     left: 12px;
+    z-index: 1;
     border-radius: 999px;
     padding: 0.32rem 0.7rem;
     background: rgba(255, 255, 255, 0.94);
@@ -1344,6 +1377,7 @@
     position: absolute;
     right: 12px;
     bottom: 12px;
+    z-index: 1;
     border: 0;
     border-radius: 999px;
     background: #8bea45;
@@ -1462,15 +1496,48 @@
   }
 
   .hero-listing-card > img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+
+  .hero-listing-card > img.active {
+    opacity: 1;
+  }
+
+  .hero-listing-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+  }
+
+  .hero-listing-dots button {
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .hero-listing-dots button.active {
+    background: #8bea45;
   }
 
   .hero-listing-badge {
     position: absolute;
     top: 12px;
     left: 12px;
+    z-index: 1;
     border-radius: 999px;
     padding: 0.3rem 0.65rem;
     background: rgba(255, 255, 255, 0.94);
@@ -1484,6 +1551,7 @@
     position: absolute;
     right: 12px;
     bottom: 12px;
+    z-index: 1;
     border: 0;
     border-radius: 999px;
     background: #8bea45;

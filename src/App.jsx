@@ -234,6 +234,7 @@ function App() {
   const [activeCategory] = useState('Todos os imóveis')
   const [showAllListings, setShowAllListings] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0)
 
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publishedListings : sampleListings)
@@ -330,7 +331,17 @@ function App() {
   })
 
   const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
-  const heroListing = filteredListings[0] || sampleListings[0]
+  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : sampleListings).slice(0, 3)
+
+  useEffect(() => {
+    if (heroCarouselListings.length < 2) return undefined
+
+    const timer = setInterval(() => {
+      setHeroSlideIndex((current) => (current + 1) % heroCarouselListings.length)
+    }, 4500)
+
+    return () => clearInterval(timer)
+  }, [heroCarouselListings.length])
 
   const summaryCards = [
     {
@@ -717,10 +728,39 @@ function App() {
       </section>
 
       <section className="home-search-grid">
-        <article className="hero-listing-card" onClick={() => openDetails(heroListing)}>
-          <img src={heroListing.image} alt={heroListing.title} />
-          <span className="hero-listing-badge">{heroListing.type === 'aluguel' ? 'Aluguel' : 'Venda'}</span>
-          <button type="button" className="hero-listing-cta" onClick={(event) => { event.stopPropagation(); openDetails(heroListing) }}>Ver detalhes <b>›</b></button>
+        <article className="hero-listing-card">
+          {heroCarouselListings.map((item, index) => (
+            <img
+              key={item.id}
+              src={item.image}
+              alt={item.title}
+              className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+              onClick={() => openDetails(item)}
+            />
+          ))}
+          <span className="hero-listing-badge">
+            {heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type === 'aluguel' ? 'Aluguel' : 'Venda'}
+          </span>
+          <button
+            type="button"
+            className="hero-listing-cta"
+            onClick={() => openDetails(heroCarouselListings[heroSlideIndex % heroCarouselListings.length])}
+          >
+            Ver detalhes <b>›</b>
+          </button>
+          {heroCarouselListings.length > 1 && (
+            <div className="hero-listing-dots">
+              {heroCarouselListings.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+                  aria-label={`Ver imóvel ${index + 1}`}
+                  onClick={() => setHeroSlideIndex(index)}
+                />
+              ))}
+            </div>
+          )}
         </article>
 
         <section className="filters-bar search-panel">
