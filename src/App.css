@@ -1387,6 +1387,32 @@
     font-size: 0.72rem;
     font-weight: 800;
   }
+
+  .hero-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 50%;
+    background: rgba(7, 29, 52, 0.72);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.7rem;
+    line-height: 1;
+    transform: translateY(-50%);
+  }
+
+  .hero-carousel-arrow-left {
+    left: 12px;
+  }
+
+  .hero-carousel-arrow-right {
+    right: 12px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1560,6 +1586,20 @@
     cursor: pointer;
     font-size: 0.7rem;
     font-weight: 800;
+  }
+
+  .hero-carousel-arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 1.9rem;
+  }
+
+  .hero-carousel-arrow-left {
+    left: 10px;
+  }
+
+  .hero-carousel-arrow-right {
+    right: 10px;
   }
 
   .mobile-menu-backdrop {

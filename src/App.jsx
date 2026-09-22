@@ -741,6 +741,22 @@ function App() {
           <span className="hero-listing-badge">
             {heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type === 'aluguel' ? 'Aluguel' : 'Venda'}
           </span>
+          {heroCarouselListings.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="hero-carousel-arrow hero-carousel-arrow-left"
+                aria-label="Anúncio anterior"
+                onClick={() => setHeroSlideIndex((current) => (current - 1 + heroCarouselListings.length) % heroCarouselListings.length)}
+              >‹</button>
+              <button
+                type="button"
+                className="hero-carousel-arrow hero-carousel-arrow-right"
+                aria-label="Próximo anúncio"
+                onClick={() => setHeroSlideIndex((current) => (current + 1) % heroCarouselListings.length)}
+              >›</button>
+            </>
+          )}
           <button
             type="button"
             className="hero-listing-cta"
