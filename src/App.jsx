@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
+import heroIllustration from './assets/hero-illustration.svg'
 
 const sampleListings = [
   {
@@ -728,12 +729,7 @@ function App() {
           <h2>Encontre seu<br /><span>próximo lar.</span></h2>
           <p>Imóveis do seu jeito, perto de você.</p>
         </div>
-        <div className="hero-illustration" aria-hidden="true">
-          <span className="hero-pin">●</span>
-          <span className="hero-house-roof" />
-          <span className="hero-house-body"><i /><i /><b /></span>
-          <span className="hero-house-line" />
-        </div>
+        <img className="hero-illustration" src={heroIllustration} alt="" aria-hidden="true" />
       </section>
 
       <section className="home-search-grid">

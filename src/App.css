@@ -1315,74 +1315,10 @@
     position: absolute;
     right: 10%;
     bottom: 0;
-    width: 360px;
-    height: 145px;
+    width: 420px;
+    height: auto;
     opacity: 0.9;
     pointer-events: none;
-  }
-
-  .hero-house-roof {
-    position: absolute;
-    right: 18px;
-    bottom: 35px;
-    width: 220px;
-    height: 120px;
-    border-top: 8px solid #0692dd;
-    border-right: 8px solid #0692dd;
-    transform: rotate(-45deg) skew(12deg, 12deg);
-    opacity: 0.72;
-  }
-
-  .hero-house-body {
-    position: absolute;
-    right: 35px;
-    bottom: 0;
-    width: 175px;
-    height: 83px;
-    border: 7px solid #057bc1;
-    border-bottom: 0;
-    opacity: 0.72;
-  }
-
-  .hero-house-body i {
-    position: absolute;
-    top: 20px;
-    width: 26px;
-    height: 36px;
-    border: 5px solid #057bc1;
-  }
-
-  .hero-house-body i:first-child { left: 25px; }
-  .hero-house-body i:nth-child(2) { right: 25px; }
-
-  .hero-house-body b {
-    position: absolute;
-    right: 65px;
-    bottom: 0;
-    width: 34px;
-    height: 53px;
-    border: 5px solid #057bc1;
-    border-bottom: 0;
-  }
-
-  .hero-house-line {
-    position: absolute;
-    right: 0;
-    bottom: 18px;
-    width: 320px;
-    height: 2px;
-    background: #057bc1;
-    opacity: 0.5;
-  }
-
-  .hero-pin {
-    position: absolute;
-    top: 2px;
-    left: 35px;
-    color: #0798e5;
-    font-size: 4.6rem;
-    line-height: 1;
-    text-shadow: 0 24px 0 -12px #0798e5;
   }
 
   .home-search-grid {
