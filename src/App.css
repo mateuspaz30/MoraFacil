@@ -1314,10 +1314,13 @@
   .hero-illustration {
     position: absolute;
     right: 5%;
-    bottom: -5px;
-    width: 360px;
+    bottom: -2px;
+    width: min(430px, 38vw);
     height: auto;
-    opacity: 0.72;
+    max-height: 170px;
+    object-fit: contain;
+    object-position: right bottom;
+    opacity: 0.82;
     pointer-events: none;
   }
 
