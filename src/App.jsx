@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
-import heroIllustration from './assets/hero-illustration.svg'
+import heroIllustration from './assets/hero-house.png'
 
 const sampleListings = [
   {
