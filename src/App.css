@@ -1564,8 +1564,9 @@
 
   .hero-content img.hero-illustration {
     position: absolute;
-    right: -10px;
-    bottom: 26px;
+    right: auto;
+    bottom: 34px;
+    left: 50%;
     z-index: 0;
     display: block;
     width: 180px !important;
@@ -1574,7 +1575,7 @@
     max-height: none;
     object-fit: contain;
     object-position: right bottom;
-    transform: none !important;
+    transform: translateX(-50%) !important;
     opacity: 0.42;
     pointer-events: none;
   }
