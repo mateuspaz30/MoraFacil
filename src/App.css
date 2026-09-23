@@ -1357,11 +1357,11 @@
   }
 
   .map-panel {
-    min-height: 230px;
+    min-height: 300px;
   }
 
   .map-box {
-    height: 230px;
+    height: 300px;
   }
 
   .hero-listing-card > img {
