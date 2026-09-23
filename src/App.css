@@ -1309,16 +1309,14 @@
     margin: 10px 0 0;
     color: #c6dded;
     font-size: 1rem;
-  }
-
   .hero-illustration {
     position: absolute;
     right: calc(5% + 250px);
-    bottom: -2px;
+    bottom: 55px;
     z-index: 0;
     width: clamp(300px, 32vw, 400px);
     height: auto;
-    max-height: 170px;
+    max-height: 180px;
     object-fit: contain;
     object-position: right bottom;
     opacity: 0.82;
