@@ -1311,16 +1311,18 @@
     font-size: 1rem;
   }
 
-  .hero-illustration {
+  .hero-content img.hero-illustration {
     position: absolute;
-    right: calc(5% + 250px);
-    bottom: 12px;
+    right: calc(5% + 100px);
+    bottom: 24px;
     z-index: 0;
-    width: 340px;
-    height: auto;
-    max-height: 180px;
+    width: 500px !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none;
     object-fit: contain;
     object-position: right bottom;
+    transform: translateY(-10px) !important;
     opacity: 0.82;
     pointer-events: none;
   }
@@ -1516,6 +1518,7 @@
   }
 
   .hero-content {
+    position: relative;
     display: grid;
     gap: 14px;
     margin: 0 -14px 18px;
@@ -1523,6 +1526,7 @@
     border-bottom: 4px solid #8bea45;
     border-radius: 0 0 28% 18px;
     background: linear-gradient(140deg, #061d35 0%, #0a3658 70%, #0b2947 100%);
+    overflow: hidden;
   }
 
   .home-search-grid {
@@ -1558,8 +1562,26 @@
     font-size: 0.9rem;
   }
 
-  .hero-illustration {
-    display: none;
+  .hero-content img.hero-illustration {
+    position: absolute;
+    right: -10px;
+    bottom: 26px;
+    z-index: 0;
+    display: block;
+    width: 200px !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none;
+    object-fit: contain;
+    object-position: right bottom;
+    transform: none !important;
+    opacity: 0.42;
+    pointer-events: none;
+  }
+
+  .hero-copy {
+    position: relative;
+    z-index: 1;
   }
 
   .hero-listing-card {
