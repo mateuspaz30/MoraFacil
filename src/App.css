@@ -1361,7 +1361,7 @@
   font-size: 1.08rem;
 }
 
-.mobile-menu-greeting span {
+.mobile-menu-greeting > div span {
   display: block;
   margin-top: 3px;
   color: #9db9d1;
