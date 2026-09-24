@@ -627,6 +627,12 @@ function App() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
+  const userFirstName = (() => {
+    const source = authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'visitante'
+    const first = source.trim().split(' ')[0]
+    return first.charAt(0).toUpperCase() + first.slice(1)
+  })()
+
   return (
     <div className="real-estate-shell">
       <header className="top-header hero-header">
@@ -709,16 +715,54 @@ function App() {
               <img src={logo} alt="" />
               <strong>Mora <span>Fácil</span></strong>
             </div>
-            {['Início', 'Imóveis', 'Mapa', 'Sobre', 'Contato'].map((item, index) => (
-              <button key={item} type="button" className={`mobile-menu-item ${index === 0 ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <span>{['⌂', '⌂', '⌖', 'ⓘ', '✉'][index]}</span>{item}
-              </button>
-            ))}
-            <button type="button" className="mobile-menu-announce" onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}>+ Anunciar imóvel</button>
             {authUser ? (
-              <button type="button" className="mobile-menu-login" onClick={() => setMobileMenuOpen(false)}>Minha conta</button>
+              <>
+                <div className="mobile-menu-greeting">
+                  <span className="mobile-menu-avatar">{userFirstName.charAt(0)}</span>
+                  <div>
+                    <strong>Olá, {userFirstName}! 👋</strong>
+                    <span>O que deseja fazer?</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mobile-menu-primary"
+                  onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
+                >
+                  <span className="mobile-menu-action-icon">🔎</span>
+                  Ver imóveis cadastrados
+                  <span className="mobile-menu-action-arrow">→</span>
+                </button>
+                <button
+                  type="button"
+                  className="mobile-menu-secondary"
+                  onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}
+                >
+                  <span className="mobile-menu-action-icon">+</span>
+                  Anunciar imóvel
+                  <span className="mobile-menu-action-arrow">→</span>
+                </button>
+                <div className="mobile-menu-divider" />
+                <button
+                  type="button"
+                  className="mobile-menu-logout"
+                  onClick={() => { setMobileMenuOpen(false); handleLogout() }}
+                >
+                  <span className="mobile-menu-action-icon">⎋</span>
+                  Sair da conta
+                  <span className="mobile-menu-action-arrow">›</span>
+                </button>
+              </>
             ) : (
-              <button type="button" className="mobile-menu-login" onClick={() => { setMobileMenuOpen(false); setAuthOpen(true) }}>Entrar</button>
+              <>
+                {['Início', 'Imóveis', 'Mapa', 'Sobre', 'Contato'].map((item, index) => (
+                  <button key={item} type="button" className={`mobile-menu-item ${index === 0 ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                    <span>{['⌂', '⌂', '⌖', 'ⓘ', '✉'][index]}</span>{item}
+                  </button>
+                ))}
+                <button type="button" className="mobile-menu-announce" onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}>+ Anunciar imóvel</button>
+                <button type="button" className="mobile-menu-login" onClick={() => { setMobileMenuOpen(false); setAuthOpen(true) }}>Entrar</button>
+              </>
             )}
           </aside>
         </div>
