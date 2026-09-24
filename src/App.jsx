@@ -752,7 +752,7 @@ function App() {
                   className="mobile-menu-logout"
                   onClick={() => { setMobileMenuOpen(false); handleLogout() }}
                 >
-                  <span className="mobile-menu-action-icon">⎋</span>
+                  <span className="mobile-menu-action-icon">🚪</span>
                   Sair da conta
                   <span className="mobile-menu-action-arrow">›</span>
                 </button>
