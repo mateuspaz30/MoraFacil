@@ -1341,15 +1341,16 @@
 }
 
 .mobile-menu-avatar {
-  display: grid;
+  display: flex;
   flex-shrink: 0;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   width: 52px;
   height: 52px;
   border-radius: 50%;
   background: #0d3b22;
   color: #8bea45;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
   text-transform: uppercase;
@@ -1401,6 +1402,14 @@
   place-items: center;
   width: 22px;
   height: 22px;
+}
+
+.mobile-menu-action-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .mobile-menu-action-arrow {
@@ -1652,6 +1661,14 @@
 }
 
 @media (max-width: 640px) {
+  .mobile-menu-primary,
+  .mobile-menu-secondary,
+  .mobile-menu-logout {
+    gap: 8px;
+    padding: 0.95rem 1rem;
+    font-size: 0.88rem;
+  }
+
   .top-header {
     min-height: 58px;
     margin-bottom: 0;

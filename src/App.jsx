@@ -762,7 +762,7 @@ function App() {
                   onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
                 >
                   <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
-                  Ver imóveis cadastrados
+                  <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
                 </button>
                 <button
@@ -771,7 +771,7 @@ function App() {
                   onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}
                 >
                   <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
-                  Anunciar imóvel
+                  <span className="mobile-menu-action-label">Anunciar imóvel</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
                 </button>
                 <div className="mobile-menu-divider" />
@@ -781,7 +781,7 @@ function App() {
                   onClick={() => { setMobileMenuOpen(false); handleLogout() }}
                 >
                   <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
-                  Sair da conta
+                  <span className="mobile-menu-action-label">Sair da conta</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
                 </button>
               </>
