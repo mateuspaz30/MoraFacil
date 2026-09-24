@@ -639,7 +639,7 @@ function App() {
             <img src={logo} alt="" className="brand-mark-img" />
           </div>
           <div className="brand-copy">
-            <h1>Mora Fácil</h1>
+            <h1>Mora <span className="brand-highlight">Fácil</span></h1>
             <strong>Encontre seu próximo lar.</strong>
             <small>Imóveis do seu jeito, perto de você.</small>
           </div>

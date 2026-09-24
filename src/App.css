@@ -102,6 +102,10 @@
   font-size: 1.05rem;
 }
 
+.brand-highlight {
+  color: #8bea45;
+}
+
 .top-header small {
   display: block;
   margin-top: 2px;
@@ -1486,7 +1490,15 @@
   }
 
   .brand-copy h1 {
+    display: flex;
+    align-items: center;
+    margin: 0;
     font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .brand-copy h1 .brand-highlight {
+    margin-left: 0.3ch;
   }
 
   .brand-copy strong,
