@@ -42,7 +42,7 @@
   border-radius: 16px;
   border: 0;
   background: #000;
-  box-shadow: 0 10px 22px rgba(1, 10, 20, 0.35);
+  box-shadow: none;
 }
 
 .brand-mark-img {
@@ -1732,6 +1732,8 @@
     left: 14px;
     width: 38px;
     height: 38px;
+    overflow: hidden;
+    border-radius: 12px;
   }
 
   .brand-copy h1 {
