@@ -690,11 +690,11 @@ function App() {
             <>
               <span className="header-divider" aria-hidden="true" />
               <span className="header-avatar" aria-label={`Usuário ${userFirstName}`}>{userFirstName.charAt(0)}</span>
+              <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
             </>
           ) : (
             <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
           ))}
-          <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
         </div>
 
         {accountOpen && authUser && (
@@ -736,7 +736,7 @@ function App() {
         )}
       </header>
 
-      {mobileMenuOpen && (
+      {mobileMenuOpen && authUser && (
         <div className="mobile-menu-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setMobileMenuOpen(false)
         }}>
@@ -746,56 +746,42 @@ function App() {
               <img src={logo} alt="" />
               <strong>Mora <span>Fácil</span></strong>
             </div>
-            {authUser && <div className="mobile-menu-header-divider" />}
-            {authUser ? (
-              <>
-                <div className="mobile-menu-greeting">
-                  <span className="mobile-menu-avatar">{userFirstName.charAt(0)}</span>
-                  <div>
-                    <strong>Olá, {userFirstName}! 👋</strong>
-                    <span>O que deseja fazer?</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="mobile-menu-primary"
-                  onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
-                >
-                  <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
-                  <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
-                  <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-                </button>
-                <button
-                  type="button"
-                  className="mobile-menu-secondary"
-                  onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}
-                >
-                  <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
-                  <span className="mobile-menu-action-label">Anunciar imóvel</span>
-                  <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-                </button>
-                <div className="mobile-menu-divider" />
-                <button
-                  type="button"
-                  className="mobile-menu-logout"
-                  onClick={() => { setMobileMenuOpen(false); handleLogout() }}
-                >
-                  <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
-                  <span className="mobile-menu-action-label">Sair da conta</span>
-                  <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-                </button>
-              </>
-            ) : (
-              <>
-                {['Início', 'Imóveis', 'Mapa', 'Sobre', 'Contato'].map((item, index) => (
-                  <button key={item} type="button" className={`mobile-menu-item ${index === 0 ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                    <span>{['⌂', '⌂', '⌖', 'ⓘ', '✉'][index]}</span>{item}
-                  </button>
-                ))}
-                <button type="button" className="mobile-menu-announce" onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}>+ Anunciar imóvel</button>
-                <button type="button" className="mobile-menu-login" onClick={() => { setMobileMenuOpen(false); setAuthOpen(true) }}>Entrar</button>
-              </>
-            )}
+            <div className="mobile-menu-header-divider" />
+            <div className="mobile-menu-greeting">
+              <span className="mobile-menu-avatar">{userFirstName.charAt(0)}</span>
+              <div>
+                <strong>Olá, {userFirstName}! 👋</strong>
+                <span>O que deseja fazer?</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="mobile-menu-primary"
+              onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
+            >
+              <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
+              <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
+              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+            </button>
+            <button
+              type="button"
+              className="mobile-menu-secondary"
+              onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}
+            >
+              <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
+              <span className="mobile-menu-action-label">Anunciar imóvel</span>
+              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+            </button>
+            <div className="mobile-menu-divider" />
+            <button
+              type="button"
+              className="mobile-menu-logout"
+              onClick={() => { setMobileMenuOpen(false); handleLogout() }}
+            >
+              <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
+              <span className="mobile-menu-action-label">Sair da conta</span>
+              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+            </button>
           </aside>
         </div>
       )}
