@@ -1761,17 +1761,40 @@
     display: none;
   }
 
+  .header-divider {
+    display: inline-block;
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .header-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #071d34;
+    color: #8bea45;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
   .menu-toggle {
     display: inline-grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border: 1px solid #8ac8ff;
-    border-radius: 9px;
+    border-radius: 8px;
     background: transparent;
     color: #fff;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .hero-content {
