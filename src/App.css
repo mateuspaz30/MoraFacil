@@ -1756,16 +1756,12 @@
     right: 14px;
   }
 
-  .header-actions .account-btn,
   .header-actions .announce-btn {
     display: none;
   }
 
   .header-divider {
-    display: inline-block;
-    width: 1px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.28);
+    display: none;
   }
 
   .header-avatar {
