@@ -215,7 +215,7 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
-  const [authForm, setAuthForm] = useState({ email: '', password: '' })
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' })
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
@@ -578,8 +578,12 @@ function App() {
     let result
     try {
       result = authMode === 'login'
-        ? await supabase.auth.signInWithPassword(authForm)
-        : await supabase.auth.signUp(authForm)
+        ? await supabase.auth.signInWithPassword({ email: authForm.email, password: authForm.password })
+        : await supabase.auth.signUp({
+          email: authForm.email,
+          password: authForm.password,
+          options: { data: { full_name: authForm.name } },
+        })
     } catch (error) {
       setAuthMessage(`Não foi possível conectar ao Supabase. Confira a URL do projeto e tente novamente. (${error.message})`)
       setAuthLoading(false)
@@ -592,7 +596,7 @@ function App() {
       setAuthMessage('Conta criada. Confira seu e-mail para confirmar o cadastro.')
     } else {
       setAuthOpen(false)
-      setAuthForm({ email: '', password: '' })
+      setAuthForm({ name: '', email: '', password: '' })
     }
     setAuthLoading(false)
   }
@@ -1107,6 +1111,12 @@ function App() {
               <p>Você pode continuar navegando sem cadastro. A conta só é necessária para publicar e acompanhar seus imóveis.</p>
             </div>
             <form className="announcement-form" onSubmit={handleAuthSubmit}>
+              {authMode === 'signup' && (
+                <div className="form-group">
+                  <label htmlFor="auth-name">Nome completo</label>
+                  <input id="auth-name" type="text" value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} placeholder="Seu nome" required />
+                </div>
+              )}
               <div className="form-group">
                 <label htmlFor="auth-email">E-mail</label>
                 <input id="auth-email" type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="voce@email.com" required />
