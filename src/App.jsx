@@ -277,6 +277,7 @@ function App() {
   const [showAllListings, setShowAllListings] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
+  const [accountFilter, setAccountFilter] = useState('all')
 
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publishedListings : sampleListings)
@@ -678,6 +679,16 @@ function App() {
     return first.charAt(0).toUpperCase() + first.slice(1)
   })()
 
+  const isCompletedListing = (item) => {
+    const status = String(item.status || '').toLowerCase()
+    return status.includes('conclu') || status.includes('vend') || status.includes('expir')
+  }
+  const activeListings = userListings.filter((item) => !isCompletedListing(item))
+  const completedListings = userListings.filter(isCompletedListing)
+  const visibleAccountListings = accountFilter === 'active'
+    ? activeListings
+    : accountFilter === 'completed' ? completedListings : userListings
+
   return (
     <div className="real-estate-shell">
       <header className="top-header hero-header">
@@ -714,38 +725,66 @@ function App() {
         {accountOpen && authUser && (
           <section className="account-popover" aria-label="Minha conta">
             <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
-            <div className="account-profile">
-              <span className="account-profile-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
-              <div>
-                <strong>Anunciante Mora Fácil</strong>
-                <span>{authUser.email}</span>
+            <div className="account-dashboard-heading">
+              <div className="account-dashboard-title-group">
+                <span className="account-dashboard-icon">⌂</span>
+                <div>
+                  <h2>Meus Imóveis</h2>
+                  <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
+                </div>
+              </div>
+              <div className="account-summary-card">
+                <strong>{userListings.length} anúncios</strong>
+                <span>{activeListings.length} ativos • {completedListings.length} concluídos</span>
               </div>
             </div>
-
-            <div className="account-divider" />
             {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
-            <div className="account-section-title">{isAdmin ? 'Todos os imóveis' : 'Meus imóveis'}</div>
-            {userListings.length === 0 ? (
+            <div className="account-dashboard-toolbar">
+              <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
+                <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
+                <button type="button" className={accountFilter === 'active' ? 'active' : ''} onClick={() => setAccountFilter('active')}>Ativos ({activeListings.length})</button>
+                <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
+              </div>
+              <span className="account-sort-label">Mais recentes⌄</span>
+            </div>
+            {visibleAccountListings.length === 0 ? (
               <div className="account-empty">Você ainda não cadastrou imóveis.</div>
             ) : (
-              <div className="account-listings">
-                {userListings.map((item) => (
-                  <div key={item.id} className="account-listing">
-                    <div>
-                      <strong>{item.title}</strong>
-                      <span>{item.location} · {item.price}</span>
-                    </div>
-                    <div className="account-listing-actions">
-                      <button type="button" onClick={() => { openDetails(item); setAccountOpen(false) }}>Ver</button>
-                      <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar</button>
-                      <button type="button" onClick={() => removeUserListing(item.id)} aria-label={`Excluir ${item.title}`}>Excluir</button>
-                    </div>
-                  </div>
-                ))}
+              <div className="account-dashboard-grid">
+                {visibleAccountListings.map((item) => {
+                  const completed = isCompletedListing(item)
+                  return (
+                    <article key={item.id} className="account-dashboard-card">
+                      <div className="account-card-image-wrap">
+                        <img src={item.image} alt={item.title} className="account-card-image" />
+                        <span className={`account-status ${completed ? 'completed' : 'active'}`}>{completed ? 'Concluído' : 'Ativo'}</span>
+                        <button type="button" className="account-card-favorite" aria-label="Favoritar imóvel">♡</button>
+                      </div>
+                      <div className="account-card-body">
+                        <div className="account-card-title-row">
+                          <div>
+                            <h3>{item.title}</h3>
+                            <p>{item.location}</p>
+                          </div>
+                          <button type="button" className="account-card-menu" aria-label="Mais opções">⋮</button>
+                        </div>
+                        <p className="account-card-description">{item.description || 'Imóvel cadastrado no Mora Fácil.'}</p>
+                        <strong className="account-card-price">{item.price}</strong>
+                        <div className="account-card-meta">
+                          <span>⌂ {item.bedrooms || 0} quartos</span>
+                          <span>▦ {item.bathrooms || 1} banheiros</span>
+                          <span>▱ {item.area || 'Área não informada'}</span>
+                        </div>
+                        <div className="account-card-actions">
+                          <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>✎ Editar anúncio</button>
+                          <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             )}
-            <button type="button" className="account-new-listing" onClick={() => { openAnnouncementForm(); setAccountOpen(false) }}>+ Anunciar outro imóvel</button>
-            <button type="button" className="account-logout" onClick={handleLogout}>↪&nbsp; Sair</button>
           </section>
         )}
       </header>
