@@ -1930,7 +1930,7 @@
   .hero-content img.hero-illustration {
     grid-area: hero;
     justify-self: end;
-    align-self: end;
+    align-self: center;
     display: block;
     width: min(100%, 135px);
     max-width: 100%;
