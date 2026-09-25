@@ -746,7 +746,6 @@ function App() {
                 <button type="button" className={accountFilter === 'active' ? 'active' : ''} onClick={() => setAccountFilter('active')}>Ativos ({activeListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
               </div>
-              <span className="account-sort-label">Mais recentes⌄</span>
             </div>
             {visibleAccountListings.length === 0 ? (
               <div className="account-empty">Você ainda não cadastrou imóveis.</div>
@@ -759,7 +758,6 @@ function App() {
                       <div className="account-card-image-wrap">
                         <img src={item.image} alt={item.title} className="account-card-image" />
                         <span className={`account-status ${completed ? 'completed' : 'active'}`}>{completed ? 'Concluído' : 'Ativo'}</span>
-                        <button type="button" className="account-card-favorite" aria-label="Favoritar imóvel">♡</button>
                       </div>
                       <div className="account-card-body">
                         <div className="account-card-title-row">
@@ -767,7 +765,6 @@ function App() {
                             <h3>{item.title}</h3>
                             <p>{item.location}</p>
                           </div>
-                          <button type="button" className="account-card-menu" aria-label="Mais opções">⋮</button>
                         </div>
                         <p className="account-card-description">{item.description || 'Imóvel cadastrado no Mora Fácil.'}</p>
                         <strong className="account-card-price">{item.price}</strong>

@@ -2194,11 +2194,6 @@
   color: #06321f;
 }
 
-.account-sort-label {
-  color: #a9c6df;
-  font-size: 0.75rem;
-}
-
 .account-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2208,6 +2203,7 @@
 .account-dashboard-card {
   display: grid;
   grid-template-columns: minmax(170px, 42%) 1fr;
+  height: 340px;
   overflow: hidden;
   border: 1px solid #dce8f3;
   border-radius: 14px;
@@ -2217,7 +2213,7 @@
 
 .account-card-image-wrap {
   position: relative;
-  min-height: 220px;
+  min-height: 0;
   overflow: hidden;
   background: #dfeef8;
 }
@@ -2240,29 +2236,12 @@
 }
 
 .account-status.active {
-  background: #063b2a;
+  background: #8bea45;
+  color: #fff;
 }
 
 .account-status.completed {
   background: #27445f;
-}
-
-.account-card-favorite,
-.account-card-menu {
-  border: 0;
-  cursor: pointer;
-}
-
-.account-card-favorite {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #1d4266;
-  font-size: 1.2rem;
 }
 
 .account-card-body {
@@ -2295,13 +2274,6 @@
 .account-card-description {
   min-height: 34px;
   margin-top: 12px;
-}
-
-.account-card-menu {
-  align-self: flex-start;
-  background: transparent;
-  color: #6a89a5;
-  font-size: 1.25rem;
 }
 
 .account-card-price {
@@ -2386,10 +2358,11 @@
 
   .account-dashboard-card {
     grid-template-columns: 40% 1fr;
+    height: 310px;
   }
 
   .account-card-image-wrap {
-    min-height: 190px;
+    min-height: 0;
   }
 
   .account-card-meta {
