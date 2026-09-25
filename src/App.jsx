@@ -223,6 +223,20 @@ const MenuArrowIcon = () => (
   </svg>
 )
 
+const InstagramIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+  </svg>
+)
+
+const FacebookIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M14 8h3V4.2c-.52-.08-1.7-.2-3.2-.2-3.17 0-5.34 1.93-5.34 5.48V12H5v4h3.46v8h4.24v-8h3.53l.56-4H12.7V9.92c0-1.16.31-1.92 1.3-1.92Z" />
+  </svg>
+)
+
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [userListings, setUserListings] = useState(() => {
@@ -782,6 +796,24 @@ function App() {
               <span className="mobile-menu-action-label">Sair da conta</span>
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
             </button>
+            <div className="mobile-menu-social">
+              <div className="mobile-menu-social-divider" />
+              <div className="mobile-menu-social-heading">
+                <strong>Siga o Mora Fácil</strong>
+                <span>Fique por dentro das novidades!</span>
+              </div>
+              <div className="mobile-menu-social-actions">
+                <button type="button" className="mobile-menu-social-button instagram-button">
+                  <InstagramIcon />
+                  <span>Instagram</span>
+                </button>
+                <button type="button" className="mobile-menu-social-button facebook-button">
+                  <FacebookIcon />
+                  <span>Facebook</span>
+                </button>
+              </div>
+              <div className="mobile-menu-social-footer">Mora Fácil • Conectando pessoas a novos lares.</div>
+            </div>
           </aside>
         </div>
       )}

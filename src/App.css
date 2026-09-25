@@ -1332,6 +1332,69 @@
   text-align: center;
 }
 
+.mobile-menu-social {
+  margin-top: 22px;
+}
+
+.mobile-menu-social-divider {
+  margin-bottom: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mobile-menu-social-heading {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 16px;
+}
+
+.mobile-menu-social-heading strong {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.mobile-menu-social-heading span {
+  color: #9db9d1;
+  font-size: 0.8rem;
+}
+
+.mobile-menu-social-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mobile-menu-social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.75rem 0.55rem;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.instagram-button {
+  background: linear-gradient(135deg, #feda75 0%, #fa7e1e 28%, #d62976 62%, #962fbf 100%);
+}
+
+.facebook-button {
+  background: #1877f2;
+}
+
+.mobile-menu-social-footer {
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
 .mobile-menu-greeting {
   display: flex;
   align-items: center;
