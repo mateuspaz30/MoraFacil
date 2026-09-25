@@ -1621,8 +1621,9 @@
     display: block;
     grid-column: 2;
     grid-row: 1;
-    justify-self: end;
+    justify-self: center;
     align-self: end;
+    margin-bottom: -6px;
     width: min(100%, 500px);
     max-width: 100%;
     height: auto;
@@ -1928,8 +1929,9 @@
 
   .hero-content img.hero-illustration {
     grid-area: hero;
-    justify-self: end;
+    justify-self: center;
     align-self: end;
+    margin-bottom: -6px;
     display: block;
     width: min(100%, 180px);
     max-width: 100%;
