@@ -1589,7 +1589,7 @@
 
   .hero-content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 40%);
+    grid-template-columns: minmax(240px, 37fr) minmax(220px, 63fr);
     align-items: end;
     gap: 24px;
     min-height: 154px;
