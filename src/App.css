@@ -1882,7 +1882,7 @@
 
   .hero-content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(100px, 36%);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "hero";
     align-items: end;
     gap: 0;
