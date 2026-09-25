@@ -737,7 +737,6 @@ function App() {
                 <strong>{userListings.length} anúncios</strong>
                 <span>{activeListings.length} ativos • {completedListings.length} concluídos</span>
               </div>
-              <img className="account-dashboard-illustration" src={heroIllustration} alt="" aria-hidden="true" />
             </div>
             {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
             <div className="account-dashboard-toolbar">
