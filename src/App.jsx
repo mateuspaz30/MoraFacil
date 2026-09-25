@@ -237,6 +237,12 @@ const FacebookIcon = () => (
   </svg>
 )
 
+const DashboardHomeIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3 10.8 12 3l9 7.8v8.7a1.5 1.5 0 0 1-1.5 1.5h-5.2v-6h-4.6v6H4.5A1.5 1.5 0 0 1 3 19.5v-8.7Z" />
+  </svg>
+)
+
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [userListings, setUserListings] = useState(() => {
@@ -727,7 +733,7 @@ function App() {
             <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
             <div className="account-dashboard-heading">
               <div className="account-dashboard-title-group">
-                <span className="account-dashboard-icon">⌂</span>
+                <span className="account-dashboard-icon"><DashboardHomeIcon /></span>
                 <div>
                   <h2>Meus Imóveis</h2>
                   <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
