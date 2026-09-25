@@ -1767,6 +1767,10 @@
 }
 
 @media (max-width: 640px) {
+  .mobile-menu {
+    padding-top: 45px;
+  }
+
   .mobile-menu-primary,
   .mobile-menu-secondary,
   .mobile-menu-logout {
