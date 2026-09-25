@@ -1588,8 +1588,10 @@
   }
 
   .hero-content {
-    position: relative;
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 40%);
+    align-items: end;
+    gap: 24px;
     min-height: 154px;
     margin: 0 -22px 20px;
     padding: 22px 48px 20px;
@@ -1616,19 +1618,26 @@
   }
 
   .hero-content img.hero-illustration {
-    position: absolute;
-    right: calc(5% + 100px);
-    bottom: 24px;
-    z-index: 0;
-    width: 500px !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none;
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: end;
+    width: min(100%, 500px);
+    max-width: 100%;
+    height: auto;
+    max-height: 180px;
     object-fit: contain;
     object-position: right bottom;
-    transform: translateY(-10px) !important;
     opacity: 0.82;
     pointer-events: none;
+  }
+
+  .hero-copy {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    z-index: 1;
   }
 
   .home-search-grid {
@@ -1871,9 +1880,11 @@
   }
 
   .hero-content {
-    position: relative;
     display: grid;
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr) minmax(100px, 36%);
+    grid-template-areas: "hero";
+    align-items: end;
+    gap: 0;
     margin: 0 -14px 18px;
     padding: 22px 20px 18px;
     border-bottom: 4px solid #8bea45;
@@ -1916,25 +1927,23 @@
   }
 
   .hero-content img.hero-illustration {
-    position: absolute;
-    right: -10px;
-    bottom: 42px;
-    left: auto;
-    z-index: 0;
+    grid-area: hero;
+    justify-self: end;
+    align-self: end;
     display: block;
-    width: 180px !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none;
+    width: min(100%, 180px);
+    max-width: 100%;
+    height: auto;
+    max-height: 100px;
     object-fit: contain;
     object-position: right bottom;
-    transform: none !important;
     opacity: 0.42;
     pointer-events: none;
   }
 
   .hero-copy {
-    position: relative;
+    grid-area: hero;
+    min-width: 0;
     z-index: 1;
   }
 
