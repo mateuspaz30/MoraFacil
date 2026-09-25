@@ -1622,8 +1622,7 @@
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
-    align-self: end;
-    margin-bottom: -6px;
+    align-self: center;
     width: min(100%, 500px);
     max-width: 100%;
     height: auto;
