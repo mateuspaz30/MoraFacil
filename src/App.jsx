@@ -237,12 +237,6 @@ const FacebookIcon = () => (
   </svg>
 )
 
-const DashboardHomeIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M3 10.8 12 3l9 7.8v8.7a1.5 1.5 0 0 1-1.5 1.5h-5.2v-6h-4.6v6H4.5A1.5 1.5 0 0 1 3 19.5v-8.7Z" />
-  </svg>
-)
-
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [userListings, setUserListings] = useState(() => {
@@ -731,18 +725,32 @@ function App() {
         {accountOpen && authUser && (
           <section className="account-popover" aria-label="Minha conta">
             <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
+            <div className="account-dashboard-header">
+              <div className="account-dashboard-brand">
+                <img src={logo} alt="" />
+                <strong>Mora <span>Fácil</span></strong>
+              </div>
+              <span className="account-dashboard-avatar" aria-label={`Usuário ${userFirstName}`}>
+                {userFirstName.charAt(0)}
+              </span>
+            </div>
             <div className="account-dashboard-heading">
-              <div className="account-dashboard-title-group">
-                <span className="account-dashboard-icon"><DashboardHomeIcon /></span>
-                <div>
-                  <h2>Meus Imóveis</h2>
-                  <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
-                </div>
-              </div>
-              <div className="account-summary-card">
-                <strong>{userListings.length} anúncios</strong>
-                <span>{activeListings.length} ativos • {completedListings.length} concluídos</span>
-              </div>
+              <h2>Meus Imóveis</h2>
+              <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
+            </div>
+            <div className="account-metrics" aria-label="Resumo dos anúncios">
+              <article className="account-metric-card">
+                <strong>{userListings.length}</strong>
+                <span>Total</span>
+              </article>
+              <article className="account-metric-card active">
+                <strong>{activeListings.length}</strong>
+                <span>Ativos</span>
+              </article>
+              <article className="account-metric-card completed">
+                <strong>{completedListings.length}</strong>
+                <span>Concluídos</span>
+              </article>
             </div>
             {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
             <div className="account-dashboard-toolbar">
@@ -765,23 +773,19 @@ function App() {
                         <span className={`account-status ${completed ? 'completed' : 'active'}`}>{completed ? 'Concluído' : 'Ativo'}</span>
                       </div>
                       <div className="account-card-body">
-                        <div className="account-card-title-row">
-                          <div>
-                            <h3>{item.title}</h3>
-                            <p>{item.location}</p>
-                          </div>
-                        </div>
-                        <p className="account-card-description">{item.description || 'Imóvel cadastrado no Mora Fácil.'}</p>
+                        <h3>{item.title}</h3>
+                        <p className="account-card-location">{item.location}</p>
                         <strong className="account-card-price">{item.price}</strong>
                         <div className="account-card-meta">
-                          <span>⌂ {item.bedrooms || 0} quartos</span>
-                          <span>▦ {item.bathrooms || 1} banheiros</span>
-                          <span>▱ {item.area || 'Área não informada'}</span>
+                          <span><i aria-hidden="true">🛏</i><b>{item.bedrooms || 0}</b><small>Quartos</small></span>
+                          <span><i aria-hidden="true">🚿</i><b>{item.bathrooms || 1}</b><small>Banheiros</small></span>
+                          <span><i aria-hidden="true">🚗</i><b>{item.parking_spaces || item.garages || 0}</b><small>Vagas</small></span>
+                          <span><i aria-hidden="true">📐</i><b>{item.area || '—'}</b><small>Área</small></span>
                         </div>
-                        <div className="account-card-actions">
-                          <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>✎ Editar anúncio</button>
-                          <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
-                        </div>
+                      </div>
+                      <div className="account-card-actions">
+                        <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar anúncio</button>
+                        <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
                       </div>
                     </article>
                   )
