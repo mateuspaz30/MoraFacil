@@ -1932,10 +1932,10 @@
     justify-self: end;
     align-self: end;
     display: block;
-    width: min(100%, 180px);
+    width: min(100%, 135px);
     max-width: 100%;
     height: auto;
-    max-height: 100px;
+    max-height: 80px;
     object-fit: contain;
     object-position: right bottom;
     opacity: 0.42;
