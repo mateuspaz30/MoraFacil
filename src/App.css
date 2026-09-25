@@ -1931,6 +1931,7 @@
     grid-area: hero;
     justify-self: end;
     align-self: center;
+    margin-top: -12px;
     display: block;
     width: min(100%, 180px);
     max-width: 100%;
