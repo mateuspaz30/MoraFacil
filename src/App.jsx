@@ -759,9 +759,6 @@ function App() {
                 <img src={logo} alt="" />
                 <strong>Mora <span>Fácil</span></strong>
               </div>
-              <span className="account-dashboard-avatar" aria-label={`Usuário ${userFirstName}`}>
-                {userFirstName.charAt(0)}
-              </span>
             </div>
             <div className="account-dashboard-heading">
               <h2>Meus Imóveis</h2>
