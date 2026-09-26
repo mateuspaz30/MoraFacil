@@ -164,7 +164,7 @@ function FilterSelect({ id, label, value, options, onChange, emphasized = false 
   return (
     <div className={`field${emphasized ? ' filter-search' : ''}`}>
       <label htmlFor={id}>{label}</label>
-      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`}>
+      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`} translate="no">
         <span className="filter-select-value" aria-hidden="true">{value}</span>
         <span className="filter-select-chevron" aria-hidden="true" />
         <select
@@ -909,7 +909,7 @@ function App() {
               onClick={() => openDetails(item)}
             />
           ))}
-          <span className="hero-listing-badge">
+          <span className="hero-listing-badge" translate="no">
             {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
           </span>
           {heroCarouselListings.length > 1 && (
@@ -1040,12 +1040,12 @@ function App() {
             <article key={item.id} className="property-card">
               <div className="property-thumb">
                 <img src={item.image} alt={item.title} className="property-card-image" />
-                <span className="thumb-badge">{getListingTypeLabel(item.type)}</span>
+                <span className="thumb-badge" translate="no">{getListingTypeLabel(item.type)}</span>
               </div>
 
               <div className="property-content">
                 <div className="content-top">
-                  <span className="property-tag">{getListingTypeLabel(item.type)}</span>
+                  <span className="property-tag" translate="no">{getListingTypeLabel(item.type)}</span>
                   <strong>{item.price}</strong>
                 </div>
 
