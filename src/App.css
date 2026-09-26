@@ -403,6 +403,74 @@
   font-weight: 700;
 }
 
+.filter-select-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 40px 0 14px;
+  border: 1px solid #d5e1ef;
+  border-radius: 12px;
+  background: #fafdff;
+  color: #142d4c;
+  font-size: 16px;
+  line-height: 1.25;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.filter-select-control.emphasized {
+  min-height: 48px;
+  font-weight: 700;
+}
+
+.filter-select-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.filter-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid #64748b;
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  transform: translateY(-30%);
+  pointer-events: none;
+}
+
+.field select.filter-select-native {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.field select.filter-select-native:focus {
+  outline: none;
+}
+
+.filter-select-control:focus-within {
+  outline: 3px solid rgba(116, 218, 76, 0.2);
+  border-color: #73c9ff;
+}
+
 .search-btn {
   align-self: end;
   min-height: 44px;
@@ -610,7 +678,13 @@
   padding: 0.35rem 0.55rem;
   font-size: 0.68rem;
   font-weight: 800;
-  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.hero-listing-badge,
+.thumb-badge {
+  width: max-content;
+  max-width: calc(100% - 24px);
 }
 
 .property-content {
@@ -1127,17 +1201,13 @@
   }
 
   .filters-bar {
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     padding: 14px;
     border-radius: 16px;
   }
 
-  .filter-search {
-    grid-column: 1 / -1;
-  }
-
-  .filters-bar > .field:nth-child(2),
+  .filters-bar > .field,
   .filters-bar > .search-btn {
     grid-column: 1 / -1;
   }
@@ -1727,7 +1797,6 @@
     color: #142d4c;
     font-size: 0.7rem;
     font-weight: 800;
-    text-transform: uppercase;
   }
 
   .hero-listing-cta {
@@ -2006,7 +2075,6 @@
     color: #142d4c;
     font-size: 0.68rem;
     font-weight: 800;
-    text-transform: uppercase;
   }
 
   .hero-listing-cta {

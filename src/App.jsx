@@ -152,6 +152,35 @@ const typeColors = {
   terreno: '#f59e0b',
 }
 
+const listingTypeLabels = {
+  venda: 'Venda',
+  aluguel: 'Aluguel',
+  terreno: 'Terreno',
+}
+
+const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
+
+function FilterSelect({ id, label, value, options, onChange, emphasized = false }) {
+  return (
+    <div className={`field${emphasized ? ' filter-search' : ''}`}>
+      <label htmlFor={id}>{label}</label>
+      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`}>
+        <span className="filter-select-value" aria-hidden="true">{value}</span>
+        <span className="filter-select-chevron" aria-hidden="true" />
+        <select
+          id={id}
+          className="filter-select-native"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={label}
+        >
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+      </div>
+    </div>
+  )
+}
+
 const mapCenter = [-20.438, -48.012]
 
 const neighborhoodCoordinates = {
@@ -884,7 +913,7 @@ function App() {
             />
           ))}
           <span className="hero-listing-badge">
-            {heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type === 'aluguel' ? 'Aluguel' : 'Venda'}
+            {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
           </span>
           {heroCarouselListings.length > 1 && (
             <>
@@ -925,48 +954,35 @@ function App() {
         </article>
 
         <section className="filters-bar search-panel">
-        <div className="filter-search field">
-          <label htmlFor="search-location">Onde você quer morar?</label>
-          <select
-            id="search-location"
-            value={draftFilters.search}
-            onChange={(event) => setDraftFilters({ ...draftFilters, search: event.target.value })}
-          >
-            <option>Ipuã-SP</option>
-            <option>Guaíra-SP</option>
-          </select>
-        </div>
-        <div className="field">
-          <label>Tipo</label>
-          <select value={draftFilters.type} onChange={(event) => setDraftFilters({ ...draftFilters, type: event.target.value })}>
-            <option>Todos os imóveis</option>
-            <option>Venda</option>
-            <option>Aluguel</option>
-            <option>Terrenos</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Bairro</label>
-          <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
-            <option>Qualquer bairro</option>
-            <option>Centro</option>
-            <option>Jardim das Flores</option>
-            <option>Zona Norte</option>
-            <option>Jardim Primavera</option>
-            <option>Residencial Santana</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Quartos</label>
-          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
-            <option>Qualquer</option>
-            <option>1+</option>
-            <option>2+</option>
-            <option>3+</option>
-          </select>
-        </div>
+        <FilterSelect
+          id="search-location"
+          label="Onde você quer morar?"
+          value={draftFilters.search}
+          options={['Ipuã-SP', 'Guaíra-SP']}
+          emphasized
+          onChange={(search) => setDraftFilters({ ...draftFilters, search })}
+        />
+        <FilterSelect
+          id="search-type"
+          label="Tipo"
+          value={draftFilters.type}
+          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos']}
+          onChange={(type) => setDraftFilters({ ...draftFilters, type })}
+        />
+        <FilterSelect
+          id="search-neighborhood"
+          label="Bairro"
+          value={draftFilters.neighborhood}
+          options={['Qualquer bairro', 'Centro', 'Jardim das Flores', 'Zona Norte', 'Jardim Primavera', 'Residencial Santana']}
+          onChange={(neighborhood) => setDraftFilters({ ...draftFilters, neighborhood })}
+        />
+        <FilterSelect
+          id="search-bedrooms"
+          label="Quartos"
+          value={draftFilters.bedrooms}
+          options={['Qualquer', '1+', '2+', '3+']}
+          onChange={(bedrooms) => setDraftFilters({ ...draftFilters, bedrooms })}
+        />
 
         <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
         </section>
@@ -1027,12 +1043,12 @@ function App() {
             <article key={item.id} className="property-card">
               <div className="property-thumb">
                 <img src={item.image} alt={item.title} className="property-card-image" />
-                <span className="thumb-badge">{item.type}</span>
+                <span className="thumb-badge">{getListingTypeLabel(item.type)}</span>
               </div>
 
               <div className="property-content">
                 <div className="content-top">
-                  <span className="property-tag">{item.type}</span>
+                  <span className="property-tag">{getListingTypeLabel(item.type)}</span>
                   <strong>{item.price}</strong>
                 </div>
 
