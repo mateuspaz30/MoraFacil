@@ -159,6 +159,7 @@ const listingTypeLabels = {
 }
 
 const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
+const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
 function FilterSelect({ id, label, value, options, onChange, emphasized = false }) {
   return (
@@ -365,7 +366,7 @@ function App() {
           id: item.id,
           coordinates: [item.latitude, item.longitude],
           location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
-          area: item.area ? `${item.area} m²` : '',
+          area: formatArea(item.area),
           owner: item.user_id === authUser?.id,
         }))
         setPublishedListings(normalizedListings)
@@ -591,7 +592,7 @@ function App() {
       price: announcement.type === 'aluguel' ? `R$ ${announcement.price}/mês` : `R$ ${announcement.price}`,
       location: `${announcement.neighborhood}, ${announcement.city}`,
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
-      area: `${announcement.area} m²`,
+      area: formatArea(announcement.area),
       coordinates,
       address: announcement.address || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
@@ -631,7 +632,7 @@ function App() {
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
-      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: item.area ? `${item.area} m²` : '', owner: item.user_id === authUser.id }))
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
       setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
@@ -806,7 +807,7 @@ function App() {
                           <span><i aria-hidden="true">🛏</i><b>{item.bedrooms || 0}</b><small>Quartos</small></span>
                           <span><i aria-hidden="true">🚿</i><b>{item.bathrooms || 1}</b><small>Banheiros</small></span>
                           <span><i aria-hidden="true">🚗</i><b>{item.parking_spaces || item.garages || 0}</b><small>Vagas</small></span>
-                          <span><i aria-hidden="true">📐</i><b>{item.area || '—'}</b><small>Área</small></span>
+                          <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
                         </div>
                       </div>
                       <div className="account-card-actions">
@@ -1007,7 +1008,7 @@ function App() {
                   <p className="detail-price">{item.price}</p>
                   <p className="detail-meta">{item.address}</p>
                   <p className="detail-meta">
-                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}{item.area ? ` · ${item.area}` : ''}
+                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'} · {formatArea(item.area)}
                   </p>
                   <button type="button" className="detail-button" onClick={() => openDetails(item)}>Saiba mais →</button>
                 </div>
@@ -1054,7 +1055,7 @@ function App() {
 
                 <div className="meta-row">
                   <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
-                  {item.area && <span>{item.area}</span>}
+                  <span>{formatArea(item.area)}</span>
                 </div>
                 <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
                   Saiba mais
@@ -1090,7 +1091,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="form-row three-columns">
+              <div className="form-row four-columns">
                 <div className="form-group">
                   <label htmlFor="price">Valor {announcement.type === 'aluguel' ? 'mensal' : ''}</label>
                   <input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="Ex.: 320000" required />
@@ -1102,6 +1103,10 @@ function App() {
                 <div className="form-group">
                   <label htmlFor="bathrooms">Banheiros</label>
                   <input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="area">Área (m²) (opcional)</label>
+                  <input id="area" name="area" type="number" min="0" step="1" inputMode="numeric" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" />
                 </div>
               </div>
 
@@ -1263,7 +1268,7 @@ function App() {
 
               <div className="property-facts">
                 <div><strong>{selectedListing.bedrooms || '-'}</strong><span>Quartos</span></div>
-                {selectedListing.area && <div><strong>{selectedListing.area}</strong><span>Área</span></div>}
+                <div><strong>{formatArea(selectedListing.area)}</strong><span>Área</span></div>
                 <div><strong>{selectedListing.neighborhood}</strong><span>Bairro</span></div>
                 <div><strong>{selectedListing.type}</strong><span>Tipo</span></div>
               </div>
