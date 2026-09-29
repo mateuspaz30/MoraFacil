@@ -205,6 +205,7 @@ const emptyAnnouncement = {
   price: '',
   bedrooms: '0',
   bathrooms: '1',
+  parking_spaces: '',
   area: '',
   city: 'Ipuã-SP',
   cep: '',
@@ -367,6 +368,7 @@ function App() {
           coordinates: [item.latitude, item.longitude],
           location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
           area: formatArea(item.area),
+          parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
           owner: item.user_id === authUser?.id,
         }))
         setPublishedListings(normalizedListings)
@@ -455,6 +457,7 @@ function App() {
       ...listing,
       bedrooms: String(listing.bedrooms || 0),
       bathrooms: String(listing.bathrooms || 1),
+      parking_spaces: String(listing.parking_spaces ?? listing.garages ?? ''),
       price: String(listing.price || '').replace(/\D/g, ''),
       area: String(listing.area || '').replace(/\D/g, ''),
     } : emptyAnnouncement)
@@ -592,6 +595,7 @@ function App() {
       price: announcement.type === 'aluguel' ? `R$ ${announcement.price}/mês` : `R$ ${announcement.price}`,
       location: `${announcement.neighborhood}, ${announcement.city}`,
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
+      parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
       area: formatArea(announcement.area),
       coordinates,
       address: announcement.address || `${announcement.street}, ${announcement.number}`,
@@ -613,6 +617,7 @@ function App() {
         price: listing.price,
         bedrooms: listing.bedrooms,
         bathrooms: Number.parseInt(announcement.bathrooms, 10) || 0,
+        parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
         area: Number.parseInt(announcement.area, 10) || 0,
         neighborhood: listing.neighborhood,
         address: listing.address,
@@ -632,7 +637,7 @@ function App() {
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
-      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), owner: item.user_id === authUser.id }))
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), parking_spaces: Number(item.parking_spaces ?? item.garages) || 0, owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
       setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
@@ -1055,6 +1060,8 @@ function App() {
 
                 <div className="meta-row">
                   <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
+                  <span>{item.bathrooms || 0} banheiros</span>
+                  <span>{item.parking_spaces || item.garages || 0} vagas</span>
                   <span>{formatArea(item.area)}</span>
                 </div>
                 <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
@@ -1107,6 +1114,13 @@ function App() {
                 <div className="form-group">
                   <label htmlFor="area">Área (m²) (opcional)</label>
                   <input id="area" name="area" type="number" min="0" step="1" inputMode="numeric" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" />
+                </div>
+              </div>
+
+              <div className="form-row two-columns">
+                <div className="form-group">
+                  <label htmlFor="parking-spaces">Vagas (opcional)</label>
+                  <input id="parking-spaces" name="parking_spaces" type="number" min="0" step="1" inputMode="numeric" value={announcement.parking_spaces} onChange={(event) => setAnnouncement({ ...announcement, parking_spaces: event.target.value })} placeholder="Ex.: 1" />
                 </div>
               </div>
 
