@@ -6,7 +6,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { ListingShowcase } from './ListingShowcase.jsx'
+import { isPortalCityListing, ListingShowcase } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
