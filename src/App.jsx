@@ -6,6 +6,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
+import { getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, PORTAL_CITY } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -152,36 +153,6 @@ const typeColors = {
   terreno: '#f59e0b',
 }
 
-const listingTypeLabels = {
-  venda: 'Venda',
-  aluguel: 'Aluguel',
-  terreno: 'Terreno',
-}
-
-const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
-const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
-
-function FilterSelect({ id, label, value, options, onChange, emphasized = false }) {
-  return (
-    <div className={`field${emphasized ? ' filter-search' : ''}`}>
-      <label htmlFor={id}>{label}</label>
-      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`} translate="no">
-        <span className="filter-select-value" aria-hidden="true">{value}</span>
-        <span className="filter-select-chevron" aria-hidden="true" />
-        <select
-          id={id}
-          className="filter-select-native"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          aria-label={label}
-        >
-          {options.map((option) => <option key={option} value={option}>{option}</option>)}
-        </select>
-      </div>
-    </div>
-  )
-}
-
 const mapCenter = [-20.438, -48.012]
 
 const neighborhoodCoordinates = {
@@ -205,6 +176,7 @@ const emptyAnnouncement = {
   price: '',
   bedrooms: '0',
   bathrooms: '1',
+  parking_spaces: '',
   area: '',
   city: 'Ipuã-SP',
   cep: '',
@@ -226,47 +198,6 @@ const createMarkerIcon = (color) => L.divIcon({
   popupAnchor: [0, -28],
 })
 
-const MenuSearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-    <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
-
-const MenuPlusIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-  </svg>
-)
-
-const MenuLogoutIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M15 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 17L15 12L10 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
-
-const MenuArrowIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
-const InstagramIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
-    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
-    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-  </svg>
-)
-
-const FacebookIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M14 8h3V4.2c-.52-.08-1.7-.2-3.2-.2-3.17 0-5.34 1.93-5.34 5.48V12H5v4h3.46v8h4.24v-8h3.53l.56-4H12.7V9.92c0-1.16.31-1.92 1.3-1.92Z" />
-  </svg>
-)
-
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [userListings, setUserListings] = useState(() => {
@@ -277,6 +208,8 @@ function App() {
     }
   })
   const [publishedListings, setPublishedListings] = useState([])
+  const [listingsLoaded, setListingsLoaded] = useState(!isSupabaseConfigured)
+  const [listingRouteSlug] = useState(getListingSlugFromPath)
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
@@ -286,7 +219,7 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
-  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' })
+  const [authForm, setAuthForm] = useState({ email: '', password: '' })
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
@@ -307,11 +240,12 @@ function App() {
   const [showAllListings, setShowAllListings] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
-  const [accountFilter, setAccountFilter] = useState('all')
 
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publishedListings : sampleListings)
     : [...sampleListings, ...userListings]
+  const portalListings = listings.filter(isPortalCityListing)
+  const visiblePortalListings = portalListings.length > 0 ? portalListings : sampleListings
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -354,32 +288,38 @@ function App() {
   useEffect(() => {
     if (!isSupabaseConfigured) return
 
+    let mounted = true
     const loadUserListings = async () => {
-      const { data, error } = await supabase
-        .from('listings')
-        .select('*')
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('listings')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-      if (!error) {
-        const normalizedListings = (data || []).map((item) => ({
-          ...item,
-          id: item.id,
-          coordinates: [item.latitude, item.longitude],
-          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
-          area: formatArea(item.area),
-          owner: item.user_id === authUser?.id,
-        }))
-        setPublishedListings(normalizedListings)
-        setUserListings(authUser
-          ? (isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
-          : [])
+        if (!error && mounted) {
+          const normalizedListings = (data || []).map((item) => ({
+            ...item,
+            id: item.id,
+            coordinates: [item.latitude, item.longitude],
+            location: `${item.neighborhood}, ${item.city || PORTAL_CITY}`,
+            area: item.area ? `${item.area} m²` : '',
+            owner: item.user_id === authUser?.id,
+          }))
+          setPublishedListings(normalizedListings)
+          setUserListings(authUser
+            ? (isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
+            : [])
+        }
+      } finally {
+        if (mounted) setListingsLoaded(true)
       }
     }
 
     loadUserListings()
+    return () => { mounted = false }
   }, [authUser, isAdmin])
 
-  const filteredListings = listings.filter((item) => {
+  const filteredListings = visiblePortalListings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
       || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
       || (appliedFilters.type === 'Venda' && item.type === 'venda')
@@ -403,8 +343,8 @@ function App() {
     return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
   })
 
-  const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
-  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : sampleListings).slice(0, 3)
+  const featuredListings = visiblePortalListings
+  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : visiblePortalListings).slice(0, 3)
 
   useEffect(() => {
     if (heroCarouselListings.length < 2) return undefined
@@ -455,6 +395,7 @@ function App() {
       ...listing,
       bedrooms: String(listing.bedrooms || 0),
       bathrooms: String(listing.bathrooms || 1),
+      parking_spaces: String(listing.parking_spaces ?? listing.garages ?? ''),
       price: String(listing.price || '').replace(/\D/g, ''),
       area: String(listing.area || '').replace(/\D/g, ''),
     } : emptyAnnouncement)
@@ -592,7 +533,8 @@ function App() {
       price: announcement.type === 'aluguel' ? `R$ ${announcement.price}/mês` : `R$ ${announcement.price}`,
       location: `${announcement.neighborhood}, ${announcement.city}`,
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
-      area: formatArea(announcement.area),
+      parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
+      area: `${announcement.area} m²`,
       coordinates,
       address: announcement.address || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
@@ -613,6 +555,7 @@ function App() {
         price: listing.price,
         bedrooms: listing.bedrooms,
         bathrooms: Number.parseInt(announcement.bathrooms, 10) || 0,
+        parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
         area: Number.parseInt(announcement.area, 10) || 0,
         neighborhood: listing.neighborhood,
         address: listing.address,
@@ -632,7 +575,7 @@ function App() {
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
-      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), owner: item.user_id === authUser.id }))
+      const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: item.area ? `${item.area} m²` : '0 m²', parking_spaces: Number(item.parking_spaces ?? item.garages) || 0, owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
       setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
@@ -650,12 +593,8 @@ function App() {
     let result
     try {
       result = authMode === 'login'
-        ? await supabase.auth.signInWithPassword({ email: authForm.email, password: authForm.password })
-        : await supabase.auth.signUp({
-          email: authForm.email,
-          password: authForm.password,
-          options: { data: { full_name: authForm.name } },
-        })
+        ? await supabase.auth.signInWithPassword(authForm)
+        : await supabase.auth.signUp(authForm)
     } catch (error) {
       setAuthMessage(`Não foi possível conectar ao Supabase. Confira a URL do projeto e tente novamente. (${error.message})`)
       setAuthLoading(false)
@@ -668,7 +607,7 @@ function App() {
       setAuthMessage('Conta criada. Confira seu e-mail para confirmar o cadastro.')
     } else {
       setAuthOpen(false)
-      setAuthForm({ name: '', email: '', password: '' })
+      setAuthForm({ email: '', password: '' })
     }
     setAuthLoading(false)
   }
@@ -703,21 +642,25 @@ function App() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
-  const userFirstName = (() => {
-    const source = authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'visitante'
-    const first = source.trim().split(' ')[0]
-    return first.charAt(0).toUpperCase() + first.slice(1)
-  })()
+  const routeListing = visiblePortalListings.find((item) => getListingSlug(item) === listingRouteSlug)
+  const homePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
 
-  const isCompletedListing = (item) => {
-    const status = String(item.status || '').toLowerCase()
-    return status.includes('conclu') || status.includes('vend') || status.includes('expir')
+  if (listingRouteSlug) {
+    if (!listingsLoaded) {
+      return <main className="listing-route-message" role="status">Carregando anúncio…</main>
+    }
+
+    if (!routeListing) {
+      return (
+        <main className="listing-route-message">
+          <h1>Imóvel não encontrado</h1>
+          <a href={homePath}>Voltar aos imóveis</a>
+        </main>
+      )
+    }
+
+    return <ListingDetailPage listing={routeListing} />
   }
-  const activeListings = userListings.filter((item) => !isCompletedListing(item))
-  const completedListings = userListings.filter(isCompletedListing)
-  const visibleAccountListings = accountFilter === 'active'
-    ? activeListings
-    : accountFilter === 'completed' ? completedListings : userListings
 
   return (
     <div className="real-estate-shell">
@@ -731,7 +674,7 @@ function App() {
             <img src={logo} alt="" className="brand-mark-img" />
           </div>
           <div className="brand-copy">
-            <h1>Mora <span className="brand-highlight">Fácil</span></h1>
+            <h1>Mora Fácil</h1>
             <strong>Encontre seu próximo lar.</strong>
             <small>Imóveis do seu jeito, perto de você.</small>
           </div>
@@ -742,88 +685,56 @@ function App() {
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
           {isSupabaseConfigured && (authUser ? (
-            <>
-              <span className="header-divider" aria-hidden="true" />
-              <span className="header-avatar" aria-label={`Usuário ${userFirstName}`}>{userFirstName.charAt(0)}</span>
-              <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
-            </>
+            <button type="button" className="account-btn account-trigger" onClick={() => setAccountOpen((current) => !current)} aria-expanded={accountOpen}>
+              <span className="account-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
+              <span>Minha conta</span>
+            </button>
           ) : (
             <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
           ))}
+          <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
         </div>
 
         {accountOpen && authUser && (
           <section className="account-popover" aria-label="Minha conta">
             <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
-            <div className="account-dashboard-header">
-              <div className="account-dashboard-brand">
-                <img src={logo} alt="" />
-                <strong>Mora <span>Fácil</span></strong>
+            <div className="account-profile">
+              <span className="account-profile-avatar">{authUser.email?.charAt(0).toUpperCase() || 'M'}</span>
+              <div>
+                <strong>Anunciante Mora Fácil</strong>
+                <span>{authUser.email}</span>
               </div>
             </div>
-            <div className="account-dashboard-heading">
-              <h2>Meus Imóveis</h2>
-              <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
-            </div>
-            <div className="account-metrics" aria-label="Resumo dos anúncios">
-              <article className="account-metric-card">
-                <strong>{userListings.length}</strong>
-                <span>Total</span>
-              </article>
-              <article className="account-metric-card active">
-                <strong>{activeListings.length}</strong>
-                <span>Ativos</span>
-              </article>
-              <article className="account-metric-card completed">
-                <strong>{completedListings.length}</strong>
-                <span>Concluídos</span>
-              </article>
-            </div>
+
+            <div className="account-divider" />
             {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
-            <div className="account-dashboard-toolbar">
-              <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
-                <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
-                <button type="button" className={accountFilter === 'active' ? 'active' : ''} onClick={() => setAccountFilter('active')}>Ativos ({activeListings.length})</button>
-                <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
-              </div>
-            </div>
-            {visibleAccountListings.length === 0 ? (
+            <div className="account-section-title">{isAdmin ? 'Todos os imóveis' : 'Meus imóveis'}</div>
+            {userListings.length === 0 ? (
               <div className="account-empty">Você ainda não cadastrou imóveis.</div>
             ) : (
-              <div className="account-dashboard-grid">
-                {visibleAccountListings.map((item) => {
-                  const completed = isCompletedListing(item)
-                  return (
-                    <article key={item.id} className="account-dashboard-card">
-                      <div className="account-card-image-wrap">
-                        <img src={item.image} alt={item.title} className="account-card-image" />
-                        <span className={`account-status ${completed ? 'completed' : 'active'}`}>{completed ? 'Concluído' : 'Ativo'}</span>
-                      </div>
-                      <div className="account-card-body">
-                        <h3>{item.title}</h3>
-                        <p className="account-card-location">{item.location}</p>
-                        <strong className="account-card-price">{item.price}</strong>
-                        <div className="account-card-meta">
-                          <span><i aria-hidden="true">🛏</i><b>{item.bedrooms || 0}</b><small>Quartos</small></span>
-                          <span><i aria-hidden="true">🚿</i><b>{item.bathrooms || 1}</b><small>Banheiros</small></span>
-                          <span><i aria-hidden="true">🚗</i><b>{item.parking_spaces || item.garages || 0}</b><small>Vagas</small></span>
-                          <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
-                        </div>
-                      </div>
-                      <div className="account-card-actions">
-                        <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar anúncio</button>
-                        <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
-                      </div>
-                    </article>
-                  )
-                })}
+              <div className="account-listings">
+                {userListings.map((item) => (
+                  <div key={item.id} className="account-listing">
+                    <div>
+                      <strong>{item.title}</strong>
+                      <span>{item.location} · {item.price}</span>
+                    </div>
+                    <div className="account-listing-actions">
+                      <button type="button" onClick={() => { openDetails(item); setAccountOpen(false) }}>Ver</button>
+                      <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar</button>
+                      <button type="button" onClick={() => removeUserListing(item.id)} aria-label={`Excluir ${item.title}`}>Excluir</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+            <button type="button" className="account-new-listing" onClick={() => { openAnnouncementForm(); setAccountOpen(false) }}>+ Anunciar outro imóvel</button>
+            <button type="button" className="account-logout" onClick={handleLogout}>↪&nbsp; Sair</button>
           </section>
         )}
       </header>
 
-      {mobileMenuOpen && authUser && (
+      {mobileMenuOpen && (
         <div className="mobile-menu-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setMobileMenuOpen(false)
         }}>
@@ -833,60 +744,17 @@ function App() {
               <img src={logo} alt="" />
               <strong>Mora <span>Fácil</span></strong>
             </div>
-            <div className="mobile-menu-header-divider" />
-            <div className="mobile-menu-greeting">
-              <span className="mobile-menu-avatar">{userFirstName.charAt(0)}</span>
-              <div>
-                <strong>Olá, {userFirstName}! 👋</strong>
-                <span>O que deseja fazer?</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="mobile-menu-primary"
-              onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
-            >
-              <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
-              <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
-              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-            </button>
-            <button
-              type="button"
-              className="mobile-menu-secondary"
-              onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}
-            >
-              <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
-              <span className="mobile-menu-action-label">Anunciar imóvel</span>
-              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-            </button>
-            <div className="mobile-menu-divider" />
-            <button
-              type="button"
-              className="mobile-menu-logout"
-              onClick={() => { setMobileMenuOpen(false); handleLogout() }}
-            >
-              <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
-              <span className="mobile-menu-action-label">Sair da conta</span>
-              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-            </button>
-            <div className="mobile-menu-social">
-              <div className="mobile-menu-social-divider" />
-              <div className="mobile-menu-social-heading">
-                <strong>Siga o Mora Fácil</strong>
-                <span>Fique por dentro das novidades!</span>
-              </div>
-              <div className="mobile-menu-social-actions">
-                <button type="button" className="mobile-menu-social-button instagram-button">
-                  <InstagramIcon />
-                  <span>Instagram</span>
-                </button>
-                <button type="button" className="mobile-menu-social-button facebook-button">
-                  <FacebookIcon />
-                  <span>Facebook</span>
-                </button>
-              </div>
-              <div className="mobile-menu-social-footer">Mora Fácil • Conectando pessoas a novos lares.</div>
-            </div>
+            {['Início', 'Imóveis', 'Mapa', 'Sobre', 'Contato'].map((item, index) => (
+              <button key={item} type="button" className={`mobile-menu-item ${index === 0 ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <span>{['⌂', '⌂', '⌖', 'ⓘ', '✉'][index]}</span>{item}
+              </button>
+            ))}
+            <button type="button" className="mobile-menu-announce" onClick={() => { setMobileMenuOpen(false); openAnnouncementForm() }}>+ Anunciar imóvel</button>
+            {authUser ? (
+              <button type="button" className="mobile-menu-login" onClick={() => setMobileMenuOpen(false)}>Minha conta</button>
+            ) : (
+              <button type="button" className="mobile-menu-login" onClick={() => { setMobileMenuOpen(false); setAuthOpen(true) }}>Entrar</button>
+            )}
           </aside>
         </div>
       )}
@@ -910,8 +778,8 @@ function App() {
               onClick={() => openDetails(item)}
             />
           ))}
-          <span className="hero-listing-badge" translate="no">
-            {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
+          <span className="hero-listing-badge">
+            {heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type === 'aluguel' ? 'Aluguel' : 'Venda'}
           </span>
           {heroCarouselListings.length > 1 && (
             <>
@@ -952,35 +820,48 @@ function App() {
         </article>
 
         <section className="filters-bar search-panel">
-        <FilterSelect
-          id="search-location"
-          label="Onde você quer morar?"
-          value={draftFilters.search}
-          options={['Ipuã-SP', 'Guaíra-SP']}
-          emphasized
-          onChange={(search) => setDraftFilters({ ...draftFilters, search })}
-        />
-        <FilterSelect
-          id="search-type"
-          label="Tipo"
-          value={draftFilters.type}
-          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos']}
-          onChange={(type) => setDraftFilters({ ...draftFilters, type })}
-        />
-        <FilterSelect
-          id="search-neighborhood"
-          label="Bairro"
-          value={draftFilters.neighborhood}
-          options={['Qualquer bairro', 'Centro', 'Jardim das Flores', 'Zona Norte', 'Jardim Primavera', 'Residencial Santana']}
-          onChange={(neighborhood) => setDraftFilters({ ...draftFilters, neighborhood })}
-        />
-        <FilterSelect
-          id="search-bedrooms"
-          label="Quartos"
-          value={draftFilters.bedrooms}
-          options={['Qualquer', '1+', '2+', '3+']}
-          onChange={(bedrooms) => setDraftFilters({ ...draftFilters, bedrooms })}
-        />
+        <div className="filter-search field">
+          <label htmlFor="search-location">Onde você quer morar?</label>
+          <select
+            id="search-location"
+            value={draftFilters.search}
+            onChange={(event) => setDraftFilters({ ...draftFilters, search: event.target.value })}
+          >
+            <option>Ipuã-SP</option>
+            <option>Guaíra-SP</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Tipo</label>
+          <select value={draftFilters.type} onChange={(event) => setDraftFilters({ ...draftFilters, type: event.target.value })}>
+            <option>Todos os imóveis</option>
+            <option>Venda</option>
+            <option>Aluguel</option>
+            <option>Terrenos</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Bairro</label>
+          <select value={draftFilters.neighborhood} onChange={(event) => setDraftFilters({ ...draftFilters, neighborhood: event.target.value })}>
+            <option>Qualquer bairro</option>
+            <option>Centro</option>
+            <option>Jardim das Flores</option>
+            <option>Zona Norte</option>
+            <option>Jardim Primavera</option>
+            <option>Residencial Santana</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Quartos</label>
+          <select value={draftFilters.bedrooms} onChange={(event) => setDraftFilters({ ...draftFilters, bedrooms: event.target.value })}>
+            <option>Qualquer</option>
+            <option>1+</option>
+            <option>2+</option>
+            <option>3+</option>
+          </select>
+        </div>
 
         <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
         </section>
@@ -1008,7 +889,7 @@ function App() {
                   <p className="detail-price">{item.price}</p>
                   <p className="detail-meta">{item.address}</p>
                   <p className="detail-meta">
-                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'} · {formatArea(item.area)}
+                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}{item.area ? ` · ${item.area}` : ''}
                   </p>
                   <button type="button" className="detail-button" onClick={() => openDetails(item)}>Saiba mais →</button>
                 </div>
@@ -1041,12 +922,12 @@ function App() {
             <article key={item.id} className="property-card">
               <div className="property-thumb">
                 <img src={item.image} alt={item.title} className="property-card-image" />
-                <span className="thumb-badge" translate="no">{getListingTypeLabel(item.type)}</span>
+                <span className="thumb-badge">{item.type}</span>
               </div>
 
               <div className="property-content">
                 <div className="content-top">
-                  <span className="property-tag" translate="no">{getListingTypeLabel(item.type)}</span>
+                  <span className="property-tag">{item.type}</span>
                   <strong>{item.price}</strong>
                 </div>
 
@@ -1055,7 +936,7 @@ function App() {
 
                 <div className="meta-row">
                   <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
-                  <span>{formatArea(item.area)}</span>
+                  {item.area && <span>{item.area}</span>}
                 </div>
                 <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
                   Saiba mais
@@ -1091,7 +972,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="form-row four-columns">
+              <div className="form-row three-columns">
                 <div className="form-group">
                   <label htmlFor="price">Valor {announcement.type === 'aluguel' ? 'mensal' : ''}</label>
                   <input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="Ex.: 320000" required />
@@ -1105,8 +986,8 @@ function App() {
                   <input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="area">Área (m²) (opcional)</label>
-                  <input id="area" name="area" type="number" min="0" step="1" inputMode="numeric" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" />
+                  <label htmlFor="parking-spaces">Vagas (opcional)</label>
+                  <input id="parking-spaces" name="parking_spaces" type="number" min="0" step="1" inputMode="numeric" value={announcement.parking_spaces} onChange={(event) => setAnnouncement({ ...announcement, parking_spaces: event.target.value })} placeholder="Ex.: 1" />
                 </div>
               </div>
 
@@ -1221,12 +1102,6 @@ function App() {
               <p>Você pode continuar navegando sem cadastro. A conta só é necessária para publicar e acompanhar seus imóveis.</p>
             </div>
             <form className="announcement-form" onSubmit={handleAuthSubmit}>
-              {authMode === 'signup' && (
-                <div className="form-group">
-                  <label htmlFor="auth-name">Nome completo</label>
-                  <input id="auth-name" type="text" value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} placeholder="Seu nome" required />
-                </div>
-              )}
               <div className="form-group">
                 <label htmlFor="auth-email">E-mail</label>
                 <input id="auth-email" type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="voce@email.com" required />
@@ -1268,7 +1143,7 @@ function App() {
 
               <div className="property-facts">
                 <div><strong>{selectedListing.bedrooms || '-'}</strong><span>Quartos</span></div>
-                <div><strong>{formatArea(selectedListing.area)}</strong><span>Área</span></div>
+                {selectedListing.area && <div><strong>{selectedListing.area}</strong><span>Área</span></div>}
                 <div><strong>{selectedListing.neighborhood}</strong><span>Bairro</span></div>
                 <div><strong>{selectedListing.type}</strong><span>Tipo</span></div>
               </div>
