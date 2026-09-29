@@ -287,4 +287,3 @@ export function ListingDetailPage({ listing }) {
     </main>
   )
 }
-EOF
