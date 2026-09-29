@@ -6,7 +6,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { isPortalCityListing, ListingShowcase } from './ListingShowcase.jsx'
+import { getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -728,6 +728,12 @@ function App() {
   const visibleAccountListings = accountFilter === 'active'
     ? activeListings
     : accountFilter === 'completed' ? completedListings : userListings
+
+  const routeSlug = getListingSlugFromPath()
+  if (routeSlug) {
+    const routeListing = listings.find((item) => getListingSlug(item) === routeSlug)
+    if (routeListing) return <ListingDetailPage listing={routeListing} />
+  }
 
   return (
     <div className="real-estate-shell">
