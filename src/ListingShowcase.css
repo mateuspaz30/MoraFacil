@@ -111,6 +111,10 @@
   background: #f28a22;
 }
 
+.showcase-type-badge.type-ponto_comercial {
+  background: #64748b;
+}
+
 .showcase-property-body {
   display: grid;
   grid-template-rows: minmax(2.6em, auto) minmax(2.4em, auto) auto minmax(38px, auto);

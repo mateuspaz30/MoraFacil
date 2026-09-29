@@ -8,6 +8,7 @@ const typeLabels = {
   venda: 'Venda',
   aluguel: 'Aluguel',
   terreno: 'Terreno',
+  ponto_comercial: 'Ponto Comercial',
 }
 
 const slugify = (value) => String(value || '')
@@ -81,11 +82,13 @@ export const getListingSlugFromPath = () => {
   return route === 'imovel' ? decodeURIComponent(slug || '') : ''
 }
 
-export function ListingShowcase({ listings }) {
+export function ListingShowcase({ listings, city }) {
+  const heading = city ? `Imóveis disponíveis em ${city}` : 'Imóveis disponíveis'
+
   return (
     <section className="property-showcase" aria-labelledby="property-showcase-title">
       <div className="property-showcase-heading">
-        <h2 id="property-showcase-title">Imóveis disponíveis em {PORTAL_CITY}</h2>
+        <h2 id="property-showcase-title">{heading}</h2>
         <a href="#imoveis-disponiveis">Ver todos os imóveis <span aria-hidden="true">→</span></a>
       </div>
       <div className="property-showcase-grid" id="imoveis-disponiveis">

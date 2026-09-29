@@ -712,6 +712,31 @@
   text-transform: capitalize;
 }
 
+.thumb-badge.type-venda {
+  background: #087cf0;
+  color: #fff;
+}
+
+.thumb-badge.type-aluguel {
+  background: #087c45;
+  color: #fff;
+}
+
+.thumb-badge.type-terreno {
+  background: #f28a22;
+  color: #fff;
+}
+
+.thumb-badge.type-ponto_comercial {
+  background: #64748b;
+  color: #fff;
+}
+
+.property-tag.type-ponto_comercial {
+  background: #eef2f6;
+  color: #475569;
+}
+
 .property-content strong {
   color: #07844d;
   font-size: 0.95rem;

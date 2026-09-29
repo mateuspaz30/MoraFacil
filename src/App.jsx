@@ -6,6 +6,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
+import { ListingShowcase } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -150,12 +151,14 @@ const typeColors = {
   venda: '#22c55e',
   aluguel: '#16a34a',
   terreno: '#f59e0b',
+  ponto_comercial: '#64748b',
 }
 
 const listingTypeLabels = {
   venda: 'Venda',
   aluguel: 'Aluguel',
   terreno: 'Terreno',
+  ponto_comercial: 'Ponto Comercial',
 }
 
 const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
@@ -304,8 +307,6 @@ function App() {
     neighborhood: 'Qualquer bairro',
   })
   const [appliedFilters, setAppliedFilters] = useState(draftFilters)
-  const [activeCategory] = useState('Todos os imóveis')
-  const [showAllListings, setShowAllListings] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
   const [accountFilter, setAccountFilter] = useState('all')
@@ -381,31 +382,35 @@ function App() {
     loadUserListings()
   }, [authUser, isAdmin])
 
-  const filteredListings = listings.filter((item) => {
+  const selectedCity = appliedFilters.search.trim()
+  const selectedCityKey = selectedCity.toLocaleLowerCase('pt-BR').replace(/-sp$/i, '')
+  const cityListings = listings.filter((item) => {
+    if (!selectedCity) return true
+    if (selectedCityKey === 'ipuã') return isPortalCityListing(item)
+    const sourceCity = String(item.city || item.location || item.address || '').toLocaleLowerCase('pt-BR')
+    return sourceCity.includes(selectedCityKey)
+  })
+
+  const filteredListings = cityListings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
       || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
       || (appliedFilters.type === 'Venda' && item.type === 'venda')
       || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
-    const categoryMatches = activeCategory === 'Todos os imóveis'
-      || (activeCategory === 'Casas' && item.bedrooms > 0 && item.type === 'venda')
-      || (activeCategory === 'Apartamentos' && item.bedrooms > 0 && item.type === 'aluguel')
-      || (activeCategory === 'Terrenos' && item.type === 'terreno')
+      || (appliedFilters.type === 'Ponto Comercial' && item.type === 'ponto_comercial')
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
+    const numericPrice = Number(String(item.price || '').replace(/\D/g, '')) || 0
     const priceMatches = appliedFilters.price === 'Qualquer faixa'
-      || (appliedFilters.price === 'Até R$ 200 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 200000)
-      || (appliedFilters.price === 'Até R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) <= 500000)
-      || (appliedFilters.price === 'Acima de R$ 500 mil' && Number.parseInt(item.price.replace(/\D/g, ''), 10) > 500000)
+      || (appliedFilters.price === 'Até R$ 200 mil' && numericPrice <= 200000)
+      || (appliedFilters.price === 'Até R$ 500 mil' && numericPrice <= 500000)
+      || (appliedFilters.price === 'Acima de R$ 500 mil' && numericPrice > 500000)
     const neighborhoodMatches = appliedFilters.neighborhood === 'Qualquer bairro'
       || item.neighborhood === appliedFilters.neighborhood
-    const searchValue = appliedFilters.search.trim().toLowerCase()
-    const searchMatches = !searchValue
-      || `${item.title} ${item.location} ${item.address} ${item.neighborhood}`.toLowerCase().includes(searchValue)
 
-    return typeMatches && categoryMatches && bedroomsMatches && priceMatches && neighborhoodMatches && searchMatches
+    return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches
   })
 
-  const featuredListings = showAllListings ? filteredListings : filteredListings.slice(0, 4)
+  const featuredListings = filteredListings.length > 0 ? filteredListings : cityListings
   const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : sampleListings).slice(0, 3)
 
   useEffect(() => {
@@ -969,7 +974,7 @@ function App() {
           id="search-type"
           label="Tipo"
           value={draftFilters.type}
-          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos']}
+          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos', 'Ponto Comercial']}
           onChange={(type) => setDraftFilters({ ...draftFilters, type })}
         />
         <FilterSelect
@@ -1033,45 +1038,7 @@ function App() {
         ))}
       </div>
 
-      <section className="properties-section">
-        <div className="section-title-row">
-          <h2><span className="section-star">★</span> Imóveis em destaque</h2>
-          <button type="button" className="view-all-btn" onClick={() => setShowAllListings((current) => !current)}>
-            {showAllListings ? 'Voltar' : 'Ver todos'} <span>{showAllListings ? '‹' : '›'}</span>
-          </button>
-        </div>
-
-        <div className="properties-grid">
-          {featuredListings.map((item) => (
-            <article key={item.id} className="property-card">
-              <div className="property-thumb">
-                <img src={item.image} alt={item.title} className="property-card-image" />
-                <span className="thumb-badge" translate="no">{getListingTypeLabel(item.type)}</span>
-              </div>
-
-              <div className="property-content">
-                <div className="content-top">
-                  <span className="property-tag" translate="no">{getListingTypeLabel(item.type)}</span>
-                  <strong>{item.price}</strong>
-                </div>
-
-                <h3>{item.title}</h3>
-                <p>{item.location}</p>
-
-                <div className="meta-row">
-                  <span>{item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'}</span>
-                  <span>{item.bathrooms || 0} banheiros</span>
-                  <span>{item.parking_spaces || item.garages || 0} vagas</span>
-                  <span>{formatArea(item.area)}</span>
-                </div>
-                <button type="button" className="card-detail-button" onClick={() => openDetails(item)}>
-                  Saiba mais
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+      <ListingShowcase listings={featuredListings} city={appliedFilters.search.trim()} />
 
       {announcementOpen && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -1094,6 +1061,7 @@ function App() {
                     <option value="venda">Venda</option>
                     <option value="aluguel">Aluguel</option>
                     <option value="terreno">Terreno</option>
+                    <option value="ponto_comercial">Ponto Comercial</option>
                   </select>
                 </div>
               </div>
