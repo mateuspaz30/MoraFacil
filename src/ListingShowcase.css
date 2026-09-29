@@ -45,13 +45,11 @@
 }
 
 .showcase-property-card {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) 42px;
-  gap: 10px;
-  height: 400px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-width: 0;
   overflow: hidden;
-  padding: 10px;
   border: 1px solid #e1e8ef;
   border-radius: 14px;
   background: #fff;
@@ -59,12 +57,10 @@
 }
 
 .showcase-property-link {
-  display: grid;
-  grid-template-rows: 176px minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
-  border-radius: 9px;
   color: inherit;
   text-decoration: none;
 }
@@ -72,9 +68,8 @@
 .showcase-property-image {
   position: relative;
   width: 100%;
-  height: 176px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 9px 9px 0 0;
   background: #e4edf5;
 }
 
@@ -116,19 +111,19 @@
 }
 
 .showcase-property-body {
-  display: grid;
-  grid-template-rows: minmax(2.6em, auto) minmax(2.4em, auto) auto minmax(38px, auto);
-  align-content: start;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-width: 0;
-  gap: 3px;
-  padding: 9px 10px 6px;
+  gap: 6px;
+  padding: 18px 18px 4px;
 }
 
 .showcase-property-body h3 {
   min-width: 0;
   margin: 0;
   color: #142d4c;
-  font-size: 0.98rem;
+  font-size: 1.18rem;
   font-weight: 800;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -138,27 +133,30 @@
   min-width: 0;
   margin: 0;
   color: #52657d;
-  font-size: 0.75rem;
-  line-height: 1.25;
+  font-size: 0.88rem;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
 .showcase-property-price {
+  margin-top: 2px;
   color: #087c45;
-  font-size: 1.22rem;
+  font-size: 1.6rem;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .showcase-property-features {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-self: end;
-  gap: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
   min-width: 0;
+  margin-top: 8px;
   color: #294e72;
-  font-size: 0.64rem;
-  line-height: 1.25;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .showcase-property-features > span {
@@ -167,18 +165,18 @@
 }
 
 .showcase-property-features > span.empty {
-  visibility: hidden;
+  display: none;
 }
 
 .showcase-property-features .showcase-land-note {
-  grid-column: 1 / -1;
+  width: 100%;
   color: #087c45;
-  font-size: 0.65rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .showcase-feature-placeholder {
-  display: inline-block;
+  display: none;
 }
 
 .showcase-property-cta {
@@ -186,12 +184,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
-  min-height: 42px;
-  border-radius: 8px;
+  margin: 14px 18px 18px;
+  min-height: 50px;
+  border-radius: 9px;
   background: #087c45;
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 0.98rem;
   font-weight: 800;
   text-decoration: none;
   transition: background-color 160ms ease, transform 160ms ease;
@@ -413,16 +411,12 @@
     gap: 14px;
   }
 
-  .showcase-property-card {
-    height: 410px;
+  .showcase-property-body {
+    padding: 14px 14px 4px;
   }
 
-  .showcase-property-link {
-    grid-template-rows: 200px minmax(0, 1fr);
-  }
-
-  .showcase-property-image {
-    height: 200px;
+  .showcase-property-cta {
+    margin: 12px 14px 16px;
   }
 
   .listing-detail-header {
