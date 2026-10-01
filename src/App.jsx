@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -230,6 +230,15 @@ const createMarkerIcon = (color) => L.divIcon({
   popupAnchor: [0, -28],
 })
 
+function AnnouncementMapClick({ onSelect }) {
+  useMapEvents({
+    click(event) {
+      onSelect([event.latlng.lat, event.latlng.lng])
+    },
+  })
+  return null
+}
+
 const MenuSearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -283,6 +292,9 @@ function App() {
   const [publishedListings, setPublishedListings] = useState([])
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
+  const [announcementPhotos, setAnnouncementPhotos] = useState([])
+  const [announcementSubmitting, setAnnouncementSubmitting] = useState(false)
+  const [announcementCategory, setAnnouncementCategory] = useState('Casa')
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -466,59 +478,95 @@ function App() {
       price: String(listing.price || '').replace(/\D/g, ''),
       area: String(listing.area || '').replace(/\D/g, ''),
     } : emptyAnnouncement)
+    const listingPhotos = listing?.images?.length
+      ? listing.images.map((url, index) => ({ url, name: `Foto ${index + 1}` }))
+      : listing?.image ? [{ url: listing.image, name: 'Foto principal' }] : []
+    setAnnouncementPhotos(listingPhotos)
+    setAnnouncementSubmitting(false)
+    setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setLocationConfirmed(Boolean(listing?.coordinates))
     setAnnouncementOpen(true)
   }
 
-  const closeAnnouncementForm = () => {
+  const closeAnnouncementForm = (preservePhotos = false) => {
+    if (!preservePhotos) {
+      announcementPhotos.forEach((photo) => {
+        if (photo.url.startsWith('blob:')) URL.revokeObjectURL(photo.url)
+      })
+    }
     setAnnouncementOpen(false)
     setEditingListingId(null)
     setAnnouncement(emptyAnnouncement)
+    setAnnouncementPhotos([])
+    setAnnouncementSubmitting(false)
     setAddressMessage('')
     setLocationConfirmed(false)
     setImageMessage('')
   }
 
   const handleImageChange = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const files = Array.from(event.dataTransfer?.files || event.target?.files || [])
+    if (event.target?.tagName === 'INPUT') event.target.value = ''
+    if (!files.length) return
 
-    if (!file.type.startsWith('image/')) {
-      setImageMessage('Escolha um arquivo de imagem.')
-      return
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    const availableSlots = Math.max(0, 5 - announcementPhotos.length)
+    const selectedFiles = files.slice(0, availableSlots)
+    if (files.length > availableSlots) setImageMessage('O limite é de 5 fotos por anúncio.')
+    if (!selectedFiles.length) return
+
+    const validFiles = selectedFiles.filter((file) => acceptedTypes.includes(file.type) && file.size <= 8 * 1024 * 1024)
+    if (validFiles.length !== selectedFiles.length) {
+      setImageMessage('Use fotos JPG, PNG ou WEBP de até 8 MB cada.')
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setImageMessage('A imagem deve ter no máximo 8 MB.')
-      return
-    }
+    if (!validFiles.length) return
 
     setImageLoading(true)
-    setImageMessage('Enviando foto...')
-
-    if (!isSupabaseConfigured || !authUser) {
-      setAnnouncement((current) => ({ ...current, image: URL.createObjectURL(file) }))
-      setImageMessage('Foto selecionada para este teste local.')
-      setImageLoading(false)
-      return
-    }
-
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`
-    const { error } = await supabase.storage.from('property-images').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type,
-    })
-
-    if (error) {
-      setImageMessage(`Não foi possível enviar a foto: ${error.message}`)
-    } else {
+    setImageMessage('Preparando fotos...')
+    const uploadedPhotos = []
+    for (const file of validFiles) {
+      if (!isSupabaseConfigured || !authUser) {
+        uploadedPhotos.push({ url: URL.createObjectURL(file), name: file.name })
+        continue
+      }
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`
+      const { error } = await supabase.storage.from('property-images').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      })
+      if (error) {
+        setImageMessage(`Não foi possível enviar ${file.name}: ${error.message}`)
+        continue
+      }
       const { data } = supabase.storage.from('property-images').getPublicUrl(path)
-      setAnnouncement((current) => ({ ...current, image: data.publicUrl }))
-      setImageMessage('Foto anexada com sucesso.')
+      uploadedPhotos.push({ url: data.publicUrl, name: file.name })
     }
+
+    const nextPhotos = [...announcementPhotos, ...uploadedPhotos].slice(0, 5)
+    setAnnouncementPhotos(nextPhotos)
+    setAnnouncement((value) => ({ ...value, image: nextPhotos[0]?.url || '' }))
+    setImageMessage(uploadedPhotos.length ? 'Fotos adicionadas. Arraste para ordenar.' : 'Nenhuma foto pôde ser adicionada.')
     setImageLoading(false)
+  }
+
+  const removeAnnouncementPhoto = (index) => {
+    const removed = announcementPhotos[index]
+    if (removed?.url.startsWith('blob:')) URL.revokeObjectURL(removed.url)
+    const nextPhotos = announcementPhotos.filter((_, photoIndex) => photoIndex !== index)
+    setAnnouncementPhotos(nextPhotos)
+    setAnnouncement((value) => ({ ...value, image: nextPhotos[0]?.url || '' }))
+  }
+
+  const moveAnnouncementPhoto = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= announcementPhotos.length) return
+    const nextPhotos = [...announcementPhotos]
+    const [photo] = nextPhotos.splice(fromIndex, 1)
+    nextPhotos.splice(toIndex, 0, photo)
+    setAnnouncementPhotos(nextPhotos)
+    setAnnouncement((value) => ({ ...value, image: nextPhotos[0]?.url || '' }))
   }
 
   const lookupCep = async () => {
@@ -581,6 +629,8 @@ function App() {
 
   const handleAnnouncementSubmit = async (event) => {
     event.preventDefault()
+    if (announcementSubmitting) return
+    setAnnouncementSubmitting(true)
     const cityCenter = cityCoordinates[announcement.city] || neighborhoodCoordinates[announcement.neighborhood] || mapCenter
     let coordinates = announcementCoordinates || cityCenter
 
@@ -590,6 +640,7 @@ function App() {
         coordinates = located.coordinates
       } else {
         setAddressMessage('Confirme a localização no mapa antes de publicar.')
+        setAnnouncementSubmitting(false)
         return
       }
     }
@@ -602,9 +653,12 @@ function App() {
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
       parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
       area: formatArea(announcement.area),
+      property_category: announcementCategory.toLocaleLowerCase('pt-BR').replaceAll(' ', '_'),
+      purpose: announcement.type === 'aluguel' ? 'aluguel' : 'venda',
       coordinates,
       address: announcement.address || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
+      images: announcementPhotos.map((photo) => photo.url),
       status: announcement.status || 'Disponível',
       owner: true,
     }
@@ -618,6 +672,8 @@ function App() {
         street: listing.street,
         title: listing.title,
         type: listing.type,
+        property_category: listing.property_category,
+        purpose: listing.purpose,
         status: listing.status,
         price: listing.price,
         bedrooms: listing.bedrooms,
@@ -628,6 +684,7 @@ function App() {
         address: listing.address,
         description: listing.description,
         image: listing.image,
+        images: listing.images,
         advertiser: listing.advertiser,
         phone: listing.phone,
         latitude: coordinates[0],
@@ -639,6 +696,7 @@ function App() {
       const { error } = await query
       if (error) {
         setAuthMessage(`Não foi possível salvar o anúncio: ${error.message}`)
+        setAnnouncementSubmitting(false)
         return
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
@@ -650,7 +708,7 @@ function App() {
         ? current.map((item) => item.id === editingListingId ? listing : item)
         : [...current, listing])
     }
-    closeAnnouncementForm()
+    closeAnnouncementForm(true)
   }
 
   const handleAuthSubmit = async (event) => {
@@ -1051,148 +1109,108 @@ function App() {
           if (event.target === event.currentTarget) closeAnnouncementForm()
         }}>
           <section className="property-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
-            <div className="announcement-header">
-              <h2 id="announcement-title">{editingListingId ? 'Editar imóvel' : 'Cadastrar imóvel'}</h2>
-              <p>Preencha os dados para criar o anúncio e posicioná-lo no mapa de Ipuã.</p>
+            <div className="announcement-page-heading">
+              <div>
+                <button type="button" className="announcement-back" onClick={closeAnnouncementForm}>← Voltar</button>
+                <h2 id="announcement-title">{editingListingId ? 'Editar imóvel' : 'Cadastrar imóvel'}</h2>
+                <p>Preencha os dados para publicar seu anúncio.</p>
+              </div>
+              <aside className="announcement-trust">
+                <span aria-hidden="true">✓</span>
+                <div><strong>Anúncio seguro e confiável</strong><small>Seus dados estão protegidos e serão analisados pela nossa equipe.</small></div>
+              </aside>
+            </div>
+            <div className="announcement-progress" aria-label="Formulário organizado em cinco etapas">
+              {['Tipo do imóvel', 'Dados do imóvel', 'Endereço', 'Localização', 'Fotos'].map((step, index) => (
+                <div className={`announcement-progress-step${index === 0 ? ' current' : ''}`} key={step}>
+                  <span>{index + 1}</span><small>{step}</small>
+                </div>
+              ))}
             </div>
             <form className="announcement-form" onSubmit={handleAnnouncementSubmit}>
-              <div className="form-row two-columns">
-                <div className="form-group">
-                  <label htmlFor="title">Título do anúncio</label>
-                  <input id="title" name="title" value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} placeholder="Ex.: Casa com quintal no Centro" required />
+              <section className="announcement-step-panel">
+                <div className="announcement-step-heading"><span>1</span><div><h3>Qual o tipo do imóvel? <i>*</i></h3><p>Selecione a categoria que melhor descreve seu imóvel.</p></div></div>
+                <div className="announcement-category-grid">
+                  {[['Casa', '⌂'], ['Apartamento', '▦'], ['Terreno', '♣'], ['Ponto Comercial', '▤']].map(([category, icon]) => (
+                    <button type="button" key={category} className={`announcement-category${announcementCategory === category ? ' selected' : ''}`} aria-pressed={announcementCategory === category} onClick={() => {
+                      setAnnouncementCategory(category)
+                      if (category === 'Terreno') setAnnouncement((current) => ({ ...current, type: 'terreno' }))
+                      if (category === 'Ponto Comercial') setAnnouncement((current) => ({ ...current, type: 'ponto_comercial' }))
+                      if (category === 'Casa' || category === 'Apartamento') setAnnouncement((current) => ({ ...current, type: ['terreno', 'ponto_comercial'].includes(current.type) ? 'venda' : current.type }))
+                    }}>
+                      <span className="announcement-category-icon" aria-hidden="true">{icon}</span><strong>{category}</strong>{announcementCategory === category && <span className="announcement-category-check" aria-hidden="true">✓</span>}
+                    </button>
+                  ))}
                 </div>
-                <div className="form-group">
-                  <label htmlFor="type">Finalidade</label>
-                  <select id="type" name="type" value={announcement.type} onChange={(event) => setAnnouncement({ ...announcement, type: event.target.value })}>
-                    <option value="venda">Venda</option>
-                    <option value="aluguel">Aluguel</option>
-                    <option value="terreno">Terreno</option>
-                    <option value="ponto_comercial">Ponto Comercial</option>
-                  </select>
-                </div>
-              </div>
+              </section>
 
-              <div className="form-row four-columns">
-                <div className="form-group">
-                  <label htmlFor="price">Valor {announcement.type === 'aluguel' ? 'mensal' : ''}</label>
-                  <input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="Ex.: 320000" required />
+              <section className="announcement-step-panel">
+                <div className="announcement-step-heading"><span>2</span><div><h3>Dados do imóvel</h3><p>Informe as principais características do seu imóvel.</p></div></div>
+                <div className="announcement-fields announcement-fields-property">
+                  <div className="form-group field-title"><label htmlFor="title">Título do anúncio <i>*</i></label><input id="title" name="title" value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} placeholder="Ex.: Casa térrea com garagem" required /></div>
+                  <fieldset className="form-group field-purpose"><legend>Finalidade <i>*</i></legend><div className="announcement-purpose-control">
+                    <label className={announcement.type !== 'aluguel' ? 'active' : ''}><input type="radio" name="purpose" checked={announcement.type !== 'aluguel'} onChange={() => setAnnouncement((current) => ({ ...current, type: 'venda' }))} />Venda</label>
+                    <label className={announcement.type === 'aluguel' ? 'active' : ''}><input type="radio" name="purpose" checked={announcement.type === 'aluguel'} onChange={() => setAnnouncement((current) => ({ ...current, type: 'aluguel' }))} />Aluguel</label>
+                  </div></fieldset>
+                  <div className="form-group field-price"><label htmlFor="price">Valor <i>*</i></label><input id="price" name="price" inputMode="numeric" value={announcement.price} onChange={(event) => setAnnouncement({ ...announcement, price: event.target.value.replace(/\D/g, '') })} placeholder="R$ 0,00" required /></div>
+                  <div className="form-group field-area"><label htmlFor="area">Área construída (m²) <i>*</i></label><input id="area" name="area" type="number" min="1" step="1" inputMode="numeric" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 96" required /></div>
+                  <div className="form-group"><label htmlFor="bedrooms">Quartos <i>*</i></label><input id="bedrooms" name="bedrooms" type="number" min="0" value={announcement.bedrooms} onChange={(event) => setAnnouncement({ ...announcement, bedrooms: event.target.value })} required /></div>
+                  <div className="form-group"><label htmlFor="bathrooms">Banheiros <i>*</i></label><input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} required /></div>
+                  <div className="form-group"><label htmlFor="parking-spaces">Vagas <i>*</i></label><input id="parking-spaces" name="parking_spaces" type="number" min="0" step="1" inputMode="numeric" value={announcement.parking_spaces} onChange={(event) => setAnnouncement({ ...announcement, parking_spaces: event.target.value })} placeholder="0" required /></div>
+                  <div className="form-group field-description"><label htmlFor="description">Descrição do imóvel <i>*</i></label><textarea id="description" name="description" value={announcement.description} onChange={(event) => setAnnouncement({ ...announcement, description: event.target.value })} placeholder="Conte os detalhes que tornam este imóvel especial" required /></div>
+                  <div className="form-group"><label htmlFor="advertiser">Seu nome <i>*</i></label><input id="advertiser" name="advertiser" value={announcement.advertiser} onChange={(event) => setAnnouncement({ ...announcement, advertiser: event.target.value })} placeholder="Nome do anunciante" required /></div>
+                  <div className="form-group"><label htmlFor="phone">Telefone ou WhatsApp <i>*</i></label><input id="phone" name="phone" type="tel" value={announcement.phone} onChange={(event) => setAnnouncement({ ...announcement, phone: event.target.value })} placeholder="(16) 99999-1234" required /></div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="bedrooms">Quartos</label>
-                  <input id="bedrooms" name="bedrooms" type="number" min="0" value={announcement.bedrooms} onChange={(event) => setAnnouncement({ ...announcement, bedrooms: event.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="bathrooms">Banheiros</label>
-                  <input id="bathrooms" name="bathrooms" type="number" min="0" value={announcement.bathrooms} onChange={(event) => setAnnouncement({ ...announcement, bathrooms: event.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="area">Área (m²) (opcional)</label>
-                  <input id="area" name="area" type="number" min="0" step="1" inputMode="numeric" value={announcement.area} onChange={(event) => setAnnouncement({ ...announcement, area: event.target.value })} placeholder="Ex.: 120" />
-                </div>
-              </div>
+              </section>
 
-              <div className="form-row two-columns">
-                <div className="form-group">
-                  <label htmlFor="parking-spaces">Vagas (opcional)</label>
-                  <input id="parking-spaces" name="parking_spaces" type="number" min="0" step="1" inputMode="numeric" value={announcement.parking_spaces} onChange={(event) => setAnnouncement({ ...announcement, parking_spaces: event.target.value })} placeholder="Ex.: 1" />
+              <section className="announcement-step-panel">
+                <div className="announcement-step-heading"><span>3</span><div><h3>Endereço</h3><p>Informe o endereço completo do imóvel.</p></div></div>
+                <div className="announcement-fields announcement-fields-address">
+                  <div className="form-group"><label htmlFor="city">Cidade <i>*</i></label><select id="city" name="city" value={announcement.city} onChange={(event) => { const city = event.target.value; setAnnouncement({ ...announcement, city }); setAnnouncementCoordinates(cityCoordinates[city] || mapCenter); setLocationConfirmed(false) }} required><option>Ipuã-SP</option><option>Guaíra-SP</option></select></div>
+                  <div className="form-group"><label htmlFor="cep">CEP <i>*</i></label><input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => setAnnouncement({ ...announcement, cep: event.target.value.replace(/\D/g, '').slice(0, 8) })} onBlur={lookupCep} placeholder="Ex.: 14610-000" required /><small className="announcement-field-message">{addressLoading ? 'Consultando CEP...' : addressMessage || 'O endereço será preenchido quando disponível.'}</small></div>
+                  <div className="form-group field-street"><label htmlFor="street">Rua <i>*</i></label><input id="street" name="street" value={announcement.street} onChange={(event) => setAnnouncement({ ...announcement, street: event.target.value })} placeholder="Ex.: Rua das Flores" required /></div>
+                  <div className="form-group"><label htmlFor="number">Número <i>*</i></label><input id="number" name="number" value={announcement.number} onChange={(event) => setAnnouncement({ ...announcement, number: event.target.value })} placeholder="Ex.: 123" required /></div>
+                  <div className="form-group"><label htmlFor="neighborhood">Bairro <i>*</i></label><input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Ex.: Centro" required /></div>
                 </div>
-              </div>
+              </section>
 
-              <div className="form-row three-columns">
-                <div className="form-group">
-                  <label htmlFor="city">Cidade</label>
-                  <select id="city" name="city" value={announcement.city} onChange={(event) => {
-                    const city = event.target.value
-                    setAnnouncement({ ...announcement, city })
-                    setAnnouncementCoordinates(cityCoordinates[city] || mapCenter)
-                    setLocationConfirmed(false)
-                  }}>
-                    <option>Ipuã-SP</option>
-                    <option>Guaíra-SP</option>
-                  </select>
+              <section className="announcement-step-panel">
+                <div className="announcement-step-heading"><span>4</span><div><h3>Localização <i>*</i></h3><p>Marque a localização exata do seu imóvel no mapa.</p></div></div>
+                <div className="location-confirmation">
+                  <div className="location-confirmation-header"><div><strong>⌖ &nbsp;Localizar no mapa</strong><small>{addressMessage || 'Clique no mapa ou arraste o marcador para definir a localização do imóvel.'}</small></div><button type="button" className="locate-button" onClick={locateAnnouncement} disabled={addressLoading}>{addressLoading ? 'Localizando...' : 'Buscar endereço'}</button></div>
+                  <MapContainer center={announcementCoordinates} zoom={16} className="announcement-map" scrollWheelZoom>
+                    <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <AnnouncementMapClick onSelect={(coordinates) => { setAnnouncementCoordinates(coordinates); setLocationConfirmed(true); setAddressMessage('Localização marcada. Você pode ajustar o marcador no mapa.') }} />
+                    <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(typeColors[announcement.type])} />
+                  </MapContainer>
+                  <small className={`announcement-map-status${locationConfirmed ? ' confirmed' : ''}`}>{locationConfirmed ? `Coordenadas: ${announcementCoordinates[0].toFixed(5)}, ${announcementCoordinates[1].toFixed(5)}` : 'Marque a localização exata do seu imóvel.'}</small>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="cep">CEP</label>
-                  <input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => setAnnouncement({ ...announcement, cep: event.target.value.replace(/\D/g, '').slice(0, 8) })} onBlur={lookupCep} placeholder="Ex.: 14610-000" required />
-                  <small>{addressLoading ? 'Consultando...' : addressMessage || 'Digite o CEP para localizar o endereço.'}</small>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="number">Número</label>
-                  <input id="number" name="number" inputMode="numeric" value={announcement.number} onChange={(event) => setAnnouncement({ ...announcement, number: event.target.value })} placeholder="Ex.: 120" required />
-                </div>
-              </div>
+              </section>
 
-              <div className="form-row two-columns">
-                <div className="form-group">
-                  <label htmlFor="street">Rua</label>
-                  <input id="street" name="street" value={announcement.street} onChange={(event) => setAnnouncement({ ...announcement, street: event.target.value })} placeholder="Preenchida pelo CEP" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="neighborhood">Bairro</label>
-                  <input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Preenchido pelo CEP" required />
-                </div>
-              </div>
-
-              <div className="location-confirmation">
-                <div className="location-confirmation-header">
-                  <div>
-                    <strong>Confirme a localização</strong>
-                    <small>{addressMessage || 'Localize o endereço e arraste o marcador até o ponto exato.'}</small>
+              <section className="announcement-step-panel">
+                <div className="announcement-step-heading"><span>5</span><div><h3>Fotos do imóvel</h3><p>Adicione fotos de qualidade para destacar seu anúncio.</p></div></div>
+                <div className="announcement-photo-layout">
+                  <label className={`announcement-dropzone${imageLoading ? ' uploading' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleImageChange(event) }}>
+                    <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={handleImageChange} disabled={imageLoading || announcementPhotos.length >= 5} />
+                    <span className="announcement-upload-icon" aria-hidden="true">▣</span><strong>{imageLoading ? 'Enviando fotos...' : 'Arraste as fotos aqui'}</strong><small>ou</small><span className="announcement-select-files">Selecionar imagens</span>
+                  </label>
+                  <div className="announcement-photo-gallery">
+                    {announcementPhotos.map((photo, index) => (
+                      <div className="announcement-photo-thumb" key={`${photo.url}-${index}`} draggable onDragStart={(event) => event.dataTransfer.setData('text/plain', String(index))} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); moveAnnouncementPhoto(Number(event.dataTransfer.getData('text/plain')), index) }}>
+                        <img src={photo.url} alt={`Foto ${index + 1} do imóvel`} />
+                        <button type="button" className="announcement-photo-remove" aria-label={`Remover foto ${index + 1}`} onClick={() => removeAnnouncementPhoto(index)}>×</button>
+                        <div className="announcement-photo-order"><button type="button" aria-label="Mover foto para a esquerda" disabled={index === 0} onClick={() => moveAnnouncementPhoto(index, index - 1)}>‹</button><span>{index === 0 ? 'Principal' : index + 1}</span><button type="button" aria-label="Mover foto para a direita" disabled={index === announcementPhotos.length - 1} onClick={() => moveAnnouncementPhoto(index, index + 1)}>›</button></div>
+                      </div>
+                    ))}
+                    {announcementPhotos.length < 5 && <label className="announcement-add-photo" htmlFor="image"><span>＋</span>Adicionar<br />mais fotos</label>}
                   </div>
-                  <button type="button" className="locate-button" onClick={locateAnnouncement} disabled={addressLoading}>
-                    {addressLoading ? 'Localizando...' : 'Localizar no mapa'}
-                  </button>
                 </div>
-                <MapContainer center={announcementCoordinates} zoom={17} className="announcement-map" scrollWheelZoom>
-                  <TileLayer
-                    attribution='&copy; Esri &copy; OpenStreetMap contributors'
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  />
-                  <Marker
-                    position={announcementCoordinates}
-                    draggable
-                    eventHandlers={{
-                      dragend: (event) => {
-                        const marker = event.target
-                        const position = marker.getLatLng()
-                        setAnnouncementCoordinates([position.lat, position.lng])
-                        setLocationConfirmed(true)
-                        setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.')
-                      },
-                    }}
-                    icon={createMarkerIcon(typeColors[announcement.type])}
-                  />
-                </MapContainer>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="description">Descrição completa</label>
-                <textarea id="description" name="description" value={announcement.description} onChange={(event) => setAnnouncement({ ...announcement, description: event.target.value })} placeholder="Conte detalhes importantes do imóvel" required />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="image">Foto principal do imóvel (opcional)</label>
-                <input id="image" name="image" type="file" accept="image/*" onChange={handleImageChange} disabled={imageLoading} />
-                <small>{imageLoading ? 'Enviando foto...' : imageMessage || 'Escolha uma foto da galeria do celular ou do computador.'}</small>
-                {announcement.image && (
-                  <img src={announcement.image} alt="Prévia do imóvel" className="announcement-image-preview" />
-                )}
-              </div>
-
-              <div className="form-row two-columns">
-                <div className="form-group">
-                  <label htmlFor="advertiser">Seu nome</label>
-                  <input id="advertiser" name="advertiser" value={announcement.advertiser} onChange={(event) => setAnnouncement({ ...announcement, advertiser: event.target.value })} placeholder="Nome do anunciante" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="phone">Telefone ou WhatsApp</label>
-                  <input id="phone" name="phone" type="tel" value={announcement.phone} onChange={(event) => setAnnouncement({ ...announcement, phone: event.target.value })} placeholder="(16) 99999-1234" required />
-                </div>
-              </div>
+                <small className="announcement-photo-message">{imageLoading ? 'Enviando...' : imageMessage || `${announcementPhotos.length}/5 fotos. JPG, PNG ou WEBP, até 8 MB cada.`}</small>
+              </section>
 
               <div className="form-actions">
                 <button type="button" className="cancel-form-btn" onClick={closeAnnouncementForm}>Cancelar</button>
-                <button type="submit" className="submit-form-btn">Publicar anúncio</button>
+                <button type="submit" className="submit-form-btn" disabled={announcementSubmitting || imageLoading}>{announcementSubmitting ? <><span className="announcement-spinner" />Publicando...</> : '➤  Publicar imóvel'}</button>
               </div>
             </form>
           </section>
