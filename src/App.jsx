@@ -174,11 +174,19 @@ const propertyCategoryLabels = {
 const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
-function FilterSelect({ id, label, value, options, onChange, emphasized = false }) {
+function FilterIcon({ name }) {
+  if (name === 'pin') return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 10c0 5-7 12-7 12S5 15 5 10a7 7 0 1 1 14 0Z" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="10" r="2.3" stroke="currentColor" strokeWidth="1.8" /></svg>
+  if (name === 'home') return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+  if (name === 'bed') return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 19v-9m0 5h18v4M3 15V8a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v6m0-3h6a2 2 0 0 1 2 2v1M7 10h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.3" stroke="currentColor" strokeWidth="2" /><path d="m16.2 16.2 4.3 4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+}
+
+function FilterSelect({ id, label, value, options, onChange, emphasized = false, icon, fieldClassName = '' }) {
   return (
-    <div className={`field${emphasized ? ' filter-search' : ''}`}>
+    <div className={`field${emphasized ? ' filter-search' : ''}${fieldClassName ? ` ${fieldClassName}` : ''}`}>
       <label htmlFor={id}>{label}</label>
       <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`} translate="no">
+        {icon && <span className="filter-select-icon"><FilterIcon name={icon} /></span>}
         <span className="filter-select-value" aria-hidden="true">{value}</span>
         <span className="filter-select-chevron" aria-hidden="true" />
         <select
@@ -325,7 +333,7 @@ function App() {
   const [imageMessage, setImageMessage] = useState('')
   const [draftFilters, setDraftFilters] = useState({
     search: 'Ipuã-SP',
-    type: 'Todos os imóveis',
+    type: 'Aluguel',
     bedrooms: 'Qualquer',
     price: 'Qualquer faixa',
     neighborhood: 'Qualquer bairro',
@@ -1169,6 +1177,7 @@ function App() {
           value={draftFilters.search}
           options={['Ipuã-SP', 'Guaíra-SP']}
           emphasized
+          icon="pin"
           onChange={(search) => setDraftFilters({ ...draftFilters, search })}
         />
         <FilterSelect
@@ -1176,6 +1185,7 @@ function App() {
           label="Tipo"
           value={draftFilters.type}
           options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos', 'Ponto Comercial']}
+          icon="home"
           onChange={(type) => setDraftFilters({ ...draftFilters, type })}
         />
         <FilterSelect
@@ -1183,6 +1193,7 @@ function App() {
           label="Bairro"
           value={draftFilters.neighborhood}
           options={['Qualquer bairro', 'Centro', 'Jardim das Flores', 'Zona Norte', 'Jardim Primavera', 'Residencial Santana']}
+          icon="pin"
           onChange={(neighborhood) => setDraftFilters({ ...draftFilters, neighborhood })}
         />
         <FilterSelect
@@ -1190,14 +1201,17 @@ function App() {
           label="Quartos"
           value={draftFilters.bedrooms}
           options={['Qualquer', '1+', '2+', '3+']}
+          icon="bed"
+          fieldClassName="field-bedrooms"
           onChange={(bedrooms) => setDraftFilters({ ...draftFilters, bedrooms })}
         />
 
-        <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
-        </section>
         <div className="results-counter" aria-live="polite">
-          <span aria-hidden="true">🏠</span> {filteredListings.length} {filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+          <span className="results-counter-check" aria-hidden="true">✓</span>
+          {filteredListings.length} {filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
         </div>
+        <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}><FilterIcon name="search" />Buscar</button>
+        </section>
       </section>
 
       <div className="map-label-row">
