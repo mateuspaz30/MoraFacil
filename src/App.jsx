@@ -438,7 +438,6 @@ function App() {
     return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches
   })
 
-  const featuredListings = filteredListings.length > 0 ? filteredListings : cityListings
   const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : approvedSampleListings).slice(0, 3)
 
   useEffect(() => {
@@ -1196,6 +1195,9 @@ function App() {
 
         <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}>Buscar</button>
         </section>
+        <div className="results-counter" aria-live="polite">
+          <span aria-hidden="true">🏠</span> {filteredListings.length} {filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+        </div>
       </section>
 
       <div className="map-label-row">
@@ -1240,7 +1242,7 @@ function App() {
         ))}
       </div>
 
-      <ListingShowcase listings={featuredListings} city={appliedFilters.search.trim()} />
+      <ListingShowcase listings={filteredListings} city={appliedFilters.search.trim()} />
 
       {announcementOpen && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {

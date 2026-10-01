@@ -480,6 +480,20 @@
   padding: 0.9rem 1.1rem;
 }
 
+.results-counter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: -10px 18px 16px;
+  color: #52657d;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.results-counter > span {
+  font-size: 1rem;
+}
+
 .map-label-row {
   margin: 10px 0 6px;
 }
