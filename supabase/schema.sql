@@ -5,7 +5,8 @@ create table public.listings (
   type text not null check (type in ('venda', 'aluguel', 'terreno', 'ponto_comercial')),
   property_category text not null default 'casa' check (property_category in ('casa', 'apartamento', 'terreno', 'ponto_comercial')),
   purpose text not null default 'venda' check (purpose in ('venda', 'aluguel')),
-  status text not null default 'Disponível',
+  status text not null default 'em_analise' check (status in ('em_analise', 'aprovado', 'reprovado', 'concluido')),
+  motivo_reprovacao text,
   price text not null,
   bedrooms integer not null default 0,
   bathrooms integer not null default 0,
@@ -28,22 +29,50 @@ create table public.listings (
 
 alter table public.listings enable row level security;
 
+create table if not exists public.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.admin_users where user_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated, anon;
+
+drop policy if exists "Users can view their admin record" on public.admin_users;
+create policy "Users can view their admin record"
+on public.admin_users for select
+to authenticated
+using (auth.uid() = user_id);
+
 create policy "Anyone can read published listings"
 on public.listings for select
-using (true);
+using (status = 'aprovado' or auth.uid() = user_id or public.is_admin());
 
 create policy "Users can create their own listings"
 on public.listings for insert
 to authenticated
-with check (auth.uid() = user_id);
+with check (auth.uid() = user_id and status = 'em_analise');
 
 create policy "Users can update their own listings"
 on public.listings for update
 to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = user_id or public.is_admin())
+with check (public.is_admin() or (auth.uid() = user_id and status in ('em_analise', 'concluido')));
 
 create policy "Users can delete their own listings"
 on public.listings for delete
 to authenticated
-using (auth.uid() = user_id);
+using (auth.uid() = user_id or public.is_admin());

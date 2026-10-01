@@ -147,6 +147,9 @@ const sampleListings = [
   },
 ]
 
+const approvedSampleListings = sampleListings.map((listing) => ({ ...listing, status: 'aprovado' }))
+const isApprovedListing = (listing) => ['aprovado', 'disponível', 'disponivel', 'ativo'].includes(String(listing.status || '').trim().toLocaleLowerCase('pt-BR'))
+
 const typeColors = {
   venda: '#22c55e',
   aluguel: '#16a34a',
@@ -157,6 +160,13 @@ const typeColors = {
 const listingTypeLabels = {
   venda: 'Venda',
   aluguel: 'Aluguel',
+  terreno: 'Terreno',
+  ponto_comercial: 'Ponto Comercial',
+}
+
+const propertyCategoryLabels = {
+  casa: 'Casa',
+  apartamento: 'Apartamento',
   terreno: 'Terreno',
   ponto_comercial: 'Ponto Comercial',
 }
@@ -204,7 +214,7 @@ const cityCoordinates = {
 const emptyAnnouncement = {
   title: '',
   type: 'venda',
-  status: 'Disponível',
+  status: 'em_analise',
   price: '',
   bedrooms: '0',
   bathrooms: '1',
@@ -296,6 +306,7 @@ function App() {
   const [announcementSubmitting, setAnnouncementSubmitting] = useState(false)
   const [announcementError, setAnnouncementError] = useState('')
   const [announcementCategory, setAnnouncementCategory] = useState('Casa')
+  const [announcementSuccess, setAnnouncementSuccess] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -323,10 +334,14 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
   const [accountFilter, setAccountFilter] = useState('all')
+  const [rejectionListingId, setRejectionListingId] = useState(null)
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [moderationMessage, setModerationMessage] = useState('')
 
+  const publicPublishedListings = publishedListings.filter(isApprovedListing)
   const listings = isSupabaseConfigured
-    ? (publishedListings.length > 0 ? publishedListings : sampleListings)
-    : [...sampleListings, ...userListings]
+    ? (publishedListings.length > 0 ? publicPublishedListings : approvedSampleListings)
+    : [...approvedSampleListings, ...userListings.filter(isApprovedListing)]
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -406,10 +421,10 @@ function App() {
 
   const filteredListings = cityListings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
-      || (appliedFilters.type === 'Terrenos' && item.type === 'terreno')
-      || (appliedFilters.type === 'Venda' && item.type === 'venda')
-      || (appliedFilters.type === 'Aluguel' && item.type === 'aluguel')
-      || (appliedFilters.type === 'Ponto Comercial' && item.type === 'ponto_comercial')
+      || (appliedFilters.type === 'Terrenos' && (item.property_category === 'terreno' || item.type === 'terreno'))
+      || (appliedFilters.type === 'Venda' && (item.purpose === 'venda' || (!item.purpose && item.type === 'venda')))
+      || (appliedFilters.type === 'Aluguel' && (item.purpose === 'aluguel' || item.type === 'aluguel'))
+      || (appliedFilters.type === 'Ponto Comercial' && (item.property_category === 'ponto_comercial' || item.type === 'ponto_comercial'))
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
     const numericPrice = Number(String(item.price || '').replace(/\D/g, '')) || 0
@@ -424,7 +439,7 @@ function App() {
   })
 
   const featuredListings = filteredListings.length > 0 ? filteredListings : cityListings
-  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : sampleListings).slice(0, 3)
+  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : approvedSampleListings).slice(0, 3)
 
   useEffect(() => {
     if (heroCarouselListings.length < 2) return undefined
@@ -485,6 +500,7 @@ function App() {
     setAnnouncementPhotos(listingPhotos)
     setAnnouncementSubmitting(false)
     setAnnouncementError('')
+    setAnnouncementSuccess(false)
     setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setLocationConfirmed(Boolean(listing?.coordinates))
@@ -659,11 +675,12 @@ function App() {
       area: formatArea(announcement.area),
       property_category: announcementCategory.toLocaleLowerCase('pt-BR').replaceAll(' ', '_'),
       purpose: announcement.type === 'aluguel' ? 'aluguel' : 'venda',
+      status: editingListingId && isAdmin ? announcement.status : 'em_analise',
+      motivo_reprovacao: editingListingId && isAdmin ? announcement.motivo_reprovacao || null : null,
       coordinates,
       address: announcement.address || `${announcement.street}, ${announcement.number}`,
       image: announcement.image || sampleListings[0].image,
       images: announcementPhotos.map((photo) => photo.url),
-      status: announcement.status || 'Disponível',
       owner: true,
     }
 
@@ -679,6 +696,7 @@ function App() {
         property_category: listing.property_category,
         purpose: listing.purpose,
         status: listing.status,
+        motivo_reprovacao: listing.motivo_reprovacao,
         price: listing.price,
         bedrooms: listing.bedrooms,
         bathrooms: Number.parseInt(announcement.bathrooms, 10) || 0,
@@ -724,6 +742,7 @@ function App() {
         : [...current, listing])
     }
     closeAnnouncementForm(true)
+    setAnnouncementSuccess(true)
   }
 
   const handleAuthSubmit = async (event) => {
@@ -780,6 +799,63 @@ function App() {
     setUserListings((current) => current.filter((item) => item.id !== id))
     if (selectedListing?.id === id) closeDetails()
   }
+
+  const changeListingStatus = async (listing, status, motivoReprovacao = null) => {
+    const updates = { status, motivo_reprovacao: motivoReprovacao }
+    let updatedListing = { ...listing, ...updates }
+
+    if (supabase && authUser) {
+      try {
+        const { data, error } = await supabase
+          .from('listings')
+          .update(updates)
+          .eq('id', listing.id)
+          .select('*')
+          .single()
+        if (error) throw error
+        updatedListing = {
+          ...data,
+          coordinates: [data.latitude, data.longitude],
+          location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+          area: formatArea(data.area),
+          parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+          owner: data.user_id === authUser.id,
+        }
+      } catch (error) {
+        setModerationMessage(`Não foi possível atualizar o anúncio: ${error.message}`)
+        return false
+      }
+    }
+
+    setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+    setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+    return true
+  }
+
+  const approveListing = async (listing) => {
+    if (await changeListingStatus(listing, 'aprovado')) {
+      setModerationMessage(`“${listing.title}” foi aprovado e já está publicado.`)
+    }
+  }
+
+  const rejectListing = async (listing) => {
+    const reason = rejectionReason.trim()
+    if (!reason) {
+      setModerationMessage('Informe o motivo da reprovação para continuar.')
+      return
+    }
+    if (await changeListingStatus(listing, 'reprovado', reason)) {
+      setRejectionListingId(null)
+      setRejectionReason('')
+      setModerationMessage(`“${listing.title}” foi reprovado.`)
+    }
+  }
+
+  const completeListing = async (listing) => {
+    if (await changeListingStatus(listing, 'concluido')) {
+      setModerationMessage(`“${listing.title}” foi marcado como concluído.`)
+    }
+  }
   
   useEffect(() => {
     const handleEscape = (event) => {
@@ -796,15 +872,28 @@ function App() {
     return first.charAt(0).toUpperCase() + first.slice(1)
   })()
 
-  const isCompletedListing = (item) => {
-    const status = String(item.status || '').toLowerCase()
-    return status.includes('conclu') || status.includes('vend') || status.includes('expir')
+  const getListingStatusKey = (item) => {
+    const status = String(item.status || '').trim().toLocaleLowerCase('pt-BR')
+    if (status === 'em_analise' || status === 'em análise') return 'pending'
+    if (status === 'reprovado') return 'rejected'
+    if (status === 'concluido' || status.includes('conclu') || status.includes('vend') || status.includes('expir')) return 'completed'
+    return 'published'
   }
-  const activeListings = userListings.filter((item) => !isCompletedListing(item))
-  const completedListings = userListings.filter(isCompletedListing)
-  const visibleAccountListings = accountFilter === 'active'
-    ? activeListings
-    : accountFilter === 'completed' ? completedListings : userListings
+  const getListingStatusLabel = (item) => ({
+    pending: 'Em análise',
+    published: 'Publicado',
+    rejected: 'Reprovado',
+    completed: 'Concluído',
+  })[getListingStatusKey(item)]
+  const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
+  const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
+  const rejectedListings = userListings.filter((item) => getListingStatusKey(item) === 'rejected')
+  const completedListings = userListings.filter((item) => getListingStatusKey(item) === 'completed')
+  const visibleAccountListings = accountFilter === 'pending' || accountFilter === 'review'
+    ? pendingListings
+    : accountFilter === 'published' ? activeListings
+      : accountFilter === 'rejected' ? rejectedListings
+        : accountFilter === 'completed' ? completedListings : userListings
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
@@ -862,7 +951,7 @@ function App() {
               </article>
               <article className="account-metric-card active">
                 <strong>{activeListings.length}</strong>
-                <span>Ativos</span>
+                <span>Publicados</span>
               </article>
               <article className="account-metric-card completed">
                 <strong>{completedListings.length}</strong>
@@ -870,28 +959,35 @@ function App() {
               </article>
             </div>
             {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
+            {moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
             <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
                 <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
-                <button type="button" className={accountFilter === 'active' ? 'active' : ''} onClick={() => setAccountFilter('active')}>Ativos ({activeListings.length})</button>
+                <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
+                <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Publicados ({activeListings.length})</button>
+                <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
+                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({pendingListings.length})</button>}
               </div>
             </div>
             {visibleAccountListings.length === 0 ? (
-              <div className="account-empty">Você ainda não cadastrou imóveis.</div>
+              <div className="account-empty">{accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
             ) : (
               <div className="account-dashboard-grid">
                 {visibleAccountListings.map((item) => {
-                  const completed = isCompletedListing(item)
+                  const statusKey = getListingStatusKey(item)
+                  const reviewable = isAdmin && accountFilter === 'review' && statusKey === 'pending'
                   return (
                     <article key={item.id} className="account-dashboard-card">
                       <div className="account-card-image-wrap">
                         <img src={item.image} alt={item.title} className="account-card-image" />
-                        <span className={`account-status ${completed ? 'completed' : 'active'}`}>{completed ? 'Concluído' : 'Ativo'}</span>
+                        <span className={`account-status ${statusKey}`}>{getListingStatusLabel(item)}</span>
                       </div>
                       <div className="account-card-body">
                         <h3>{item.title}</h3>
                         <p className="account-card-location">{item.location}</p>
+                        <p className="account-card-type">{propertyCategoryLabels[item.property_category] || getListingTypeLabel(item.type)} · {item.purpose === 'aluguel' || item.type === 'aluguel' ? 'Aluguel' : 'Venda'}</p>
+                        {accountFilter === 'review' && <p className="account-card-submitted">Enviado em {item.created_at ? new Intl.DateTimeFormat('pt-BR').format(new Date(item.created_at)) : 'data indisponível'}</p>}
                         <strong className="account-card-price">{item.price}</strong>
                         <div className="account-card-meta">
                           <span><i aria-hidden="true">🛏</i><b>{item.bedrooms || 0}</b><small>Quartos</small></span>
@@ -899,10 +995,29 @@ function App() {
                           <span><i aria-hidden="true">🚗</i><b>{item.parking_spaces || item.garages || 0}</b><small>Vagas</small></span>
                           <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
                         </div>
+                        {statusKey === 'rejected' && <div className="account-rejection-reason"><strong>Motivo da reprovação</strong><p>{item.motivo_reprovacao || 'O administrador solicitou ajustes no anúncio.'}</p></div>}
                       </div>
                       <div className="account-card-actions">
-                        <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar anúncio</button>
-                        <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
+                        {reviewable ? (
+                          <div className="admin-review-actions">
+                            <button type="button" className="approve-listing-button" onClick={() => approveListing(item)}>✓ Aprovar</button>
+                            {rejectionListingId === item.id ? (
+                              <div className="admin-rejection-form">
+                                <label htmlFor={`rejection-${item.id}`}>Motivo da reprovação *</label>
+                                <textarea id={`rejection-${item.id}`} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Ex.: Fotos insuficientes ou endereço incompleto" required />
+                                <button type="button" className="reject-listing-button" onClick={() => rejectListing(item)}>Confirmar reprovação</button>
+                                <button type="button" onClick={() => { setRejectionListingId(null); setRejectionReason('') }}>Cancelar</button>
+                              </div>
+                            ) : <button type="button" className="reject-listing-button" onClick={() => { setRejectionListingId(item.id); setRejectionReason(''); setModerationMessage('') }}>✕ Reprovar</button>}
+                          </div>
+                        ) : (
+                          <>
+                            {statusKey === 'rejected' && <button type="button" className="correct-listing-button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Corrigir anúncio</button>}
+                            {statusKey === 'published' && <button type="button" onClick={() => completeListing(item)}>Marcar concluído</button>}
+                            {statusKey !== 'completed' && statusKey !== 'rejected' && <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar anúncio</button>}
+                            <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
+                          </>
+                        )}
                       </div>
                     </article>
                   )
@@ -1237,6 +1352,31 @@ function App() {
                 <button type="submit" className="submit-form-btn" disabled={announcementSubmitting || imageLoading}>{announcementSubmitting ? <><span className="announcement-spinner" />Publicando...</> : '➤  Publicar imóvel'}</button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {announcementSuccess && (
+        <div className="property-modal-backdrop announcement-success-backdrop" role="presentation">
+          <section className="announcement-success-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-success-title">
+            <span className="announcement-success-icon" aria-hidden="true">✓</span>
+            <h2 id="announcement-success-title">🎉 Anúncio enviado com sucesso!</h2>
+            <p>Seu imóvel foi recebido e agora passará por uma análise antes da publicação.</p>
+            <p>Você poderá acompanhar o andamento em <strong>Meus Imóveis</strong>.</p>
+            <div className="announcement-success-status"><span aria-hidden="true">●</span><div><small>Status atual</small><strong>Em análise</strong></div></div>
+            <div className="announcement-success-actions">
+              <button type="button" className="submit-form-btn" onClick={() => {
+                setAnnouncementSuccess(false)
+                if (authUser) {
+                  setAccountFilter('all')
+                  setAccountOpen(true)
+                } else {
+                  setAuthMode('login')
+                  setAuthOpen(true)
+                }
+              }}>Ir para Meus Imóveis</button>
+              <button type="button" className="cancel-form-btn" onClick={() => setAnnouncementSuccess(false)}>Voltar para a página inicial</button>
+            </div>
           </section>
         </div>
       )}
