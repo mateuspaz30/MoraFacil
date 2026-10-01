@@ -713,6 +713,10 @@ function App() {
 
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
+    if (!supabase) {
+      setAuthMessage('O acesso à conta estará disponível assim que o serviço for configurado.')
+      return
+    }
     setAuthLoading(true)
     setAuthMessage('')
     let result
@@ -815,15 +819,10 @@ function App() {
           <button type="button" className="announce-btn" onClick={() => openAnnouncementForm()}>
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
-          {isSupabaseConfigured && (authUser ? (
-            <>
-              <span className="header-divider" aria-hidden="true" />
-              <span className="header-avatar" aria-label={`Usuário ${userFirstName}`}>{userFirstName.charAt(0)}</span>
-              <button type="button" className="menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}>☰</button>
-            </>
-          ) : (
-            <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>
-          ))}
+          <span className="header-divider" aria-hidden="true" />
+          <span className="header-avatar" aria-label={authUser ? `Usuário ${userFirstName}` : 'Visitante'}>{userFirstName.charAt(0)}</span>
+          <button type="button" className="menu-toggle" aria-label="Abrir menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}>☰</button>
+          {isSupabaseConfigured && !authUser && <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>}
         </div>
 
         {accountOpen && authUser && (
@@ -897,7 +896,7 @@ function App() {
         )}
       </header>
 
-      {mobileMenuOpen && authUser && (
+      {mobileMenuOpen && (
         <div className="mobile-menu-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setMobileMenuOpen(false)
         }}>
@@ -911,19 +910,30 @@ function App() {
             <div className="mobile-menu-greeting">
               <span className="mobile-menu-avatar">{userFirstName.charAt(0)}</span>
               <div>
-                <strong>Olá, {userFirstName}! 👋</strong>
+                <strong>{authUser ? `Olá, ${userFirstName}!` : 'Olá, visitante!'}</strong>
                 <span>O que deseja fazer?</span>
               </div>
             </div>
-            <button
-              type="button"
-              className="mobile-menu-primary"
-              onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}
-            >
-              <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
-              <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
-              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-            </button>
+            {authUser ? (
+              <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}>
+                <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
+                <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
+                <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+              </button>
+            ) : (
+              <>
+                <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); setAuthMode('login'); setAuthMessage(''); setAuthOpen(true) }}>
+                  <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
+                  <span className="mobile-menu-action-label">Entrar na conta</span>
+                  <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+                </button>
+                <button type="button" className="mobile-menu-secondary" onClick={() => { setMobileMenuOpen(false); setAuthMode('signup'); setAuthMessage(''); setAuthOpen(true) }}>
+                  <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
+                  <span className="mobile-menu-action-label">Criar conta</span>
+                  <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+                </button>
+              </>
+            )}
             <button
               type="button"
               className="mobile-menu-secondary"
@@ -934,15 +944,11 @@ function App() {
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
             </button>
             <div className="mobile-menu-divider" />
-            <button
-              type="button"
-              className="mobile-menu-logout"
-              onClick={() => { setMobileMenuOpen(false); handleLogout() }}
-            >
+            {authUser && <button type="button" className="mobile-menu-logout" onClick={() => { setMobileMenuOpen(false); handleLogout() }}>
               <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
               <span className="mobile-menu-action-label">Sair da conta</span>
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
-            </button>
+            </button>}
             <div className="mobile-menu-social">
               <div className="mobile-menu-social-divider" />
               <div className="mobile-menu-social-heading">

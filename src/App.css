@@ -2272,6 +2272,10 @@
     display: none;
   }
 
+  .header-actions .account-btn {
+    display: none;
+  }
+
   .header-divider {
     display: none;
   }
