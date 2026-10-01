@@ -294,6 +294,7 @@ function App() {
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [announcementPhotos, setAnnouncementPhotos] = useState([])
   const [announcementSubmitting, setAnnouncementSubmitting] = useState(false)
+  const [announcementError, setAnnouncementError] = useState('')
   const [announcementCategory, setAnnouncementCategory] = useState('Casa')
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
@@ -483,6 +484,7 @@ function App() {
       : listing?.image ? [{ url: listing.image, name: 'Foto principal' }] : []
     setAnnouncementPhotos(listingPhotos)
     setAnnouncementSubmitting(false)
+    setAnnouncementError('')
     setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setLocationConfirmed(Boolean(listing?.coordinates))
@@ -500,6 +502,7 @@ function App() {
     setAnnouncement(emptyAnnouncement)
     setAnnouncementPhotos([])
     setAnnouncementSubmitting(false)
+    setAnnouncementError('')
     setAddressMessage('')
     setLocationConfirmed(false)
     setImageMessage('')
@@ -630,6 +633,7 @@ function App() {
   const handleAnnouncementSubmit = async (event) => {
     event.preventDefault()
     if (announcementSubmitting) return
+    setAnnouncementError('')
     setAnnouncementSubmitting(true)
     const cityCenter = cityCoordinates[announcement.city] || neighborhoodCoordinates[announcement.neighborhood] || mapCenter
     let coordinates = announcementCoordinates || cityCenter
@@ -693,9 +697,20 @@ function App() {
       const query = editingListingId
         ? supabase.from('listings').update(databaseListing).eq('id', editingListingId)
         : supabase.from('listings').insert(databaseListing)
-      const { error } = await query
+      let error
+      try {
+        ({ error } = await query)
+      } catch (requestError) {
+        setAnnouncementError(`Falha de conexão ao salvar o imóvel: ${requestError.message || 'verifique sua conexão e tente novamente.'}`)
+        setAnnouncementSubmitting(false)
+        return
+      }
       if (error) {
-        setAuthMessage(`Não foi possível salvar o anúncio: ${error.message}`)
+        const missingFormColumns = /(images|property_category|purpose)/i.test(error.message)
+          && /(column|schema cache|does not exist|could not find)/i.test(error.message)
+        setAnnouncementError(missingFormColumns
+          ? `O banco ainda não tem as colunas do novo formulário. Execute supabase/migrations/20261001_add_listing_image_gallery.sql no SQL Editor do Supabase. Detalhe: ${error.message}`
+          : `Não foi possível cadastrar o imóvel. ${error.message}`)
         setAnnouncementSubmitting(false)
         return
       }
@@ -1135,7 +1150,7 @@ function App() {
                 </div>
               ))}
             </div>
-            <form className="announcement-form" onSubmit={handleAnnouncementSubmit}>
+            <form className="announcement-form" onSubmit={handleAnnouncementSubmit} onInvalidCapture={() => setAnnouncementError('Confira os campos obrigatórios destacados e tente publicar novamente.')} onChange={() => { if (announcementError) setAnnouncementError('') }}>
               <section className="announcement-step-panel">
                 <div className="announcement-step-heading"><span>1</span><div><h3>Qual o tipo do imóvel? <i>*</i></h3><p>Selecione a categoria que melhor descreve seu imóvel.</p></div></div>
                 <div className="announcement-category-grid">
@@ -1216,6 +1231,7 @@ function App() {
                 <small className="announcement-photo-message">{imageLoading ? 'Enviando...' : imageMessage || `${announcementPhotos.length}/5 fotos. JPG, PNG ou WEBP, até 8 MB cada.`}</small>
               </section>
 
+              {announcementError && <p className="announcement-submit-error" role="alert">{announcementError}</p>}
               <div className="form-actions">
                 <button type="button" className="cancel-form-btn" onClick={closeAnnouncementForm}>Cancelar</button>
                 <button type="submit" className="submit-form-btn" disabled={announcementSubmitting || imageLoading}>{announcementSubmitting ? <><span className="announcement-spinner" />Publicando...</> : '➤  Publicar imóvel'}</button>
