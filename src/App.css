@@ -2874,3 +2874,35 @@
     padding-top: 0;
   }
 }
+
+.top-header .header-actions {
+  z-index: 20;
+}
+
+.top-header .header-actions > .header-avatar {
+  display: inline-flex !important;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.top-header .header-actions > .menu-toggle {
+  display: inline-grid !important;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.menu-toggle-icon {
+  display: block;
+}
+
+.header-avatar:focus-visible,
+.menu-toggle:focus-visible {
+  outline: 2px solid #8bea45;
+  outline-offset: 3px;
+}

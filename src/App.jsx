@@ -820,8 +820,10 @@ function App() {
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
           <span className="header-divider" aria-hidden="true" />
-          <span className="header-avatar" aria-label={authUser ? `Usuário ${userFirstName}` : 'Visitante'}>{userFirstName.charAt(0)}</span>
-          <button type="button" className="menu-toggle" aria-label="Abrir menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}>☰</button>
+          <button type="button" className="header-avatar" aria-label={authUser ? `Abrir conta de ${userFirstName}` : 'Abrir acesso à conta'} onClick={() => authUser ? setAccountOpen(true) : setAuthOpen(true)}>{userFirstName.charAt(0)}</button>
+          <button type="button" className="menu-toggle" aria-label="Abrir menu lateral" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}>
+            <svg className="menu-toggle-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+          </button>
           {isSupabaseConfigured && !authUser && <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>}
         </div>
 
