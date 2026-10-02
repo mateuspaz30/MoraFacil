@@ -4,6 +4,8 @@ import './ListingShowcase.css'
 export const PORTAL_CITY = 'Ipuã-SP'
 
 const typeLabels = {
+  casa: 'Casa',
+  apartamento: 'Apartamento',
   venda: 'Venda',
   aluguel: 'Aluguel',
   terreno: 'Terreno',
