@@ -2974,7 +2974,8 @@
   gap: 4px 14px;
   width: 100%;
   max-width: none;
-  height: 260px;
+  height: auto;
+  min-height: 260px;
   margin: 0 auto;
   padding: 8px 22px;
   border: 1px solid #dce3eb;
