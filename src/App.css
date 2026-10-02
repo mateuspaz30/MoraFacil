@@ -3130,11 +3130,11 @@
   }
 
   .home-search-grid .filters-bar.search-panel {
-    order: 0;
+    order: 1;
   }
 
   .home-search-grid .hero-listing-card {
-    order: 1;
+    order: 0;
     min-height: 220px;
     height: 220px;
   }
