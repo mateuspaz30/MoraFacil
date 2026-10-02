@@ -2969,12 +2969,14 @@
   order: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: start;
-  gap: 22px 24px;
+  grid-template-rows: auto auto auto auto auto;
+  align-content: space-between;
+  gap: 4px 14px;
   width: 100%;
   max-width: none;
+  height: 260px;
   margin: 0 auto;
-  padding: 36px 40px 32px;
+  padding: 8px 22px;
   border: 1px solid #dce3eb;
   border-radius: 24px;
   background: #fff;
@@ -2989,48 +2991,49 @@
 }
 
 .home-search-grid .search-panel .field {
-  gap: 9px;
+  gap: 3px;
 }
 
 .home-search-grid .search-panel .field label {
   color: #243953;
-  font-size: 1.02rem;
+  font-size: 0.72rem;
   font-weight: 750;
+  line-height: 1.1;
 }
 
 .home-search-grid .search-panel .field.filter-search label {
   margin-bottom: 1px;
   color: #0f2345;
-  font-size: 2.15rem;
+  font-size: 1.24rem;
   font-weight: 750;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .home-search-grid .search-panel .filter-select-control,
 .home-search-grid .search-panel .filter-select-control.emphasized {
-  min-height: 78px;
-  padding: 0 54px 0 78px;
+  min-height: 36px;
+  padding: 0 34px 0 48px;
   border: 1.5px solid #dce3eb;
-  border-radius: 20px;
+  border-radius: 12px;
   background: #fff;
   color: #142d4c;
   box-shadow: inset 0 1px 2px rgba(15, 35, 69, 0.025);
-  font-size: 1.35rem;
+  font-size: 0.94rem;
   font-weight: 500;
 }
 
 .home-search-grid .search-panel .filter-select-control.emphasized {
-  min-height: 82px;
-  font-size: 1.5rem;
+  min-height: 36px;
+  font-size: 1.05rem;
   font-weight: 650;
 }
 
 .home-search-grid .search-panel .filter-select-icon {
   position: absolute;
-  left: 26px;
+  left: 14px;
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   place-items: center;
   color: #64748b;
   pointer-events: none;
@@ -3043,10 +3046,10 @@
 }
 
 .home-search-grid .search-panel .filter-select-chevron {
-  right: 24px;
-  border-top-width: 8px;
-  border-right-width: 8px;
-  border-left-width: 8px;
+  right: 13px;
+  border-top-width: 5px;
+  border-right-width: 5px;
+  border-left-width: 5px;
   color: #64748b;
 }
 
@@ -3058,24 +3061,24 @@
 .home-search-grid .search-panel .results-counter {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 30px;
+  gap: 7px;
+  min-height: 18px;
   margin: 0;
   color: #2bbe5a;
-  font-size: 1rem;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
 .results-counter-check {
   display: grid;
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
   place-items: center;
   border-radius: 50%;
   background: #2bbe5a;
   color: white;
-  font-size: 1rem;
+  font-size: 0.68rem;
   font-weight: 900;
 }
 
@@ -3083,22 +3086,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  min-height: 72px;
+  gap: 8px;
+  min-height: 38px;
   border: 0;
-  border-radius: 18px;
-  padding: 0 24px;
+  border-radius: 12px;
+  padding: 0 16px;
   background: linear-gradient(100deg, #35bd59 0%, #42c95f 100%);
   box-shadow: 0 8px 18px rgba(43, 190, 90, 0.16);
   color: #fff;
-  font-size: 1.4rem;
+  font-size: 1rem;
   font-weight: 750;
   transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
 
 .home-search-grid .search-panel .search-btn svg {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
 }
 
 .home-search-grid .search-panel .search-btn:hover {
@@ -3141,9 +3144,10 @@
 
   .home-search-grid .filters-bar.search-panel {
     grid-template-columns: minmax(0, 1fr);
-    gap: 17px;
-    padding: 24px 20px;
-    border-radius: 20px;
+    grid-template-rows: auto auto auto auto auto;
+    gap: 4px;
+    padding: 8px 20px;
+    border-radius: 18px;
   }
 
   .home-search-grid .search-panel .filter-search,
@@ -3154,27 +3158,29 @@
   }
 
   .home-search-grid .search-panel .field.filter-search label {
-    font-size: 1.7rem;
+    font-size: 1.24rem;
   }
+
+  .home-search-grid .search-panel .field label { font-size: 0.72rem; }
 
   .home-search-grid .search-panel .filter-select-control,
   .home-search-grid .search-panel .filter-select-control.emphasized {
-    min-height: 64px;
-    padding-left: 62px;
-    border-radius: 16px;
-    font-size: 1.1rem;
+    min-height: 36px;
+    padding-left: 48px;
+    border-radius: 12px;
+    font-size: 0.94rem;
   }
 
   .home-search-grid .search-panel .filter-select-icon {
-    left: 20px;
-    width: 24px;
-    height: 24px;
+    left: 14px;
+    width: 20px;
+    height: 20px;
   }
 
   .home-search-grid .search-panel .search-btn {
-    min-height: 64px;
-    border-radius: 16px;
-    font-size: 1.2rem;
+    min-height: 38px;
+    border-radius: 12px;
+    font-size: 1rem;
   }
 }
 
@@ -3185,6 +3191,6 @@
   }
 
   .home-search-grid .search-panel .field.filter-search label {
-    font-size: 1.55rem;
+    font-size: 1.1rem;
   }
 }
