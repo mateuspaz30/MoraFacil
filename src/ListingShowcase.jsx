@@ -292,82 +292,73 @@ export function ListingDetailPage({ listing }) {
         </div>
       </header>
       <article className="listing-detail-layout">
-        <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
-          <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
-            {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
-            <span className={`showcase-type-badge type-${purpose}`} translate="no">{purposeLabel}</span>
-            {galleryImages.length > 1 && <>
-              <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
-              <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
-            </>}
-            <span className="listing-gallery-count"><span aria-hidden="true">▣</span> {galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
-          </div>
-          {galleryImages.length > 1 && <div className="listing-detail-thumbnails">
-            {visibleThumbnails.map((photo, index) => {
-              const photoIndex = index + 1
-              const isLast = index === visibleThumbnails.length - 1
-              const remaining = Math.max(galleryImages.length - 4, 0)
-              return (
-                <button type="button" className="listing-detail-thumbnail" key={`${photo}-${photoIndex}`} onClick={() => isLast && galleryImages.length > 4 ? setGalleryOpen(true) : setActiveImageIndex(photoIndex)} aria-label={isLast ? 'Ver todas as fotos' : `Ver foto ${photoIndex + 1}`}>
-                  <img src={photo} alt={`Foto ${photoIndex + 1} de ${listing.title}`} />
-                  {isLast && <span className="listing-thumbnail-overlay">{remaining > 0 && <strong>+{remaining}</strong>}<small>Ver todas as fotos</small></span>}
-                </button>
-              )
-            })}
-          </div>}
-        </section>
+        <div className="listing-detail-primary-column">
+          <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
+            <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
+              {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
+              <span className={`showcase-type-badge type-${purpose}`} translate="no">{purposeLabel}</span>
+              {galleryImages.length > 1 && <>
+                <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
+                <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
+              </>}
+              <span className="listing-gallery-count"><span aria-hidden="true">▣</span> {galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
+            </div>
+            {galleryImages.length > 1 && <div className="listing-detail-thumbnails">
+              {visibleThumbnails.map((photo, index) => {
+                const photoIndex = index + 1
+                const isLast = index === visibleThumbnails.length - 1
+                const remaining = Math.max(galleryImages.length - 4, 0)
+                return (
+                  <button type="button" className="listing-detail-thumbnail" key={`${photo}-${photoIndex}`} onClick={() => isLast && galleryImages.length > 4 ? setGalleryOpen(true) : setActiveImageIndex(photoIndex)} aria-label={isLast ? 'Ver todas as fotos' : `Ver foto ${photoIndex + 1}`}>
+                    <img src={photo} alt={`Foto ${photoIndex + 1} de ${listing.title}`} />
+                    {isLast && <span className="listing-thumbnail-overlay">{remaining > 0 && <strong>+{remaining}</strong>}<small>Ver todas as fotos</small></span>}
+                  </button>
+                )
+              })}
+            </div>}
+          </section>
 
-        <aside className="listing-detail-price-card">
-          <span className="listing-detail-eyebrow">Valor do imóvel</span>
-          <strong className="listing-detail-price">{price}</strong>
-          {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
-          {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
-        </aside>
+          <section className="listing-detail-description listing-detail-card">
+            <h2><span aria-hidden="true">▤</span>Sobre este imóvel</h2>
+            <p>{description}</p>
+          </section>
 
-        <aside className="listing-detail-advertiser-card">
-          <h2>Anunciante</h2>
-          <div className="listing-detail-advertiser"><span>{String(listing.advertiser || 'M').trim().charAt(0).toLocaleUpperCase('pt-BR')}</span><div><strong>{listing.advertiser || 'Anunciante particular'}</strong><small>♢ Anunciante particular</small></div></div>
-        </aside>
+          <section className="listing-detail-address-card listing-detail-card">
+            <div className="listing-detail-address-copy"><h2><span aria-hidden="true">⌖</span>Endereço</h2>
+              <p>{fullAddress}</p>
+              {neighborhood && <p>{neighborhood}</p>}
+              <p>{city}</p>
+              {listing.cep && <p>CEP: {listing.cep}</p>}
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery)}`} target="_blank" rel="noreferrer">Abrir no Google Maps ↗</a>
+            </div>
+          </section>
+        </div>
 
-        <section className="listing-detail-highlights" aria-label="Características do imóvel">
-          <div><span aria-hidden="true">🛏</span><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
-          <div><span aria-hidden="true">🚿</span><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
-          <div><span aria-hidden="true">🚗</span><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
-          <div><span aria-hidden="true">📐</span><strong>{area ? `${area} m²` : '—'}</strong><small>Área construída</small></div>
-        </section>
+        <aside className="listing-detail-sidebar">
+          <section className="listing-detail-price-card">
+            <span className="listing-detail-eyebrow">Valor do imóvel</span>
+            <strong className="listing-detail-price">{price}</strong>
+            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
+            {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
+          </section>
 
-        <section className="listing-detail-description listing-detail-card">
-          <h2><span aria-hidden="true">▤</span>Sobre este imóvel</h2>
-          <p>{description}</p>
-        </section>
+          <section className="listing-detail-advertiser-card">
+            <h2>Anunciante</h2>
+            <div className="listing-detail-advertiser"><span>{String(listing.advertiser || 'M').trim().charAt(0).toLocaleUpperCase('pt-BR')}</span><div><strong>{listing.advertiser || 'Anunciante particular'}</strong><small>♢ Anunciante particular</small></div></div>
+          </section>
 
-        <section className="listing-detail-address-card listing-detail-card">
-          <div className="listing-detail-address-copy"><h2><span aria-hidden="true">⌖</span>Endereço</h2>
-            <p>{fullAddress}</p>
-            {neighborhood && <p>{neighborhood}</p>}
-            <p>{city}</p>
-            {listing.cep && <p>CEP: {listing.cep}</p>}
-          </div>
-          <div className="listing-detail-map">
-            <iframe title={`Mapa do endereço de ${listing.title}`} src={`https://www.google.com/maps?q=${encodeURIComponent(addressQuery)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery)}`} target="_blank" rel="noreferrer">Ver no Google Maps ↗</a>
-          </div>
-        </section>
-
-        <aside className="listing-detail-information-card listing-detail-card">
-          <h2><span aria-hidden="true">▤</span>Informações do imóvel</h2>
-          <dl>
-            <div><dt><span aria-hidden="true">↗</span>Finalidade</dt><dd>{purposeLabel}</dd></div>
-            <div><dt><span aria-hidden="true">⌂</span>Tipo do imóvel</dt><dd>{propertyTypeLabel}</dd></div>
-            <div><dt><span aria-hidden="true">📐</span>Área construída</dt><dd>{area ? `${area} m²` : '—'}</dd></div>
-            <div><dt><span aria-hidden="true">🛏</span>Quartos</dt><dd>{bedrooms}</dd></div>
-            <div><dt><span aria-hidden="true">🚿</span>Banheiros</dt><dd>{bathrooms}</dd></div>
-            <div><dt><span aria-hidden="true">🚗</span>Vagas</dt><dd>{parking}</dd></div>
-          </dl>
-        </aside>
-
-        <aside className="listing-detail-published-card listing-detail-card">
-          <span aria-hidden="true">▦</span><div><strong>Publicado em</strong><small>{publishedDate}</small></div>
+          <section className="listing-detail-information-card listing-detail-card">
+            <h2><span aria-hidden="true">▤</span>Informações do imóvel</h2>
+            <dl>
+              <div><dt><span aria-hidden="true">↗</span>Finalidade</dt><dd>{purposeLabel}</dd></div>
+              <div><dt><span aria-hidden="true">⌂</span>Tipo do imóvel</dt><dd>{propertyTypeLabel}</dd></div>
+              <div><dt><span aria-hidden="true">📐</span>Área construída</dt><dd>{area ? `${area} m²` : '—'}</dd></div>
+              <div><dt><span aria-hidden="true">🛏</span>Quartos</dt><dd>{bedrooms}</dd></div>
+              <div><dt><span aria-hidden="true">🚿</span>Banheiros</dt><dd>{bathrooms}</dd></div>
+              <div><dt><span aria-hidden="true">🚗</span>Vagas</dt><dd>{parking}</dd></div>
+              <div><dt><span aria-hidden="true">▦</span>Publicado em</dt><dd>{publishedDate}</dd></div>
+            </dl>
+          </section>
         </aside>
       </article>
 
