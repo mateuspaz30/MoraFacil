@@ -3061,24 +3061,29 @@
 .home-search-grid .search-panel .results-counter {
   display: flex;
   align-items: center;
-  gap: 7px;
-  min-height: 18px;
-  margin: 0;
+  justify-self: start;
+  gap: 8px;
+  min-height: 24px;
+  margin: 2px 0 4px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  background: #effbf2;
   color: #2bbe5a;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .results-counter-check {
   display: grid;
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
   place-items: center;
   border-radius: 50%;
   background: #2bbe5a;
   color: white;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 900;
 }
 
