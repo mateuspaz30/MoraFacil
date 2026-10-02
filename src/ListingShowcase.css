@@ -409,16 +409,52 @@
   }
 
   .property-showcase-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .showcase-type-badge {
+    top: 6px;
+    left: 6px;
+    padding: 0.22rem 0.42rem;
+    font-size: 0.62rem;
   }
 
   .showcase-property-body {
-    padding: 14px 14px 4px;
+    gap: 3px;
+    padding: 8px 9px 2px;
+  }
+
+  .showcase-property-body h3 {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  .showcase-property-location {
+    font-size: 0.68rem;
+  }
+
+  .showcase-property-price {
+    margin-top: 1px;
+    font-size: 0.98rem;
+  }
+
+  .showcase-property-features {
+    gap: 3px 8px;
+    min-height: calc(2 * 1.2em + 3px);
+    margin-top: 4px;
+    font-size: 0.64rem;
+  }
+
+  .showcase-property-features .showcase-land-note {
+    font-size: 0.62rem;
   }
 
   .showcase-property-cta {
-    margin: 12px 14px 16px;
+    margin: 8px 9px 10px;
+    min-height: 34px;
+    border-radius: 7px;
+    font-size: 0.72rem;
   }
 
   .listing-detail-header {
