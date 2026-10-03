@@ -1285,7 +1285,12 @@ function App() {
               <section className="announcement-step-panel">
                 <div className="announcement-step-heading"><span>1</span><div><h3>Qual o tipo do imóvel? <i>*</i></h3><p>Selecione a categoria que melhor descreve seu imóvel.</p></div></div>
                 <div className="announcement-category-grid">
-                  {[['Casa', '⌂'], ['Apartamento', '▦'], ['Terreno', '♣'], ['Ponto Comercial', '▤']].map(([category, icon]) => (
+                  {[
+                    ['Casa', <svg key="casa" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m3 10 9-7 9 7M5.5 9v11h13V9M9.5 20v-6h5v6" /></svg>],
+                    ['Apartamento', <svg key="apartamento" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 21V4h14v17M3 21h18M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1m-3 5v-3" /></svg>],
+                    ['Terreno', <svg key="terreno" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m4 7 13-3 3 13-13 3L4 7ZM7 9l9-2 2 8-9 2-2-8ZM4 7 2.5 5.5M20 17l1.5 1.5M17 4l-.5-2M7 20l-.5 2" /></svg>],
+                    ['Ponto Comercial', <svg key="ponto-comercial" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16v11H4zM3 10l2-6h14l2 6M3 10c0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0M9 21v-6h4v6m4-7h.01" /></svg>],
+                  ].map(([category, icon]) => (
                     <button type="button" key={category} className={`announcement-category${announcementCategory === category ? ' selected' : ''}`} aria-pressed={announcementCategory === category} onClick={() => {
                       setAnnouncementCategory(category)
                       if (category === 'Terreno') setAnnouncement((current) => ({ ...current, type: 'terreno' }))
