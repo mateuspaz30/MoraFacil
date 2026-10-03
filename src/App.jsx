@@ -318,7 +318,6 @@ function App() {
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [adminCheckMessage, setAdminCheckMessage] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
@@ -379,7 +378,11 @@ function App() {
       if (mounted) setAuthUser(session?.user || null)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setModerationMessage('')
+        setFeaturedDrafts({})
+      }
       setAuthUser(session?.user || null)
     })
 
@@ -394,12 +397,11 @@ function App() {
 
     supabase.rpc('is_admin').then(({ data, error }) => {
       if (error) {
+        console.error('Falha ao verificar permissões administrativas:', error)
         setIsAdmin(false)
-        setAdminCheckMessage('Execute a migração de administrador no Supabase para liberar a gestão de todos os anúncios.')
         return
       }
       setIsAdmin(Boolean(data))
-      setAdminCheckMessage(data ? '' : 'Esta conta ainda não está registrada como administradora.')
     })
   }, [authUser])
 
@@ -810,6 +812,8 @@ function App() {
     await supabase?.auth.signOut()
     setIsAdmin(false)
     setUserListings([])
+    setModerationMessage('')
+    setFeaturedDrafts({})
     setAccountOpen(false)
   }
 
@@ -861,8 +865,9 @@ function App() {
 
   const saveFeaturedListing = async (event, listing, draft) => {
     event.preventDefault()
-    if (!isAdmin || !supabase || !authUser) {
-      setModerationMessage('Entre como administrador para gerenciar os anúncios em destaque.')
+    if (!isAdmin) return
+    if (!supabase || !authUser) {
+      setModerationMessage('Não foi possível salvar o destaque. Verifique a conexão com sua conta.')
       return
     }
 
@@ -902,9 +907,6 @@ function App() {
         delete next[listing.id]
         return next
       })
-      setModerationMessage(draft.destaqueHome
-        ? `“${listing.title}” foi destacado na posição ${order} da Home.`
-        : `“${listing.title}” não está mais destacado na Home.`)
     } catch (error) {
       const missingFeaturedColumns = /(destaque_home|ordem_destaque)/i.test(error.message || '')
       setModerationMessage(missingFeaturedColumns
@@ -977,6 +979,11 @@ function App() {
     : accountFilter === 'published' ? activeListings
       : accountFilter === 'rejected' ? rejectedListings
         : accountFilter === 'completed' ? completedListings : userListings
+  const ownFeaturedListings = authUser
+    ? userListings
+      .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isApprovedListing(item))
+      .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
+    : []
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
@@ -1041,7 +1048,11 @@ function App() {
                 <span>Concluídos</span>
               </article>
             </div>
-            {adminCheckMessage && <p className="admin-check-message">{adminCheckMessage}</p>}
+            {ownFeaturedListings.map((item) => (
+              <p className="moderation-message" role="status" key={item.id}>
+                Seu anúncio “{item.title}” está destacado na posição {item.ordem_destaque} da Home.
+              </p>
+            ))}
             {moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
             <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
