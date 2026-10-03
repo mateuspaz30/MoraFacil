@@ -321,6 +321,7 @@ const FacebookIcon = () => (
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [mapFullscreenOpen, setMapFullscreenOpen] = useState(false)
+  const [announcementMapFullscreenOpen, setAnnouncementMapFullscreenOpen] = useState(false)
   const [userListings, setUserListings] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('morafacil-user-listings') || '[]')
@@ -381,14 +382,14 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!mapFullscreenOpen) return undefined
+    if (!mapFullscreenOpen && !announcementMapFullscreenOpen) return undefined
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [mapFullscreenOpen])
+  }, [announcementMapFullscreenOpen, mapFullscreenOpen])
 
   const publicPublishedListings = publishedListings.filter(isApprovedListing)
   const listings = isSupabaseConfigured
@@ -983,6 +984,7 @@ function App() {
       if (event.key === 'Escape') {
         closeDetails()
         setMapFullscreenOpen(false)
+        setAnnouncementMapFullscreenOpen(false)
       }
     }
     
@@ -1414,15 +1416,9 @@ function App() {
       >
         <div className={`map-overlay-toolbar${mapFullscreenOpen ? ' map-fullscreen-toolbar' : ''}`}>
           {mapFullscreenOpen ? (
-            <>
-              <button type="button" className="map-close-button" onClick={() => setMapFullscreenOpen(false)}>✕ Fechar</button>
-              <div className="map-results-count" aria-live="polite"><span aria-hidden="true">🏠</span> {resultsLabel}</div>
-            </>
+            <button type="button" className="map-close-button" onClick={() => setMapFullscreenOpen(false)}>✕ Fechar</button>
           ) : (
-            <>
-              <div className="map-results-count" aria-live="polite"><span aria-hidden="true">🏠</span> {resultsLabel}</div>
-              <button type="button" className="map-expand-button" onClick={() => setMapFullscreenOpen(true)}>⛶ Expandir mapa</button>
-            </>
+            <button type="button" className="map-expand-button" onClick={() => setMapFullscreenOpen(true)}>⛶ Expandir mapa</button>
           )}
         </div>
         <MapContainer center={mapCenter} zoom={14} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
@@ -1542,9 +1538,30 @@ function App() {
 
               <section className="announcement-step-panel">
                 <div className="announcement-step-heading"><span>4</span><div><h3>Localização <i>*</i></h3><p>Marque a localização exata do seu imóvel no mapa.</p></div></div>
-                <div className="location-confirmation">
-                  <div className="location-confirmation-header"><div><strong>⌖ &nbsp;Localizar no mapa</strong><small>{addressMessage || 'Clique no mapa ou arraste o marcador para definir a localização do imóvel.'}</small></div><button type="button" className="locate-button" onClick={locateAnnouncement} disabled={addressLoading}>{addressLoading ? 'Localizando...' : 'Buscar endereço'}</button></div>
-                  <MapContainer center={announcementCoordinates} zoom={16} className="announcement-map" scrollWheelZoom>
+                <div
+                  className={`location-confirmation${announcementMapFullscreenOpen ? ' location-confirmation-fullscreen' : ''}`}
+                  role={announcementMapFullscreenOpen ? 'dialog' : undefined}
+                  aria-modal={announcementMapFullscreenOpen ? 'true' : undefined}
+                  aria-label="Mapa para marcar a localização do imóvel"
+                >
+                  <div className="location-confirmation-header">
+                    <div>
+                      <strong>⌖ &nbsp;Localizar no mapa</strong>
+                      <small>{addressMessage || 'Clique no mapa ou arraste o marcador para definir a localização do imóvel.'}</small>
+                    </div>
+                    <div className="location-confirmation-actions">
+                      <button type="button" className="locate-button" onClick={locateAnnouncement} disabled={addressLoading}>{addressLoading ? 'Localizando...' : 'Buscar endereço'}</button>
+                      <button
+                        type="button"
+                        className="location-map-toggle-button"
+                        onClick={() => setAnnouncementMapFullscreenOpen((current) => !current)}
+                      >
+                        {announcementMapFullscreenOpen ? '✕ Fechar' : '⛶ Expandir mapa'}
+                      </button>
+                    </div>
+                  </div>
+                  <MapContainer center={announcementCoordinates} zoom={16} className="announcement-map" scrollWheelZoom touchZoom dragging>
+                    <MapResizeObserver fullscreen={announcementMapFullscreenOpen} />
                     <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <AnnouncementMapClick onSelect={(coordinates) => { setAnnouncementCoordinates(coordinates); setLocationConfirmed(true); setAddressMessage('Localização marcada. Você pode ajustar o marcador no mapa.') }} />
                     <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(typeColors[announcement.type])} />

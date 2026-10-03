@@ -3318,29 +3318,13 @@
   z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   pointer-events: none;
 }
 
 .map-overlay-toolbar > * {
   pointer-events: auto;
-}
-
-.map-results-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  max-width: calc(100% - 150px);
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  border-radius: 999px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16);
-  color: #153457;
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1.2;
 }
 
 .map-expand-button,
@@ -3400,11 +3384,6 @@
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
 }
 
-.map-fullscreen-toolbar .map-results-count {
-  max-width: none;
-  box-shadow: none;
-}
-
 .map-panel-fullscreen .map-box-main {
   position: absolute;
   top: var(--map-fullscreen-header-height);
@@ -3454,12 +3433,6 @@
 }
 
 @media (max-width: 600px) {
-  .map-fullscreen-toolbar .map-results-count {
-    gap: 5px;
-    padding: 7px 9px;
-    font-size: 0.72rem;
-  }
-
   .map-close-button {
     min-height: 36px;
     padding: 7px 9px;
@@ -3468,5 +3441,134 @@
 
   .map-detail-card {
     width: min(260px, calc(100vw - 72px));
+  }
+}
+
+.map-fullscreen-toolbar {
+  justify-content: flex-start;
+}
+
+.location-confirmation-header {
+  width: min(430px, calc(100% - 20px));
+  max-width: none;
+  display: grid;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.location-confirmation-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.location-confirmation-actions .locate-button,
+.location-map-toggle-button {
+  position: static;
+  flex: 1 1 auto;
+  min-height: 34px;
+  margin: 0;
+  border: 1px solid #d5e2ec;
+  border-radius: 7px;
+  padding: 7px 9px;
+  background: #fff;
+  color: #153457;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.location-confirmation-actions .locate-button {
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.location-confirmation-actions .locate-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.location-map-toggle-button:hover {
+  background: #f1f7fb;
+}
+
+.location-confirmation-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.location-confirmation-fullscreen .location-confirmation-header {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: 1000;
+  width: 100%;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px));
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+}
+
+.location-confirmation-fullscreen .location-confirmation-header > div:first-child {
+  min-width: 0;
+}
+
+.location-confirmation-fullscreen .location-confirmation-header small {
+  display: block;
+}
+
+.location-confirmation-fullscreen .location-confirmation-actions {
+  flex: 0 0 auto;
+}
+
+.location-confirmation-fullscreen .announcement-map {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.location-confirmation-fullscreen .announcement-map-status {
+  flex: 0 0 auto;
+  padding: 8px max(12px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: #fff;
+}
+
+@media (max-width: 600px) {
+  .location-confirmation-header {
+    width: min(430px, calc(100% - 20px));
+  }
+
+  .location-confirmation-fullscreen .location-confirmation-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .location-confirmation-fullscreen .location-confirmation-actions {
+    width: 100%;
   }
 }
