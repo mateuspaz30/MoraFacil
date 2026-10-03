@@ -2639,11 +2639,13 @@
 
 .account-dashboard-card {
   display: grid;
+  min-width: 0;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
-  grid-template-rows: minmax(0, 1fr) 40px;
+  grid-template-rows: minmax(0, 1fr) auto;
   column-gap: 18px;
   row-gap: 10px;
-  height: 304px;
+  min-height: 304px;
+  height: auto;
   overflow: hidden;
   padding: 12px;
   border: 1px solid #dce8f3;
@@ -2758,14 +2760,17 @@
 
 .account-card-actions {
   display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: auto;
   gap: 8px;
   min-width: 0;
 }
 
 .account-card-actions button {
-  flex: 1;
+  flex: 1 1 max-content;
+  min-width: max-content;
   border: 1px solid #087cf0;
   border-radius: 7px;
   background: #087cf0;
@@ -2774,6 +2779,7 @@
   cursor: pointer;
   font-size: 0.68rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .account-card-actions button.delete {
@@ -2884,8 +2890,9 @@
 
   .account-dashboard-card {
     grid-template-columns: 1fr;
-    grid-template-rows: 180px minmax(0, 1fr) 38px;
-    height: 390px;
+    grid-template-rows: 180px minmax(0, 1fr) auto;
+    min-height: 390px;
+    height: auto;
     gap: 10px;
     padding: 10px;
   }
