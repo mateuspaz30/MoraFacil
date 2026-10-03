@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -257,6 +257,26 @@ function AnnouncementMapClick({ onSelect }) {
   return null
 }
 
+function MapResizeObserver({ fullscreen }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const invalidateSize = () => map.invalidateSize({ pan: false })
+    const frame = window.requestAnimationFrame(invalidateSize)
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(invalidateSize)
+    observer?.observe(map.getContainer())
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer?.disconnect()
+    }
+  }, [fullscreen, map])
+
+  return null
+}
+
 const MenuSearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -300,6 +320,7 @@ const FacebookIcon = () => (
 
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
+  const [mapFullscreenOpen, setMapFullscreenOpen] = useState(false)
   const [userListings, setUserListings] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('morafacil-user-listings') || '[]')
@@ -358,6 +379,16 @@ function App() {
     window.addEventListener('pageshow', resetHomePropertyType)
     return () => window.removeEventListener('pageshow', resetHomePropertyType)
   }, [])
+
+  useEffect(() => {
+    if (!mapFullscreenOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mapFullscreenOpen])
 
   const publicPublishedListings = publishedListings.filter(isApprovedListing)
   const listings = isSupabaseConfigured
@@ -461,6 +492,7 @@ function App() {
 
     return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches
   })
+  const resultsLabel = `${filteredListings.length} ${filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`
 
   const heroCarouselListings = listings
     .filter((item) => isApprovedListing(item) && item.destaque_home === true)
@@ -504,6 +536,10 @@ function App() {
   ]
 
   const openDetails = (listing) => setSelectedListing(listing)
+  const openListingFromMap = (listing) => {
+    setMapFullscreenOpen(false)
+    openDetails(listing)
+  }
   const closeDetails = () => setSelectedListing(null)
 
   const openAnnouncementForm = (listing = null) => {
@@ -944,7 +980,10 @@ function App() {
   
   useEffect(() => {
     const handleEscape = (event) => {
-      if (event.key === 'Escape') closeDetails()
+      if (event.key === 'Escape') {
+        closeDetails()
+        setMapFullscreenOpen(false)
+      }
     }
     
     document.addEventListener('keydown', handleEscape)
@@ -1357,7 +1396,7 @@ function App() {
 
         <div className="results-counter" aria-live="polite">
           <span className="results-counter-check" aria-hidden="true">✓</span>
-          {filteredListings.length} {filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+          {resultsLabel}
         </div>
         <button type="button" className="search-btn" onClick={() => setAppliedFilters(draftFilters)}><FilterIcon name="search" />Buscar</button>
         </section>
@@ -1367,8 +1406,27 @@ function App() {
         <span className="map-label">Mapa de Ipuã-SP</span>
       </div>
 
-      <section className="map-panel" aria-label="Mapa com imóveis disponíveis">
-        <MapContainer center={mapCenter} zoom={14} className="map-box" scrollWheelZoom>
+      <section
+        className={`map-panel${mapFullscreenOpen ? ' map-panel-fullscreen' : ''}`}
+        aria-label="Mapa com imóveis disponíveis"
+        role={mapFullscreenOpen ? 'dialog' : undefined}
+        aria-modal={mapFullscreenOpen ? 'true' : undefined}
+      >
+        <div className={`map-overlay-toolbar${mapFullscreenOpen ? ' map-fullscreen-toolbar' : ''}`}>
+          {mapFullscreenOpen ? (
+            <>
+              <button type="button" className="map-close-button" onClick={() => setMapFullscreenOpen(false)}>✕ Fechar</button>
+              <div className="map-results-count" aria-live="polite"><span aria-hidden="true">🏠</span> {resultsLabel}</div>
+            </>
+          ) : (
+            <>
+              <div className="map-results-count" aria-live="polite"><span aria-hidden="true">🏠</span> {resultsLabel}</div>
+              <button type="button" className="map-expand-button" onClick={() => setMapFullscreenOpen(true)}>⛶ Expandir mapa</button>
+            </>
+          )}
+        </div>
+        <MapContainer center={mapCenter} zoom={14} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
+          <MapResizeObserver fullscreen={mapFullscreenOpen} />
           <TileLayer
             attribution='&copy; Esri &copy; OpenStreetMap contributors'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -1381,13 +1439,13 @@ function App() {
             <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(typeColors[item.type])}>
               <Popup>
                 <div className="map-detail-card">
-                  <h3>{item.title}</h3>
-                  <p className="detail-price">{item.price}</p>
-                  <p className="detail-meta">{item.address}</p>
-                  <p className="detail-meta">
-                    {item.bedrooms > 0 ? `${item.bedrooms} quartos` : 'Terreno'} · {formatArea(item.area)}
-                  </p>
-                  <button type="button" className="detail-button" onClick={() => openDetails(item)}>Saiba mais →</button>
+                  {item.image && <img className="map-detail-image" src={item.image} alt={item.title} />}
+                  <div className="map-detail-content">
+                    <h3>{item.title}</h3>
+                    <p className="detail-price">{item.price}</p>
+                    <p className="detail-meta">{item.neighborhood || item.address}</p>
+                    <button type="button" className="detail-button" onClick={() => openListingFromMap(item)}>Ver imóvel</button>
+                  </div>
                 </div>
               </Popup>
             </Marker>
