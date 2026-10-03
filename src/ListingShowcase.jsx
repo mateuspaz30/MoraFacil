@@ -325,10 +325,10 @@ export function ListingDetailPage({ listing }) {
 
           <section className="listing-detail-address-card listing-detail-card">
             <div className="listing-detail-address-copy"><h2><span aria-hidden="true">⌖</span>Endereço</h2>
-              <p>{fullAddress}</p>
+              <p className="address-street"><span aria-hidden="true">📍</span> {fullAddress}</p>
               {neighborhood && <p>{neighborhood}</p>}
               <p>{city}</p>
-              {listing.cep && <p>CEP: {listing.cep}</p>}
+              {listing.cep && <p>CEP {listing.cep}</p>}
               <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery)}`} target="_blank" rel="noreferrer">Abrir no Google Maps ↗</a>
             </div>
           </section>
@@ -349,15 +349,15 @@ export function ListingDetailPage({ listing }) {
 
           <section className="listing-detail-information-card listing-detail-card">
             <h2><span aria-hidden="true">▤</span>Informações do imóvel</h2>
-            <dl>
-              <div><dt><span aria-hidden="true">↗</span>Finalidade</dt><dd>{purposeLabel}</dd></div>
-              <div><dt><span aria-hidden="true">⌂</span>Tipo do imóvel</dt><dd>{propertyTypeLabel}</dd></div>
-              <div><dt><span aria-hidden="true">📐</span>Área construída</dt><dd>{area ? `${area} m²` : '—'}</dd></div>
-              <div><dt><span aria-hidden="true">🛏</span>Quartos</dt><dd>{bedrooms}</dd></div>
-              <div><dt><span aria-hidden="true">🚿</span>Banheiros</dt><dd>{bathrooms}</dd></div>
-              <div><dt><span aria-hidden="true">🚗</span>Vagas</dt><dd>{parking}</dd></div>
-              <div><dt><span aria-hidden="true">▦</span>Publicado em</dt><dd>{publishedDate}</dd></div>
-            </dl>
+            <ul className="listing-detail-info-grid">
+              <li><span aria-hidden="true">🏠</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
+              <li><span aria-hidden="true">⌂</span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
+              <li><span aria-hidden="true">📐</span><div><strong>{area ? `${area} m²` : '—'}</strong><small>Área construída</small></div></li>
+              <li><span aria-hidden="true">🛏</span><div><strong>{bedrooms} {bedrooms === 1 ? 'Quarto' : 'Quartos'}</strong><small>Dormitórios</small></div></li>
+              <li><span aria-hidden="true">🚿</span><div><strong>{bathrooms} {bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</strong><small>Banheiros</small></div></li>
+              <li><span aria-hidden="true">🚗</span><div><strong>{parking} {parking === 1 ? 'Vaga' : 'Vagas'}</strong><small>Garagem</small></div></li>
+              <li className="info-wide"><span aria-hidden="true">▦</span><div><strong>{publishedDate}</strong><small>Publicado em</small></div></li>
+            </ul>
           </section>
         </aside>
       </article>
