@@ -6,6 +6,12 @@ create table public.listings (
   property_category text not null default 'casa' check (property_category in ('casa', 'apartamento', 'terreno', 'ponto_comercial')),
   purpose text not null default 'venda' check (purpose in ('venda', 'aluguel')),
   status text not null default 'em_analise' check (status in ('em_analise', 'aprovado', 'reprovado', 'concluido')),
+  destaque_home boolean not null default false,
+  ordem_destaque integer,
+  constraint listings_featured_order_check check (
+    (destaque_home and ordem_destaque is not null and ordem_destaque > 0)
+    or (not destaque_home and ordem_destaque is null)
+  ),
   motivo_reprovacao text,
   price text not null,
   bedrooms integer not null default 0,

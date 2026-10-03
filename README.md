@@ -21,6 +21,10 @@ Sem Supabase configurado, o modo local usa o armazenamento do navegador para tes
 
 Os visitantes continuam navegando sem conta. O login só é solicitado ao publicar ou gerenciar anúncios.
 
+## Anúncios em destaque na Home
+
+Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores podem selecionar anúncios publicados em “Meus Imóveis”, ativar “Destacar na página inicial” e definir sua ordem. Apenas anúncios aprovados e destacados aparecem no carrossel.
+
 ## Verificação
 
 ```bash

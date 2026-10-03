@@ -345,6 +345,8 @@ function App() {
   const [rejectionListingId, setRejectionListingId] = useState(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [moderationMessage, setModerationMessage] = useState('')
+  const [featuredDrafts, setFeaturedDrafts] = useState({})
+  const [featuredSavingId, setFeaturedSavingId] = useState(null)
 
   useEffect(() => {
     const resetHomePropertyType = (event) => {
@@ -458,7 +460,13 @@ function App() {
     return typeMatches && bedroomsMatches && priceMatches && neighborhoodMatches
   })
 
-  const heroCarouselListings = (filteredListings.length > 0 ? filteredListings : approvedSampleListings).slice(0, 3)
+  const heroCarouselListings = listings
+    .filter((item) => isApprovedListing(item) && item.destaque_home === true)
+    .sort((first, second) => {
+      const firstOrder = Number.parseInt(first.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
+      const secondOrder = Number.parseInt(second.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
+      return firstOrder - secondOrder || String(first.id).localeCompare(String(second.id))
+    })
 
   useEffect(() => {
     if (heroCarouselListings.length < 2) return undefined
@@ -851,6 +859,62 @@ function App() {
     return true
   }
 
+  const saveFeaturedListing = async (event, listing, draft) => {
+    event.preventDefault()
+    if (!isAdmin || !supabase || !authUser) {
+      setModerationMessage('Entre como administrador para gerenciar os anúncios em destaque.')
+      return
+    }
+
+    const order = Number(draft.ordemDestaque)
+    if (draft.destaqueHome && (!Number.isInteger(order) || order < 1)) {
+      setModerationMessage('Informe uma ordem de destaque inteira maior que zero.')
+      return
+    }
+
+    setFeaturedSavingId(listing.id)
+    setModerationMessage('')
+    try {
+      const updates = {
+        destaque_home: draft.destaqueHome,
+        ordem_destaque: draft.destaqueHome ? order : null,
+      }
+      const { data, error } = await supabase
+        .from('listings')
+        .update(updates)
+        .eq('id', listing.id)
+        .select('*')
+        .single()
+      if (error) throw error
+
+      const updatedListing = {
+        ...data,
+        coordinates: [data.latitude, data.longitude],
+        location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+        area: formatArea(data.area),
+        parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+        owner: data.user_id === authUser.id,
+      }
+      setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setFeaturedDrafts((current) => {
+        const next = { ...current }
+        delete next[listing.id]
+        return next
+      })
+      setModerationMessage(draft.destaqueHome
+        ? `“${listing.title}” foi destacado na posição ${order} da Home.`
+        : `“${listing.title}” não está mais destacado na Home.`)
+    } catch (error) {
+      const missingFeaturedColumns = /(destaque_home|ordem_destaque)/i.test(error.message || '')
+      setModerationMessage(missingFeaturedColumns
+        ? `O banco ainda não tem os campos de destaque. Execute supabase/migrations/20261003_add_home_featured_listings.sql no SQL Editor do Supabase. Detalhe: ${error.message}`
+        : `Não foi possível salvar o destaque: ${error.message}`)
+    } finally {
+      setFeaturedSavingId(null)
+    }
+  }
+
   const approveListing = async (listing) => {
     if (await changeListingStatus(listing, 'aprovado')) {
       setModerationMessage(`“${listing.title}” foi aprovado e já está publicado.`)
@@ -996,8 +1060,18 @@ function App() {
                 {visibleAccountListings.map((item) => {
                   const statusKey = getListingStatusKey(item)
                   const reviewable = isAdmin && accountFilter === 'review' && statusKey === 'pending'
+                  const featuredDraft = featuredDrafts[item.id] || {
+                    destaqueHome: item.destaque_home === true,
+                    ordemDestaque: item.ordem_destaque == null ? '' : String(item.ordem_destaque),
+                  }
+                  const updateFeaturedDraft = (updates) => {
+                    setFeaturedDrafts((current) => ({
+                      ...current,
+                      [item.id]: { ...featuredDraft, ...updates },
+                    }))
+                  }
                   return (
-                    <article key={item.id} className="account-dashboard-card">
+                    <article key={item.id} className={`account-dashboard-card${isAdmin ? ' admin-manageable' : ''}`}>
                       <div className="account-card-image-wrap">
                         <img src={item.image} alt={item.title} className="account-card-image" />
                         <span className={`account-status ${statusKey}`}>{getListingStatusLabel(item)}</span>
@@ -1017,6 +1091,49 @@ function App() {
                         {statusKey === 'rejected' && <div className="account-rejection-reason"><strong>Motivo da reprovação</strong><p>{item.motivo_reprovacao || 'O administrador solicitou ajustes no anúncio.'}</p></div>}
                       </div>
                       <div className="account-card-actions">
+                        {isAdmin && (
+                          <form className="admin-featured-controls" onSubmit={(event) => saveFeaturedListing(event, item, featuredDraft)}>
+                            <label className="admin-featured-toggle" htmlFor={`featured-home-${item.id}`}>
+                              <input
+                                id={`featured-home-${item.id}`}
+                                type="checkbox"
+                                checked={featuredDraft.destaqueHome}
+                                onChange={(event) => {
+                                  const isFeatured = event.target.checked
+                                  const nextOrder = publishedListings.reduce((highest, candidate) => (
+                                    candidate.destaque_home === true
+                                      ? Math.max(highest, Number(candidate.ordem_destaque) || 0)
+                                      : highest
+                                  ), 0) + 1
+                                  updateFeaturedDraft({
+                                    destaqueHome: isFeatured,
+                                    ordemDestaque: isFeatured
+                                      ? featuredDraft.ordemDestaque || String(nextOrder)
+                                      : '',
+                                  })
+                                }}
+                              />
+                              <span>⭐ Destacar na página inicial</span>
+                            </label>
+                            {featuredDraft.destaqueHome && (
+                              <label className="admin-featured-order" htmlFor={`featured-order-${item.id}`}>
+                                Ordem do destaque
+                                <input
+                                  id={`featured-order-${item.id}`}
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  value={featuredDraft.ordemDestaque}
+                                  onChange={(event) => updateFeaturedDraft({ ordemDestaque: event.target.value })}
+                                  required
+                                />
+                              </label>
+                            )}
+                            <button type="submit" disabled={featuredSavingId === item.id}>
+                              {featuredSavingId === item.id ? 'Salvando…' : 'Salvar destaque'}
+                            </button>
+                          </form>
+                        )}
                         {reviewable ? (
                           <div className="admin-review-actions">
                             <button type="button" className="approve-listing-button" onClick={() => approveListing(item)}>✓ Aprovar</button>
@@ -1131,56 +1248,65 @@ function App() {
       </section>
 
       <section className="home-search-grid">
-        <article className="hero-listing-card">
-          {heroCarouselListings.map((item, index) => (
-            <img
-              key={item.id}
-              src={item.image}
-              alt={item.title}
-              className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
-              onClick={() => openDetails(item)}
-            />
-          ))}
-          <span className="hero-listing-badge" translate="no">
-            {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
-          </span>
-          {heroCarouselListings.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="hero-carousel-arrow hero-carousel-arrow-left"
-                aria-label="Anúncio anterior"
-                onClick={() => setHeroSlideIndex((current) => (current - 1 + heroCarouselListings.length) % heroCarouselListings.length)}
-              >‹</button>
-              <button
-                type="button"
-                className="hero-carousel-arrow hero-carousel-arrow-right"
-                aria-label="Próximo anúncio"
-                onClick={() => setHeroSlideIndex((current) => (current + 1) % heroCarouselListings.length)}
-              >›</button>
-            </>
-          )}
-          <button
-            type="button"
-            className="hero-listing-cta"
-            onClick={() => openDetails(heroCarouselListings[heroSlideIndex % heroCarouselListings.length])}
-          >
-            Ver detalhes <b>›</b>
-          </button>
-          {heroCarouselListings.length > 1 && (
-            <div className="hero-listing-dots">
-              {heroCarouselListings.map((item, index) => (
+        {heroCarouselListings.length > 0 ? (
+          <article className="hero-listing-card">
+            {heroCarouselListings.map((item, index) => (
+              <img
+                key={item.id}
+                src={item.image}
+                alt={item.title}
+                className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+                onClick={() => openDetails(item)}
+              />
+            ))}
+            <span className="hero-listing-badge" translate="no">
+              {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
+            </span>
+            {heroCarouselListings.length > 1 && (
+              <>
                 <button
-                  key={item.id}
                   type="button"
-                  className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
-                  aria-label={`Ver imóvel ${index + 1}`}
-                  onClick={() => setHeroSlideIndex(index)}
-                />
-              ))}
+                  className="hero-carousel-arrow hero-carousel-arrow-left"
+                  aria-label="Anúncio anterior"
+                  onClick={() => setHeroSlideIndex((current) => (current - 1 + heroCarouselListings.length) % heroCarouselListings.length)}
+                >‹</button>
+                <button
+                  type="button"
+                  className="hero-carousel-arrow hero-carousel-arrow-right"
+                  aria-label="Próximo anúncio"
+                  onClick={() => setHeroSlideIndex((current) => (current + 1) % heroCarouselListings.length)}
+                >›</button>
+              </>
+            )}
+            <button
+              type="button"
+              className="hero-listing-cta"
+              onClick={() => openDetails(heroCarouselListings[heroSlideIndex % heroCarouselListings.length])}
+            >
+              Ver detalhes <b>›</b>
+            </button>
+            {heroCarouselListings.length > 1 && (
+              <div className="hero-listing-dots">
+                {heroCarouselListings.map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+                    aria-label={`Ver imóvel ${index + 1}`}
+                    onClick={() => setHeroSlideIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
+          </article>
+        ) : (
+          <article className="hero-listing-card hero-listing-card-empty" aria-live="polite">
+            <div>
+              <strong>Nenhum anúncio em destaque</strong>
+              <span>Os imóveis selecionados pela administração aparecerão aqui.</span>
             </div>
-          )}
-        </article>
+          </article>
+        )}
 
         <section className="filters-bar search-panel">
         <FilterSelect
