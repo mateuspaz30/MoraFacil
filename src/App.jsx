@@ -333,7 +333,7 @@ function App() {
   const [imageMessage, setImageMessage] = useState('')
   const [draftFilters, setDraftFilters] = useState({
     search: 'Ipuã-SP',
-    type: 'Aluguel',
+    type: 'Todos os imóveis',
     bedrooms: 'Qualquer',
     price: 'Qualquer faixa',
     neighborhood: 'Qualquer bairro',
@@ -345,6 +345,18 @@ function App() {
   const [rejectionListingId, setRejectionListingId] = useState(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [moderationMessage, setModerationMessage] = useState('')
+
+  useEffect(() => {
+    const resetHomePropertyType = (event) => {
+      if (!event.persisted) return
+
+      setDraftFilters((current) => ({ ...current, type: 'Todos os imóveis' }))
+      setAppliedFilters((current) => ({ ...current, type: 'Todos os imóveis' }))
+    }
+
+    window.addEventListener('pageshow', resetHomePropertyType)
+    return () => window.removeEventListener('pageshow', resetHomePropertyType)
+  }, [])
 
   const publicPublishedListings = publishedListings.filter(isApprovedListing)
   const listings = isSupabaseConfigured
