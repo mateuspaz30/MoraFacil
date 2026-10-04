@@ -3767,7 +3767,8 @@
 .map-layer-selector {
   position: absolute;
   bottom: 24px;
-  left: 12px;
+  right: 12px;
+  left: auto;
   z-index: 1000;
   pointer-events: auto;
   color: #18324f;
@@ -3860,7 +3861,8 @@
 
   .map-layer-selector {
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-    left: 8px;
+    right: 8px;
+    left: auto;
   }
 
   .map-layer-trigger {
