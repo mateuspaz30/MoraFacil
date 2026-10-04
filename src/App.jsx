@@ -330,6 +330,8 @@ function App() {
     }
   })
   const [publishedListings, setPublishedListings] = useState([])
+  const [featuredListings, setFeaturedListings] = useState([])
+  const [featuredListingsStatus, setFeaturedListingsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [announcementPhotos, setAnnouncementPhotos] = useState([])
@@ -425,6 +427,42 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (!supabase) return undefined
+
+    let mounted = true
+    const loadFeaturedListings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('status', 'aprovado')
+          .eq('destaque_home', true)
+          .order('ordem_destaque', { ascending: true })
+
+        if (error) throw error
+        if (!mounted) return
+
+        setFeaturedListings((data || []).map((item) => ({
+          ...item,
+          coordinates: [item.latitude, item.longitude],
+          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
+          area: formatArea(item.area),
+          parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
+        })))
+        setFeaturedListingsStatus('loaded')
+      } catch (error) {
+        console.error('Falha ao carregar os anúncios em destaque da Home:', error)
+        if (mounted) setFeaturedListingsStatus('error')
+      }
+    }
+
+    loadFeaturedListings()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
     if (!supabase || !authUser) return
 
     supabase.rpc('is_admin').then(({ data, error }) => {
@@ -495,7 +533,7 @@ function App() {
   })
   const resultsLabel = `${filteredListings.length} ${filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`
 
-  const heroCarouselListings = listings
+  const heroCarouselListings = (isSupabaseConfigured ? featuredListings : listings)
     .filter((item) => isApprovedListing(item) && item.destaque_home === true)
     .sort((first, second) => {
       const firstOrder = Number.parseInt(first.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
@@ -897,6 +935,12 @@ function App() {
 
     setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
     setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+    setFeaturedListings((current) => {
+      const remaining = current.filter((item) => item.id !== listing.id)
+      return isApprovedListing(updatedListing) && updatedListing.destaque_home === true
+        ? [...remaining, updatedListing]
+        : remaining
+    })
     return true
   }
 
@@ -939,6 +983,12 @@ function App() {
       }
       setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
       setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setFeaturedListings((current) => {
+        const remaining = current.filter((item) => item.id !== listing.id)
+        return isApprovedListing(updatedListing) && updatedListing.destaque_home === true
+          ? [...remaining, updatedListing]
+          : remaining
+      })
       setFeaturedDrafts((current) => {
         const next = { ...current }
         delete next[listing.id]
@@ -1351,14 +1401,25 @@ function App() {
               </div>
             )}
           </article>
-        ) : (
+        ) : featuredListingsStatus === 'loading' ? (
+          <article className="hero-listing-card hero-listing-card-loading" aria-busy="true" aria-label="Carregando anúncios em destaque">
+            <div className="hero-listing-loading-shimmer" />
+          </article>
+        ) : featuredListingsStatus === 'loaded' ? (
           <article className="hero-listing-card hero-listing-card-empty" aria-live="polite">
             <div>
               <strong>Nenhum anúncio em destaque</strong>
               <span>Os imóveis selecionados pela administração aparecerão aqui.</span>
             </div>
           </article>
-        )}
+        ) : featuredListingsStatus === 'error' ? (
+          <article className="hero-listing-card hero-listing-card-error" role="status">
+            <div>
+              <strong>Não foi possível carregar os destaques.</strong>
+              <span>Tente atualizar a página novamente.</span>
+            </div>
+          </article>
+        ) : null}
 
         <section className="filters-bar search-panel">
         <FilterSelect
