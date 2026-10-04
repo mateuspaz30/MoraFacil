@@ -277,6 +277,86 @@ function MapResizeObserver({ fullscreen }) {
   return null
 }
 
+function MapLayerSelector() {
+  const map = useMap()
+  const [selectedLayer, setSelectedLayer] = useState('satellite-streets')
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    const satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { attribution: 'Tiles &copy; Esri', maxZoom: 19 },
+    )
+    const streetLabels = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
+      { attribution: 'Labels &copy; Esri', maxZoom: 19 },
+    )
+    const streetMap = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 },
+    )
+
+    if (selectedLayer === 'street') {
+      map.addLayer(streetMap)
+    } else {
+      map.addLayer(satellite)
+      if (selectedLayer === 'satellite-streets') map.addLayer(streetLabels)
+    }
+
+    return () => {
+      map.removeLayer(satellite)
+      map.removeLayer(streetLabels)
+      map.removeLayer(streetMap)
+    }
+  }, [map, selectedLayer])
+
+  const layerOptions = [
+    { id: 'satellite-streets', label: 'Satélite + Ruas' },
+    { id: 'satellite', label: 'Satélite' },
+    { id: 'street', label: 'Mapa' },
+  ]
+
+  return (
+    <div
+      className="map-layer-selector"
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+      onWheel={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setIsOpen(false)
+      }}
+    >
+      <button
+        type="button"
+        className="map-layer-trigger"
+        aria-expanded={isOpen}
+        aria-controls="map-layer-options"
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <span aria-hidden="true">🗺</span> Camadas
+      </button>
+      {isOpen && (
+        <div className="map-layer-options" id="map-layer-options" role="group" aria-label="Camadas do mapa">
+          {layerOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={selectedLayer === option.id ? 'active' : ''}
+              aria-pressed={selectedLayer === option.id}
+              onClick={() => {
+                setSelectedLayer(option.id)
+                setIsOpen(false)
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AnnouncementMapFocus({ focus }) {
   const map = useMap()
 
@@ -1579,13 +1659,7 @@ function App() {
         </div>
         <MapContainer center={mapCenter} zoom={14} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
           <MapResizeObserver fullscreen={mapFullscreenOpen} />
-          <TileLayer
-            attribution='&copy; Esri &copy; OpenStreetMap contributors'
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          />
-          <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
-          />
+          <MapLayerSelector />
 
           {filteredListings.map((item) => (
             <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(typeColors[item.type])}>
