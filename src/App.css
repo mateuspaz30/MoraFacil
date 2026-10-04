@@ -2671,6 +2671,13 @@
   object-fit: cover;
 }
 
+@media (min-width: 701px) {
+  .account-dashboard-card .account-card-image-wrap {
+    align-self: start;
+    aspect-ratio: 3 / 2;
+  }
+}
+
 .account-status {
   position: absolute;
   top: 12px;
