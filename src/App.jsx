@@ -283,29 +283,42 @@ function MapLayerSelector() {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
+    map.attributionControl.setPosition('bottomleft')
+    const labelsPane = map.getPane('mapLabels') || map.createPane('mapLabels')
+    labelsPane.style.zIndex = '350'
+    labelsPane.style.pointerEvents = 'none'
+
     const satellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Tiles &copy; Esri', maxZoom: 19 },
+      { attribution: 'Tiles &copy; Esri', maxNativeZoom: 18, maxZoom: 18 },
     )
     const streetLabels = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Labels &copy; Esri', maxZoom: 19 },
+      { attribution: 'Labels &copy; Esri', maxNativeZoom: 18, maxZoom: 18, pane: 'mapLabels', opacity: 1 },
+    )
+    const streetTransportation = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+      { attribution: 'Transportation &copy; Esri', maxNativeZoom: 18, maxZoom: 18, pane: 'mapLabels', opacity: 1 },
     )
     const streetMap = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 },
+      { attribution: '&copy; OpenStreetMap contributors', maxNativeZoom: 18, maxZoom: 18 },
     )
 
     if (selectedLayer === 'street') {
       map.addLayer(streetMap)
     } else {
       map.addLayer(satellite)
-      if (selectedLayer === 'satellite-streets') map.addLayer(streetLabels)
+      if (selectedLayer === 'satellite-streets') {
+        map.addLayer(streetLabels)
+        map.addLayer(streetTransportation)
+      }
     }
 
     return () => {
       map.removeLayer(satellite)
       map.removeLayer(streetLabels)
+      map.removeLayer(streetTransportation)
       map.removeLayer(streetMap)
     }
   }, [map, selectedLayer])
@@ -318,7 +331,7 @@ function MapLayerSelector() {
 
   return (
     <div
-      className="map-layer-selector"
+      className="map-layer-selector leaflet-control"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onWheel={(event) => event.stopPropagation()}
@@ -333,7 +346,11 @@ function MapLayerSelector() {
         aria-controls="map-layer-options"
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span aria-hidden="true">🗺</span> Camadas
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m12 3 9 4.5-9 4.5-9-4.5L12 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+          <path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        </svg>
+        <span>Camadas</span>
       </button>
       {isOpen && (
         <div className="map-layer-options" id="map-layer-options" role="group" aria-label="Camadas do mapa">
@@ -1654,10 +1671,10 @@ function App() {
           {mapFullscreenOpen ? (
             <button type="button" className="map-close-button" onClick={() => setMapFullscreenOpen(false)}>✕ Fechar</button>
           ) : (
-            <button type="button" className="map-expand-button" onClick={() => setMapFullscreenOpen(true)}>⛶ Expandir mapa</button>
+            <button type="button" className="map-expand-button" aria-label="Expandir mapa" title="Expandir mapa" onClick={() => setMapFullscreenOpen(true)}>⛶</button>
           )}
         </div>
-        <MapContainer center={mapCenter} zoom={14} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
+        <MapContainer center={mapCenter} zoom={14} maxZoom={18} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
           <MapResizeObserver fullscreen={mapFullscreenOpen} />
           <MapLayerSelector />
 
