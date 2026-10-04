@@ -3460,7 +3460,7 @@
 }
 
 .listing-map-popup .leaflet-popup-content {
-  width: min(280px, calc(100vw - 48px)) !important;
+  width: min(210px, calc(100vw - 48px)) !important;
   margin: 0 !important;
 }
 
@@ -3689,7 +3689,7 @@
   }
 
   .listing-map-popup .leaflet-popup-content {
-    width: min(280px, calc(100vw - 40px)) !important;
+    width: min(260px, calc(100vw - 40px)) !important;
   }
 
   .map-detail-card {

@@ -306,7 +306,7 @@ function MapListingPopup({ listing }) {
   }
 
   return (
-    <Popup className="listing-map-popup" minWidth={240} maxWidth={280} closeButton={false}>
+    <Popup className="listing-map-popup" closeButton={false}>
       <article className="map-detail-card">
         <div
           className="map-detail-image-wrap"
