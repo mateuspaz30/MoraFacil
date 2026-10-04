@@ -3766,12 +3766,30 @@
 
 .map-layer-selector {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 24px;
+  left: 12px;
   z-index: 1000;
   pointer-events: auto;
   color: #18324f;
   font-family: inherit;
+}
+
+.map-box-main .leaflet-control-attribution {
+  border-radius: 4px;
+  padding: 2px 5px;
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(31, 41, 55, 0.64);
+  font-size: 0.58rem;
+  line-height: 1.35;
+  backdrop-filter: blur(3px);
+}
+
+.map-box-main .leaflet-control-attribution a {
+  color: rgba(51, 65, 85, 0.78);
+}
+
+.map-transportation-overlay {
+  filter: saturate(0.2);
 }
 
 .map-layer-trigger {
@@ -3841,18 +3859,7 @@
   }
 
   .map-layer-selector {
-    top: 10px;
-    right: auto;
-    bottom: auto;
-    left: 8px;
-  }
-
-  .map-panel-fullscreen .leaflet-top.leaflet-left {
-    top: 48px;
-  }
-
-  .map-panel-fullscreen .map-layer-selector {
-    top: 10px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     left: 8px;
   }
 

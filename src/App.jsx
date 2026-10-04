@@ -290,19 +290,22 @@ function MapLayerSelector() {
 
     const satellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Tiles &copy; Esri', maxNativeZoom: 18, maxZoom: 18 },
-    )
-    const streetLabels = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Labels &copy; Esri', maxNativeZoom: 18, maxZoom: 18, pane: 'mapLabels', opacity: 1 },
+      { attribution: 'Sources: &copy; Esri, Garmin, USGS, NPS', maxNativeZoom: 18, maxZoom: 18 },
     )
     const streetTransportation = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Transportation &copy; Esri', maxNativeZoom: 18, maxZoom: 18, pane: 'mapLabels', opacity: 1 },
+      {
+        attribution: '&copy; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+        maxNativeZoom: 18,
+        maxZoom: 18,
+        pane: 'mapLabels',
+        opacity: 0.68,
+        className: 'map-transportation-overlay',
+      },
     )
     const streetMap = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { attribution: '&copy; OpenStreetMap contributors', maxNativeZoom: 18, maxZoom: 18 },
+      { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>', maxNativeZoom: 18, maxZoom: 18 },
     )
 
     if (selectedLayer === 'street') {
@@ -310,14 +313,12 @@ function MapLayerSelector() {
     } else {
       map.addLayer(satellite)
       if (selectedLayer === 'satellite-streets') {
-        map.addLayer(streetLabels)
         map.addLayer(streetTransportation)
       }
     }
 
     return () => {
       map.removeLayer(satellite)
-      map.removeLayer(streetLabels)
       map.removeLayer(streetTransportation)
       map.removeLayer(streetMap)
     }
