@@ -277,6 +277,16 @@ function MapResizeObserver({ fullscreen }) {
   return null
 }
 
+function AnnouncementMapFocus({ focus }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (focus) map.flyTo(focus.coordinates, focus.zoom, { animate: true, duration: 0.8 })
+  }, [focus, map])
+
+  return null
+}
+
 const MenuSearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -351,6 +361,7 @@ function App() {
   const [addressLoading, setAddressLoading] = useState(false)
   const [addressMessage, setAddressMessage] = useState('')
   const [announcementCoordinates, setAnnouncementCoordinates] = useState(mapCenter)
+  const [announcementMapFocus, setAnnouncementMapFocus] = useState(null)
   const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [imageLoading, setImageLoading] = useState(false)
   const [imageMessage, setImageMessage] = useState('')
@@ -607,6 +618,7 @@ function App() {
     setAnnouncementSuccess(false)
     setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
+    setAnnouncementMapFocus(null)
     setLocationConfirmed(Boolean(listing?.coordinates))
     setAnnouncementOpen(true)
   }
@@ -624,6 +636,7 @@ function App() {
     setAnnouncementSubmitting(false)
     setAnnouncementError('')
     setAddressMessage('')
+    setAnnouncementMapFocus(null)
     setLocationConfirmed(false)
     setImageMessage('')
   }
@@ -692,6 +705,12 @@ function App() {
     setAnnouncement((value) => ({ ...value, image: nextPhotos[0]?.url || '' }))
   }
 
+  const updateAnnouncementAddressField = (field, value) => {
+    setAnnouncement((current) => ({ ...current, [field]: value, address: '' }))
+    setLocationConfirmed(false)
+    setAddressMessage('')
+  }
+
   const lookupCep = async () => {
     const cep = announcement.cep.replace(/\D/g, '')
     if (cep.length !== 8) return
@@ -721,29 +740,51 @@ function App() {
   }
 
   const locateAnnouncement = async () => {
-    if (!announcement.street || !announcement.number) {
-      setAddressMessage('Informe a rua e o número antes de localizar.')
+    const street = announcement.street.trim()
+    const number = announcement.number.trim()
+    const city = announcement.city.replace(/-SP$/i, '').trim()
+    const postalCode = announcement.cep.replace(/\D/g, '')
+
+    if (!street || !number || !city) {
+      setAddressMessage('Informe a cidade, a rua e o número antes de localizar.')
       return null
     }
 
     setAddressLoading(true)
     setAddressMessage('Localizando endereço no mapa...')
     try {
-      const query = `${announcement.street}, ${announcement.number}, ${announcement.city}, São Paulo, Brasil`
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=${encodeURIComponent(query)}`)
+      const params = new URLSearchParams({
+        street: `${number} ${street}`,
+        city,
+        state: 'São Paulo',
+        country: 'Brasil',
+        format: 'jsonv2',
+        addressdetails: '1',
+        limit: '1',
+        countrycodes: 'br',
+      })
+      if (postalCode) params.set('postalcode', postalCode)
+
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`)
+      if (!response.ok) throw new Error(`Serviço de localização indisponível (HTTP ${response.status}).`)
       const results = await response.json()
-      if (!results[0]) {
-        setAddressMessage('Endereço não localizado. Arraste o marcador manualmente.')
+      const result = Array.isArray(results) ? results[0] : null
+      const latitude = Number(result?.lat)
+      const longitude = Number(result?.lon)
+      if (!result || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        setAddressMessage('⚠️ Endereço não encontrado. Verifique os dados informados.')
         return null
       }
-      const coordinates = [Number(results[0].lat), Number(results[0].lon)]
+      const coordinates = [latitude, longitude]
       setAnnouncementCoordinates(coordinates)
-      setAnnouncement((current) => ({ ...current, address: results[0].display_name }))
+      setAnnouncementMapFocus({ coordinates, zoom: 18 })
+      setAnnouncement((current) => ({ ...current, address: result.display_name }))
       setLocationConfirmed(true)
-      setAddressMessage('Local encontrado. Você pode ajustar o marcador no mapa.')
-      return { coordinates, address: results[0].display_name }
-    } catch {
-      setAddressMessage('Não foi possível localizar. Ajuste o marcador manualmente.')
+      setAddressMessage('Local encontrado. Você pode ajustar o marcador.')
+      return { coordinates, address: result.display_name }
+    } catch (error) {
+      console.error('Falha ao consultar o serviço de geolocalização:', error)
+      setAddressMessage('Não foi possível consultar o serviço de localização. Tente novamente.')
       return null
     } finally {
       setAddressLoading(false)
@@ -763,7 +804,6 @@ function App() {
       if (located) {
         coordinates = located.coordinates
       } else {
-        setAddressMessage('Confirme a localização no mapa antes de publicar.')
         setAnnouncementSubmitting(false)
         return
       }
@@ -1589,10 +1629,10 @@ function App() {
               <section className="announcement-step-panel">
                 <div className="announcement-step-heading"><span>3</span><div><h3>Endereço</h3><p>Informe o endereço completo do imóvel.</p></div></div>
                 <div className="announcement-fields announcement-fields-address">
-                  <div className="form-group"><label htmlFor="city">Cidade <i>*</i></label><select id="city" name="city" value={announcement.city} onChange={(event) => { const city = event.target.value; setAnnouncement({ ...announcement, city }); setAnnouncementCoordinates(cityCoordinates[city] || mapCenter); setLocationConfirmed(false) }} required><option>Ipuã-SP</option><option>Guaíra-SP</option></select></div>
-                  <div className="form-group"><label htmlFor="cep">CEP <i>*</i></label><input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => setAnnouncement({ ...announcement, cep: event.target.value.replace(/\D/g, '').slice(0, 8) })} onBlur={lookupCep} placeholder="Ex.: 14610-000" required /><small className="announcement-field-message">{addressLoading ? 'Consultando CEP...' : addressMessage || 'O endereço será preenchido quando disponível.'}</small></div>
-                  <div className="form-group field-street"><label htmlFor="street">Rua <i>*</i></label><input id="street" name="street" value={announcement.street} onChange={(event) => setAnnouncement({ ...announcement, street: event.target.value })} placeholder="Ex.: Rua das Flores" required /></div>
-                  <div className="form-group"><label htmlFor="number">Número <i>*</i></label><input id="number" name="number" value={announcement.number} onChange={(event) => setAnnouncement({ ...announcement, number: event.target.value })} placeholder="Ex.: 123" required /></div>
+                  <div className="form-group"><label htmlFor="city">Cidade <i>*</i></label><select id="city" name="city" value={announcement.city} onChange={(event) => { const city = event.target.value; updateAnnouncementAddressField('city', city); const coordinates = cityCoordinates[city] || mapCenter; setAnnouncementCoordinates(coordinates); setAnnouncementMapFocus({ coordinates, zoom: 14 }) }} required><option>Ipuã-SP</option><option>Guaíra-SP</option></select></div>
+                  <div className="form-group"><label htmlFor="cep">CEP <i>*</i></label><input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => updateAnnouncementAddressField('cep', event.target.value.replace(/\D/g, '').slice(0, 8))} onBlur={lookupCep} placeholder="Ex.: 14610-000" required /><small className="announcement-field-message">{addressLoading ? 'Consultando CEP...' : addressMessage || 'O endereço será preenchido quando disponível.'}</small></div>
+                  <div className="form-group field-street"><label htmlFor="street">Rua <i>*</i></label><input id="street" name="street" value={announcement.street} onChange={(event) => updateAnnouncementAddressField('street', event.target.value)} placeholder="Ex.: Rua das Flores" required /></div>
+                  <div className="form-group"><label htmlFor="number">Número <i>*</i></label><input id="number" name="number" value={announcement.number} onChange={(event) => updateAnnouncementAddressField('number', event.target.value)} placeholder="Ex.: 123" required /></div>
                   <div className="form-group"><label htmlFor="neighborhood">Bairro <i>*</i></label><input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Ex.: Centro" required /></div>
                 </div>
               </section>
@@ -1623,6 +1663,7 @@ function App() {
                   </div>
                   <MapContainer center={announcementCoordinates} zoom={16} className="announcement-map" scrollWheelZoom touchZoom dragging>
                     <MapResizeObserver fullscreen={announcementMapFullscreenOpen} />
+                    <AnnouncementMapFocus focus={announcementMapFocus} />
                     <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <AnnouncementMapClick onSelect={(coordinates) => { setAnnouncementCoordinates(coordinates); setLocationConfirmed(true); setAddressMessage('Localização marcada. Você pode ajustar o marcador no mapa.') }} />
                     <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(typeColors[announcement.type])} />
