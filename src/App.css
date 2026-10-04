@@ -3841,8 +3841,19 @@
   }
 
   .map-layer-selector {
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    right: 8px;
+    top: 10px;
+    right: auto;
+    bottom: auto;
+    left: 8px;
+  }
+
+  .map-panel-fullscreen .leaflet-top.leaflet-left {
+    top: 48px;
+  }
+
+  .map-panel-fullscreen .map-layer-selector {
+    top: 10px;
+    left: 8px;
   }
 
   .map-layer-trigger {
