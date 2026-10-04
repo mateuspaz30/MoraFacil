@@ -6,7 +6,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase } from './ListingShowcase.jsx'
+import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -285,6 +285,65 @@ function AnnouncementMapFocus({ focus }) {
   }, [focus, map])
 
   return null
+}
+
+function MapListingPopup({ listing }) {
+  const map = useMap()
+  const touchStartX = useRef(null)
+  const images = [...new Set([
+    ...(Array.isArray(listing.images) ? listing.images : []),
+    listing.image,
+  ].filter(Boolean))]
+  const [imageIndex, setImageIndex] = useState(0)
+  const bedrooms = Number(listing.bedrooms) || 0
+  const bathrooms = Number(listing.bathrooms) || 0
+  const parking = Number(listing.parking_spaces || listing.garages) || 0
+  const detailUrl = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/`
+  const typeLabel = getListingTypeLabel(listing.type).toLocaleUpperCase('pt-BR')
+
+  const changeImage = (direction) => {
+    setImageIndex((current) => (current + direction + images.length) % images.length)
+  }
+
+  return (
+    <Popup className="listing-map-popup" minWidth={280} maxWidth={460} closeButton={false}>
+      <article className="map-detail-card">
+        <div
+          className="map-detail-image-wrap"
+          onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null }}
+          onTouchEnd={(event) => {
+            if (touchStartX.current === null || images.length < 2) return
+            const delta = event.changedTouches[0].clientX - touchStartX.current
+            if (Math.abs(delta) > 40) changeImage(delta < 0 ? 1 : -1)
+            touchStartX.current = null
+          }}
+        >
+          {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
+          <span className={`map-detail-type-badge type-${listing.type}`}>{typeLabel}</span>
+          <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
+          {images.length > 1 && (
+            <>
+              <button type="button" className="map-detail-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
+              <button type="button" className="map-detail-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
+              <span className="map-detail-gallery-count">{imageIndex + 1}/{images.length}</span>
+            </>
+          )}
+        </div>
+        <div className="map-detail-content">
+          <h3>{listing.title}</h3>
+          <p className="map-detail-location"><FilterIcon name="pin" /><span>{getListingLocation(listing)}</span></p>
+          <p className="detail-price">{listing.price}</p>
+          <div className="map-detail-features">
+            <div><span aria-hidden="true">🛏</span><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
+            <div><span aria-hidden="true">🚿</span><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
+            <div><span aria-hidden="true">🚗</span><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
+            <div><span aria-hidden="true">📐</span><strong>{formatArea(listing.area)}</strong><small>Área</small></div>
+          </div>
+          <a className="detail-button" href={detailUrl}>Saiba mais <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    </Popup>
+  )
 }
 
 const MenuSearchIcon = () => (
@@ -586,10 +645,6 @@ function App() {
   ]
 
   const openDetails = (listing) => setSelectedListing(listing)
-  const openListingFromMap = (listing) => {
-    setMapFullscreenOpen(false)
-    openDetails(listing)
-  }
   const closeDetails = () => setSelectedListing(null)
 
   const openAnnouncementForm = (listing = null) => {
@@ -1534,17 +1589,7 @@ function App() {
 
           {filteredListings.map((item) => (
             <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(typeColors[item.type])}>
-              <Popup>
-                <div className="map-detail-card">
-                  {item.image && <img className="map-detail-image" src={item.image} alt={item.title} />}
-                  <div className="map-detail-content">
-                    <h3>{item.title}</h3>
-                    <p className="detail-price">{item.price}</p>
-                    <p className="detail-meta">{item.neighborhood || item.address}</p>
-                    <button type="button" className="detail-button" onClick={() => openListingFromMap(item)}>Ver imóvel</button>
-                  </div>
-                </div>
-              </Popup>
+              <MapListingPopup listing={item} />
             </Marker>
           ))}
         </MapContainer>
