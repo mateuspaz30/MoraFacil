@@ -292,16 +292,6 @@ function MapLayerSelector() {
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { attribution: 'Sources: &copy; Esri, Garmin, USGS, NPS', maxNativeZoom: 18, maxZoom: 18 },
     )
-    const placeLabels = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: '&copy; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-        maxNativeZoom: 18,
-        maxZoom: 18,
-        pane: 'mapLabels',
-        opacity: 1,
-      },
-    )
     const streetNames = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
       {
@@ -324,13 +314,11 @@ function MapLayerSelector() {
       map.addLayer(satellite)
       if (selectedLayer === 'satellite-streets') {
         map.addLayer(streetNames)
-        map.addLayer(placeLabels)
       }
     }
 
     return () => {
       map.removeLayer(satellite)
-      map.removeLayer(placeLabels)
       map.removeLayer(streetNames)
       map.removeLayer(streetMap)
     }
