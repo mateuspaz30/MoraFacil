@@ -708,6 +708,7 @@ function App() {
       const secondOrder = Number.parseInt(second.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
       return firstOrder - secondOrder || String(first.id).localeCompare(String(second.id))
     })
+  const activeHeroListing = heroCarouselListings[heroSlideIndex % Math.max(heroCarouselListings.length, 1)]
 
   useEffect(() => {
     if (heroCarouselListings.length < 2) return undefined
@@ -1555,7 +1556,7 @@ function App() {
               />
             ))}
             <span className="hero-listing-badge" translate="no">
-              {getListingTypeLabel(heroCarouselListings[heroSlideIndex % heroCarouselListings.length].type)}
+              {getListingTypeLabel(activeHeroListing.type)}
             </span>
             {heroCarouselListings.length > 1 && (
               <>
@@ -1573,12 +1574,23 @@ function App() {
                 >›</button>
               </>
             )}
+            <div className="hero-listing-info">
+              <h2>{activeHeroListing.title}</h2>
+              <p className="hero-listing-location"><FilterIcon name="pin" />{getListingLocation(activeHeroListing)}</p>
+              <strong className="hero-listing-price">{activeHeroListing.price}</strong>
+              <div className="hero-listing-features">
+                <span><i aria-hidden="true">🛏</i>{Number(activeHeroListing.bedrooms) || 0} quartos</span>
+                <span><i aria-hidden="true">🚿</i>{Number(activeHeroListing.bathrooms) || 0} banheiros</span>
+                <span><i aria-hidden="true">🚗</i>{Number(activeHeroListing.parking_spaces || activeHeroListing.garages) || 0} vagas</span>
+                <span><i aria-hidden="true">📐</i>{formatArea(activeHeroListing.area)}</span>
+              </div>
+            </div>
             <button
               type="button"
               className="hero-listing-cta"
-              onClick={() => openDetails(heroCarouselListings[heroSlideIndex % heroCarouselListings.length])}
+              onClick={() => openDetails(activeHeroListing)}
             >
-              Ver detalhes <b>›</b>
+              Saiba mais <b aria-hidden="true">→</b>
             </button>
             {heroCarouselListings.length > 1 && (
               <div className="hero-listing-dots">

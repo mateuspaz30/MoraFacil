@@ -3854,6 +3854,197 @@
   color: #147c47;
 }
 
+@media (min-width: 641px) {
+  .home-search-grid {
+    grid-template-columns: minmax(0, 1.86fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .home-search-grid .hero-listing-card {
+    height: 340px;
+    min-height: 340px;
+    align-self: stretch;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .home-search-grid .hero-listing-card::after {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(180deg, rgba(4, 15, 25, 0.04) 25%, rgba(4, 15, 25, 0.15) 48%, rgba(4, 15, 25, 0.88) 100%);
+    content: '';
+    pointer-events: none;
+  }
+
+  .home-search-grid .hero-listing-badge {
+    top: 14px;
+    left: 16px;
+    z-index: 2;
+    padding: 0.48rem 1rem;
+    background: #087cf0;
+    color: #fff;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+  }
+
+  .hero-listing-info {
+    position: absolute;
+    right: 180px;
+    bottom: 22px;
+    left: 20px;
+    z-index: 1;
+    min-width: 0;
+    color: #fff;
+    pointer-events: none;
+  }
+
+  .hero-listing-info h2 {
+    overflow: hidden;
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.25rem, 1.8vw, 1.65rem);
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hero-listing-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 5px 0 0;
+    color: #fff;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .hero-listing-location svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+  }
+
+  .hero-listing-price {
+    display: block;
+    margin-top: 6px;
+    color: #63df40;
+    font-size: 1.8rem;
+    font-weight: 850;
+    line-height: 1.1;
+  }
+
+  .hero-listing-features {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 1.4vw, 22px);
+    margin-top: 7px;
+    color: #fff;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .hero-listing-features span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hero-listing-features i {
+    font-size: 0.95rem;
+    font-style: normal;
+    line-height: 1;
+  }
+
+  .home-search-grid .hero-listing-cta {
+    right: 20px;
+    bottom: 16px;
+    z-index: 2;
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 10px;
+    border-radius: 12px;
+    padding: 0 20px;
+    background: #00a95c;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .home-search-grid .hero-listing-dots {
+    bottom: 22px;
+    left: 66%;
+    z-index: 2;
+    gap: 8px;
+  }
+
+  .home-search-grid .hero-listing-dots button {
+    width: 10px;
+    height: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: transparent;
+  }
+
+  .home-search-grid .hero-listing-dots button.active {
+    background: #fff;
+  }
+
+  .home-search-grid .hero-carousel-arrow {
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    background: rgba(5, 20, 34, 0.38);
+    font-size: 2rem;
+  }
+
+  .home-search-grid .hero-carousel-arrow-left {
+    left: 16px;
+  }
+
+  .home-search-grid .hero-carousel-arrow-right {
+    right: 16px;
+  }
+
+  .home-search-grid .filters-bar.search-panel {
+    grid-template-rows: auto auto auto auto auto auto;
+    align-content: space-between;
+    min-height: 340px;
+    padding: 14px 18px;
+    border-radius: 16px;
+  }
+
+  .home-search-grid .search-panel .filter-select-control,
+  .home-search-grid .search-panel .filter-select-control.emphasized {
+    min-height: 40px;
+  }
+
+  .home-search-grid .search-panel .filter-select-control.emphasized {
+    font-size: 0.94rem;
+  }
+
+  .home-search-grid .search-panel .field.filter-search label {
+    font-size: 1.12rem;
+  }
+
+  .home-search-grid .search-panel .results-counter {
+    min-height: 30px;
+    margin: 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  .home-search-grid .search-panel .search-btn {
+    min-height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(100deg, #00a95c 0%, #00a95c 100%);
+    font-size: 1.02rem;
+  }
+}
+
 @media (max-width: 600px) {
   .map-expand-button {
     width: 40px;
