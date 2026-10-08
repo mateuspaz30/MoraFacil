@@ -1798,10 +1798,11 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <MapContainer center={announcementCoordinates} zoom={16} className="announcement-map" scrollWheelZoom touchZoom dragging>
+                  <MapContainer center={announcementCoordinates} zoom={16} maxZoom={18} className="announcement-map" scrollWheelZoom touchZoom dragging>
                     <MapResizeObserver fullscreen={announcementMapFullscreenOpen} />
                     <AnnouncementMapFocus focus={announcementMapFocus} />
                     <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {announcementMapFullscreenOpen && <MapLayerSelector />}
                     <AnnouncementMapClick onSelect={(coordinates) => { setAnnouncementCoordinates(coordinates); setLocationConfirmed(true); setAddressMessage('Localização marcada. Você pode ajustar o marcador no mapa.') }} />
                     <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(typeColors[announcement.type])} />
                   </MapContainer>
