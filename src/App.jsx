@@ -292,15 +292,14 @@ function MapLayerSelector() {
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { attribution: 'Sources: &copy; Esri, Garmin, USGS, NPS', maxNativeZoom: 18, maxZoom: 18 },
     )
-    const streetTransportation = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+    const placeLabels = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
       {
-        attribution: '&copy; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+        attribution: '&copy; Esri, HERE, Garmin, <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, and the GIS user community',
         maxNativeZoom: 18,
         maxZoom: 18,
         pane: 'mapLabels',
-        opacity: 0.68,
-        className: 'map-transportation-overlay',
+        opacity: 1,
       },
     )
     const streetMap = L.tileLayer(
@@ -313,13 +312,13 @@ function MapLayerSelector() {
     } else {
       map.addLayer(satellite)
       if (selectedLayer === 'satellite-streets') {
-        map.addLayer(streetTransportation)
+        map.addLayer(placeLabels)
       }
     }
 
     return () => {
       map.removeLayer(satellite)
-      map.removeLayer(streetTransportation)
+      map.removeLayer(placeLabels)
       map.removeLayer(streetMap)
     }
   }, [map, selectedLayer])

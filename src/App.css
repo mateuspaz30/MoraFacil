@@ -3796,10 +3796,6 @@
   color: rgba(51, 65, 85, 0.78);
 }
 
-.map-transportation-overlay {
-  filter: saturate(0.2);
-}
-
 .map-layer-trigger {
   display: inline-flex;
   min-height: 38px;
