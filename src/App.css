@@ -4154,23 +4154,27 @@
   }
 
   .home-search-grid .hero-listing-cta {
+    position: absolute;
     right: 14px;
     top: 12px;
+    bottom: auto;
     z-index: 2;
     display: inline-flex;
-    width: max-content;
+    width: auto;
+    height: fit-content;
     min-width: 0;
     min-height: 0;
+    flex: 0 0 auto;
     align-items: center;
-    gap: 2px;
-    border-radius: 10px;
-    padding: 7px 10px;
-    background: #00a95c;
+    gap: 0;
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem;
+    background: #8bea45;
     box-shadow: none;
-    color: #fff;
-    font-size: 0.78rem;
+    color: #06321f;
+    font-size: 0.72rem;
     font-weight: 800;
-    line-height: 1;
+    line-height: normal;
     white-space: nowrap;
   }
 
