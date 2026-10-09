@@ -2084,7 +2084,7 @@
     min-height: 260px;
     overflow: hidden;
     border-radius: 16px;
-    cursor: pointer;
+    cursor: default;
     background: #fff;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
   }
@@ -2116,7 +2116,7 @@
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    cursor: pointer;
+    cursor: default;
     transition: opacity 0.8s ease;
   }
 
@@ -2388,7 +2388,7 @@
     height: 220px;
     overflow: hidden;
     border-radius: 16px;
-    cursor: pointer;
+    cursor: default;
   }
 
   .hero-listing-card > img {
@@ -2398,7 +2398,7 @@
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    cursor: pointer;
+    cursor: default;
     transition: opacity 0.8s ease;
   }
 

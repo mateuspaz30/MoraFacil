@@ -743,7 +743,6 @@ function App() {
     },
   ]
 
-  const openDetails = (listing) => setSelectedListing(listing)
   const closeDetails = () => setSelectedListing(null)
 
   const openAnnouncementForm = (listing = null) => {
@@ -1552,7 +1551,6 @@ function App() {
                 src={item.image}
                 alt={item.title}
                 className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
-                onClick={() => openDetails(item)}
               />
             ))}
             <span className="hero-listing-badge" translate="no">
