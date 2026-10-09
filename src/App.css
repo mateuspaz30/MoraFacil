@@ -4055,7 +4055,7 @@
 
 @media (max-width: 640px) {
   .home-search-grid .hero-listing-card {
-    height: clamp(260px, 78vw, 330px);
+    height: clamp(275px, 82vw, 350px);
     min-height: 0;
   }
 
@@ -4074,8 +4074,8 @@
 
   .hero-listing-info {
     position: absolute;
-    right: 142px;
-    bottom: 28px;
+    right: 14px;
+    bottom: 53px;
     left: 14px;
     z-index: 1;
     min-width: 0;
@@ -4085,32 +4085,35 @@
 
   .hero-listing-info h2 {
     overflow: hidden;
+    display: -webkit-box;
     margin: 0;
     color: #fff;
     font-size: 1rem;
     font-weight: 800;
     line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    white-space: normal;
   }
 
   .hero-listing-location {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     overflow: hidden;
     margin: 4px 0 0;
     color: #fff;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .hero-listing-location svg {
-    width: 14px;
-    height: 14px;
-    flex: 0 0 14px;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
   }
 
   .hero-listing-price {
@@ -4119,7 +4122,7 @@
     max-width: 100%;
     margin-top: 4px;
     color: #8bea45;
-    font-size: 1.4rem;
+    font-size: 1.55rem;
     font-weight: 850;
     line-height: 1.1;
     text-overflow: ellipsis;
@@ -4128,31 +4131,31 @@
 
   .hero-listing-features {
     display: flex;
-    width: calc(100% + 130px);
+    width: 100%;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
+    gap: 6px;
     margin-top: 7px;
     color: #fff;
-    font-size: clamp(0.5rem, 2.1vw, 0.65rem);
+    font-size: clamp(0.56rem, 2.35vw, 0.74rem);
     white-space: nowrap;
   }
 
   .hero-listing-features span {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
   }
 
   .hero-listing-features i {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     font-style: normal;
     line-height: 1;
   }
 
   .home-search-grid .hero-listing-cta {
     right: 14px;
-    bottom: 76px;
+    top: 12px;
     z-index: 2;
     display: inline-flex;
     min-height: 42px;
@@ -4176,8 +4179,8 @@
   }
 
   .home-search-grid .hero-listing-dots {
-    right: 14px;
-    bottom: 12px;
+    right: 24px;
+    bottom: 20px;
     left: auto;
     z-index: 2;
     gap: 7px;
