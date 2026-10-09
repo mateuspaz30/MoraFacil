@@ -3977,6 +3977,7 @@
     color: #fff;
     font-size: 1rem;
     font-weight: 800;
+    text-decoration: none;
   }
 
   .hero-cta-desktop {
@@ -4179,6 +4180,7 @@
     font-size: 0.72rem;
     font-weight: 800;
     line-height: normal;
+    text-decoration: none;
     white-space: nowrap;
   }
 

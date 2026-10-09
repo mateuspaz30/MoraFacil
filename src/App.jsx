@@ -1585,15 +1585,14 @@ function App() {
                 <span><i aria-hidden="true">📐</i>{formatArea(activeHeroListing.area)}</span>
               </div>
             </div>
-            <button
-              type="button"
+            <a
+              href={`${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(activeHeroListing))}/`}
               className="hero-listing-cta"
-              onClick={() => openDetails(activeHeroListing)}
             >
               <span className="hero-cta-desktop">Saiba mais</span>
               <span className="hero-cta-mobile">Ver detalhes</span>
               <b aria-hidden="true">›</b>
-            </button>
+            </a>
             {heroCarouselListings.length > 1 && (
               <div className="hero-listing-dots">
                 {heroCarouselListings.map((item, index) => (
