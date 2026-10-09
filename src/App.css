@@ -4055,7 +4055,7 @@
 
 @media (max-width: 640px) {
   .home-search-grid .hero-listing-card {
-    height: clamp(275px, 82vw, 350px);
+    height: clamp(260px, 78vw, 330px);
     min-height: 0;
   }
 
@@ -4088,7 +4088,7 @@
     display: -webkit-box;
     margin: 0;
     color: #fff;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 800;
     line-height: 1.2;
     -webkit-box-orient: vertical;
@@ -4104,7 +4104,7 @@
     overflow: hidden;
     margin: 4px 0 0;
     color: #fff;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -4134,21 +4134,21 @@
     width: 100%;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 7px;
     margin-top: 7px;
     color: #fff;
-    font-size: clamp(0.56rem, 2.35vw, 0.74rem);
+    font-size: clamp(0.62rem, 2.65vw, 0.82rem);
     white-space: nowrap;
   }
 
   .hero-listing-features span {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
   }
 
   .hero-listing-features i {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-style: normal;
     line-height: 1;
   }
@@ -4162,15 +4162,15 @@
     min-width: 0;
     min-height: 0;
     align-items: center;
-    gap: 0;
-    border-radius: 0;
-    padding: 4px 0;
-    background: transparent;
+    gap: 2px;
+    border-radius: 10px;
+    padding: 7px 10px;
+    background: #00a95c;
     box-shadow: none;
     color: #fff;
     font-size: 0.78rem;
     font-weight: 800;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    line-height: 1;
     white-space: nowrap;
   }
 
