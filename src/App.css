@@ -2490,6 +2490,18 @@
   }
 }
 
+.hero-carousel-arrow svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .account-popover {
   position: fixed;
   top: 24px;

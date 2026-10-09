@@ -1563,13 +1563,21 @@ function App() {
                   className="hero-carousel-arrow hero-carousel-arrow-left"
                   aria-label="Anúncio anterior"
                   onClick={() => setHeroSlideIndex((current) => (current - 1 + heroCarouselListings.length) % heroCarouselListings.length)}
-                >‹</button>
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 6 9 12l6 6" />
+                  </svg>
+                </button>
                 <button
                   type="button"
                   className="hero-carousel-arrow hero-carousel-arrow-right"
                   aria-label="Próximo anúncio"
                   onClick={() => setHeroSlideIndex((current) => (current + 1) % heroCarouselListings.length)}
-                >›</button>
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </button>
               </>
             )}
             <div className="hero-listing-info">
