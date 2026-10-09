@@ -2180,8 +2180,9 @@
     position: absolute;
     top: 50%;
     z-index: 2;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 34px;
     height: 34px;
     border: 1px solid rgba(255, 255, 255, 0.85);
@@ -2462,10 +2463,11 @@
     position: absolute;
     top: 50%;
     z-index: 2;
-    display: grid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 38px;
     height: 38px;
-    place-items: center;
     margin: 0;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.9);
