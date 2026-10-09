@@ -1590,7 +1590,9 @@ function App() {
               className="hero-listing-cta"
               onClick={() => openDetails(activeHeroListing)}
             >
-              Saiba mais <b aria-hidden="true">→</b>
+              <span className="hero-cta-desktop">Saiba mais</span>
+              <span className="hero-cta-mobile">Ver detalhes</span>
+              <b aria-hidden="true">›</b>
             </button>
             {heroCarouselListings.length > 1 && (
               <div className="hero-listing-dots">
