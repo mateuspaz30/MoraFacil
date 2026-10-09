@@ -3950,9 +3950,13 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    line-height: 1;
   }
 
   .hero-listing-features i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.95rem;
     font-style: normal;
     line-height: 1;
