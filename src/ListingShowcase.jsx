@@ -1,16 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './ListingShowcase.css'
+import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 
 export const PORTAL_CITY = 'Ipuã-SP'
-
-const typeLabels = {
-  casa: 'Casa',
-  apartamento: 'Apartamento',
-  venda: 'Venda',
-  aluguel: 'Aluguel',
-  terreno: 'Terreno',
-  ponto_comercial: 'Ponto Comercial',
-}
 
 const slugify = (value) => String(value || '')
   .normalize('NFD')
@@ -44,7 +36,6 @@ export const getListingLocation = (listing) => {
   return `${neighborhood || 'Ipuã'}, ${city}`
 }
 
-const getTypeLabel = (type) => typeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
 const formatPrice = (price, type) => {
@@ -97,6 +88,9 @@ export function ListingShowcase({ listings, city }) {
           const image = listing.image || ''
           const slug = getListingSlug(listing)
           const url = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(slug)}/`
+          const purpose = getListingPurpose(listing)
+          const purposeLabel = getListingPurposeLabel(listing)
+          const propertyType = getListingPropertyType(listing)
           const bedrooms = Number(listing.bedrooms) || 0
           const bathrooms = Number(listing.bathrooms) || 0
           const parking = Number(listing.parking_spaces || listing.garages) || 0
@@ -110,7 +104,7 @@ export function ListingShowcase({ listings, city }) {
           return (
             <article className="showcase-property-card" key={listing.id}>
               <a className="showcase-property-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
-                <div className={`showcase-property-image type-${listing.type}`}>
+                <div className="showcase-property-image">
                   {image && (
                     <img
                       src={image}
@@ -121,19 +115,20 @@ export function ListingShowcase({ listings, city }) {
                       decoding="async"
                     />
                   )}
-                  <span className={`showcase-type-badge type-${listing.type}`} translate="no">{getTypeLabel(listing.type)}</span>
+                  <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
                 </div>
                 <div className="showcase-property-body">
                   <h3>{listing.title}</h3>
                   <p className="showcase-property-location">⌖ {getListingLocation(listing)}</p>
-                  <strong className="showcase-property-price">{formatPrice(listing.price, listing.type)}</strong>
+                  <p className="showcase-property-type"><span aria-hidden="true">{propertyType.icon}</span> {propertyType.label}</p>
+                  <strong className={`showcase-property-price purpose-price purpose-${purpose}`}>{formatPrice(listing.price, purpose)}</strong>
                   <div className="showcase-property-features" aria-label="Características do imóvel">
                     {features.map((feature, index) => (
                       <span key={index} className={feature ? '' : 'empty'} aria-hidden={!feature}>
                         {feature || <span className="showcase-feature-placeholder" />}
                       </span>
                     ))}
-                    {listing.type === 'terreno' && listing.description?.toLowerCase().includes('pronto para construir') && (
+                    {propertyType.key === 'terreno' && listing.description?.toLowerCase().includes('pronto para construir') && (
                       <span className="showcase-land-note">✅ Pronto para construir</span>
                     )}
                   </div>
@@ -157,17 +152,17 @@ export function ListingDetailPage({ listing }) {
   const streetLine = [listing.street, listing.number].filter(Boolean).join(', ')
   const fullAddress = streetLine || listing.address || getListingLocation(listing)
   const addressQuery = [fullAddress, neighborhood, city, listing.cep].filter(Boolean).join(', ')
-  const price = formatPrice(listing.price, listing.type)
   const galleryImages = useMemo(() => [...new Set([
     ...(Array.isArray(listing.images) ? listing.images : []),
     listing.image,
   ].filter(Boolean))], [listing.images, listing.image])
   const image = galleryImages[activeImageIndex] || ''
   const description = listing.description || 'Descrição não informada.'
-  const purpose = listing.purpose || (listing.type === 'aluguel' ? 'aluguel' : 'venda')
-  const purposeLabel = purpose === 'aluguel' ? 'Aluguel' : 'Venda'
-  const propertyType = listing.property_category || (['terreno', 'ponto_comercial'].includes(listing.type) ? listing.type : '')
-  const propertyTypeLabel = typeLabels[propertyType] || 'Imóvel'
+  const purpose = getListingPurpose(listing)
+  const purposeLabel = getListingPurposeLabel(listing)
+  const price = formatPrice(listing.price, purpose)
+  const propertyType = getListingPropertyType(listing)
+  const propertyTypeLabel = propertyType.label
   const title = `${listing.title} em ${getCityLabel(listing.city)} | Mora Fácil`
   const url = window.location.href
   const bedrooms = Number(listing.bedrooms) || 0
@@ -296,7 +291,7 @@ export function ListingDetailPage({ listing }) {
           <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
             <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
               {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
-              <span className={`showcase-type-badge type-${purpose}`} translate="no">{purposeLabel}</span>
+              <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
               {galleryImages.length > 1 && <>
                 <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
                 <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
@@ -337,7 +332,7 @@ export function ListingDetailPage({ listing }) {
         <aside className="listing-detail-sidebar">
           <section className="listing-detail-price-card">
             <span className="listing-detail-eyebrow">Valor do imóvel</span>
-            <strong className="listing-detail-price">{price}</strong>
+            <strong className={`listing-detail-price purpose-price purpose-${purpose}`}>{price}</strong>
             {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
             {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
           </section>
@@ -350,8 +345,8 @@ export function ListingDetailPage({ listing }) {
           <section className="listing-detail-information-card listing-detail-card">
             <h2><span aria-hidden="true">▤</span>Informações do imóvel</h2>
             <ul className="listing-detail-info-grid">
-              <li><span aria-hidden="true">🏠</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
-              <li><span aria-hidden="true">⌂</span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
+              <li><span aria-hidden="true">{purpose === 'aluguel' ? '🔑' : '🛒'}</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
+              <li><span aria-hidden="true">{propertyType.icon}</span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
               <li><span aria-hidden="true">📐</span><div><strong>{area ? `${area} m²` : '—'}</strong><small>Área construída</small></div></li>
               <li><span aria-hidden="true">🛏</span><div><strong>{bedrooms} {bedrooms === 1 ? 'Quarto' : 'Quartos'}</strong><small>Dormitórios</small></div></li>
               <li><span aria-hidden="true">🚿</span><div><strong>{bathrooms} {bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</strong><small>Banheiros</small></div></li>

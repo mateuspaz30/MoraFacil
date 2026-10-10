@@ -677,8 +677,8 @@
   left: 10px;
   display: inline-flex;
   border-radius: 999px;
-  background: #8bea45;
-  color: #06321f;
+  background: var(--purpose-sale);
+  color: #fff;
   padding: 0.35rem 0.55rem;
   font-size: 0.68rem;
   font-weight: 800;
@@ -708,37 +708,12 @@
 .property-tag {
   display: inline-flex;
   border-radius: 999px;
-  background: #ebfdf2;
-  color: #1f9d4f;
+  background: #eef2f6;
+  color: #475569;
   padding: 0.28rem 0.5rem;
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: capitalize;
-}
-
-.thumb-badge.type-venda {
-  background: #087cf0;
-  color: #fff;
-}
-
-.thumb-badge.type-aluguel {
-  background: #087c45;
-  color: #fff;
-}
-
-.thumb-badge.type-terreno {
-  background: #f28a22;
-  color: #fff;
-}
-
-.thumb-badge.type-ponto_comercial {
-  background: #64748b;
-  color: #fff;
-}
-
-.property-tag.type-ponto_comercial {
-  background: #eef2f6;
-  color: #475569;
 }
 
 .property-content strong {
@@ -850,7 +825,7 @@
 }
 
 .modal-badge.available {
-  background: #08bf5a;
+  background: #3f444c;
 }
 
 .modal-content h2 {
@@ -2694,24 +2669,14 @@
   }
 }
 
-.account-status {
+.account-status-badge {
   position: absolute;
   top: 12px;
   left: 12px;
   border-radius: 999px;
   padding: 0.35rem 0.62rem;
-  color: #fff;
   font-size: 0.66rem;
   font-weight: 800;
-}
-
-.account-status.active {
-  background: #063b2a;
-  color: #fff;
-}
-
-.account-status.completed {
-  background: #64788b;
 }
 
 .account-card-body {
@@ -2816,11 +2781,8 @@
   color: #c5d9eb;
 }
 
-.account-status.pending { background: #f4c542; color: #443300; }
-.account-status.published { background: #078c59; color: #fff; }
-.account-status.rejected { background: #dc3545; color: #fff; }
-.account-status.completed { background: #64748b; color: #fff; }
 .account-card-type, .account-card-submitted { margin: 4px 0 0; color: #7890a8; font-size: 0.68rem; }
+.account-status-text { margin: 3px 0 0; color: #7890a8; font-size: 0.66rem; }
 .account-rejection-reason { margin-top: 8px; padding: 8px; border: 1px solid #f3c2c5; border-radius: 8px; background: #fff4f4; color: #78252d; font-size: 0.67rem; }
 .account-rejection-reason p { margin: 3px 0 0; line-height: 1.35; }
 .account-dashboard-card:has(.admin-review-actions) { height: auto; min-height: 304px; grid-template-rows: minmax(0, 1fr) auto; }
@@ -3677,19 +3639,11 @@
   z-index: 1;
   border-radius: 999px;
   padding: 6px 10px;
-  background: #179e5a;
+  background: var(--purpose-sale);
   color: #fff;
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
-}
-
-.map-detail-type-badge.type-terreno {
-  background: #ee941c;
-}
-
-.map-detail-type-badge.type-ponto_comercial {
-  background: #2563a8;
 }
 
 .map-detail-close {
@@ -4633,4 +4587,96 @@
   .location-confirmation-fullscreen .location-confirmation-actions {
     width: 100%;
   }
+}
+
+.purpose-badge.purpose-venda {
+  background: var(--purpose-sale);
+  color: #fff;
+}
+
+.purpose-badge.purpose-aluguel {
+  background: var(--purpose-rent);
+  color: #fff;
+}
+
+.home-search-grid .hero-listing-badge.purpose-venda {
+  background: var(--purpose-sale);
+  color: #fff;
+}
+
+.home-search-grid .hero-listing-badge.purpose-aluguel {
+  background: var(--purpose-rent);
+  color: #fff;
+}
+
+.hero-listing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-listing-property-type {
+  border-left: 1px solid rgba(255, 255, 255, 0.55);
+  padding-left: 8px;
+  font-size: 0.9em;
+}
+
+.map-detail-property-type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 0 0;
+  color: #52657d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.map-panel:not(.map-panel-fullscreen) .map-detail-property-type {
+  margin-top: 2px;
+  font-size: 0.6rem;
+}
+
+.home-search-grid .search-panel .filter-select-control.purpose-filter-venda {
+  border-color: var(--purpose-sale);
+}
+
+.home-search-grid .search-panel .filter-select-control.purpose-filter-aluguel {
+  border-color: var(--purpose-rent);
+}
+
+.home-search-grid .search-panel .filter-select-control.purpose-filter-venda .filter-select-icon {
+  color: var(--purpose-sale);
+}
+
+.home-search-grid .search-panel .filter-select-control.purpose-filter-aluguel .filter-select-icon {
+  color: var(--purpose-rent);
+}
+
+.announcement-purpose-control.purpose-venda label.active {
+  border-color: var(--purpose-sale);
+  color: var(--purpose-sale);
+}
+
+.announcement-purpose-control.purpose-venda label.active::before {
+  border-color: var(--purpose-sale);
+  background: var(--purpose-sale);
+}
+
+.announcement-purpose-control.purpose-aluguel label.active {
+  border-color: var(--purpose-rent);
+  color: var(--purpose-rent);
+}
+
+.announcement-purpose-control.purpose-aluguel label.active::before {
+  border-color: var(--purpose-rent);
+  background: var(--purpose-rent);
+}
+
+.purpose-price.purpose-venda {
+  color: var(--purpose-sale);
+}
+
+.purpose-price.purpose-aluguel {
+  color: var(--purpose-rent);
 }

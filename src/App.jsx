@@ -4,6 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
 import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase } from './ListingShowcase.jsx'
@@ -159,28 +160,6 @@ const normalizeNeighborhoodName = (name) => String(name || '')
   .toLocaleLowerCase('pt-BR')
 const isApprovedListing = (listing) => ['aprovado', 'disponível', 'disponivel', 'ativo'].includes(String(listing.status || '').trim().toLocaleLowerCase('pt-BR'))
 
-const typeColors = {
-  venda: '#22c55e',
-  aluguel: '#16a34a',
-  terreno: '#f59e0b',
-  ponto_comercial: '#64748b',
-}
-
-const listingTypeLabels = {
-  venda: 'Venda',
-  aluguel: 'Aluguel',
-  terreno: 'Terreno',
-  ponto_comercial: 'Ponto Comercial',
-}
-
-const propertyCategoryLabels = {
-  casa: 'Casa',
-  apartamento: 'Apartamento',
-  terreno: 'Terreno',
-  ponto_comercial: 'Ponto Comercial',
-}
-
-const getListingTypeLabel = (type) => listingTypeLabels[String(type || '').trim().toLowerCase()] || 'Imóvel'
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
 function FilterIcon({ name }) {
@@ -191,10 +170,14 @@ function FilterIcon({ name }) {
 }
 
 function FilterSelect({ id, label, value, options, onChange, emphasized = false, icon, fieldClassName = '' }) {
+  const purposeFilterClass = id === 'search-type' && ['Venda', 'Aluguel'].includes(value)
+    ? ` purpose-filter-${value === 'Aluguel' ? 'aluguel' : 'venda'}`
+    : ''
+
   return (
     <div className={`field${emphasized ? ' filter-search' : ''}${fieldClassName ? ` ${fieldClassName}` : ''}`}>
       <label htmlFor={id}>{label}</label>
-      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}`} translate="no">
+      <div className={`filter-select-control${emphasized ? ' emphasized' : ''}${purposeFilterClass}`} translate="no">
         {icon && <span className="filter-select-icon"><FilterIcon name={icon} /></span>}
         <span className="filter-select-value" aria-hidden="true">{value}</span>
         <span className="filter-select-chevron" aria-hidden="true" />
@@ -406,7 +389,9 @@ function MapListingPopup({ listing }) {
   const bathrooms = Number(listing.bathrooms) || 0
   const parking = Number(listing.parking_spaces || listing.garages) || 0
   const detailUrl = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/`
-  const typeLabel = getListingTypeLabel(listing.type).toLocaleUpperCase('pt-BR')
+  const purpose = getListingPurpose(listing)
+  const purposeLabel = getListingPurposeLabel(listing)
+  const propertyType = getListingPropertyType(listing)
 
   const changeImage = (direction) => {
     setImageIndex((current) => (current + direction + images.length) % images.length)
@@ -426,7 +411,7 @@ function MapListingPopup({ listing }) {
           }}
         >
           {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
-          <span className={`map-detail-type-badge type-${listing.type}`}>{typeLabel}</span>
+          <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
           <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
           {images.length > 1 && (
             <>
@@ -439,7 +424,8 @@ function MapListingPopup({ listing }) {
         <div className="map-detail-content">
           <h3>{listing.title}</h3>
           <p className="map-detail-location"><FilterIcon name="pin" /><span>{getListingLocation(listing)}</span></p>
-          <p className="detail-price">{listing.price}</p>
+          <p className="map-detail-property-type"><span aria-hidden="true">{propertyType.icon}</span>{propertyType.label}</p>
+          <p className={`detail-price purpose-price purpose-${purpose}`}>{listing.price}</p>
           <div className="map-detail-features">
             <div><span aria-hidden="true">🛏</span><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
             <div><span aria-hidden="true">🚿</span><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
@@ -760,8 +746,8 @@ function App() {
   const filteredListings = cityListings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
       || (appliedFilters.type === 'Terrenos' && (item.property_category === 'terreno' || item.type === 'terreno'))
-      || (appliedFilters.type === 'Venda' && (item.purpose === 'venda' || (!item.purpose && item.type === 'venda')))
-      || (appliedFilters.type === 'Aluguel' && (item.purpose === 'aluguel' || item.type === 'aluguel'))
+      || (appliedFilters.type === 'Venda' && getListingPurpose(item) === 'venda')
+      || (appliedFilters.type === 'Aluguel' && getListingPurpose(item) === 'aluguel')
       || (appliedFilters.type === 'Ponto Comercial' && (item.property_category === 'ponto_comercial' || item.type === 'ponto_comercial'))
     const bedroomsMatches = appliedFilters.bedrooms === 'Qualquer'
       || item.bedrooms >= Number.parseInt(appliedFilters.bedrooms, 10)
@@ -799,17 +785,17 @@ function App() {
   const summaryCards = [
     {
       label: 'Apartamentos',
-      value: filteredListings.filter((item) => item.type === 'aluguel' && item.bedrooms > 0).length,
+      value: filteredListings.filter((item) => getListingPurpose(item) === 'aluguel' && item.bedrooms > 0).length,
       details: 'Disponíveis',
     },
     {
       label: 'Casas',
-      value: filteredListings.filter((item) => item.type === 'venda' && item.bedrooms > 0).length,
+      value: filteredListings.filter((item) => getListingPurpose(item) === 'venda' && item.bedrooms > 0).length,
       details: 'Disponíveis',
     },
     {
       label: 'Aluguel',
-      value: filteredListings.filter((item) => item.type === 'aluguel').length,
+      value: filteredListings.filter((item) => getListingPurpose(item) === 'aluguel').length,
       details: 'Ativos',
     },
     {
@@ -1577,6 +1563,8 @@ function App() {
                 {visibleAccountListings.map((item) => {
                   const statusKey = getListingStatusKey(item)
                   const reviewable = isAdmin && accountFilter === 'review' && statusKey === 'pending'
+                  const purpose = getListingPurpose(item)
+                  const propertyType = getListingPropertyType(item)
                   const featuredDraft = featuredDrafts[item.id] || {
                     destaqueHome: item.destaque_home === true,
                     ordemDestaque: item.ordem_destaque == null ? '' : String(item.ordem_destaque),
@@ -1591,14 +1579,15 @@ function App() {
                     <article key={item.id} className={`account-dashboard-card${isAdmin ? ' admin-manageable' : ''}`}>
                       <div className="account-card-image-wrap">
                         <img src={item.image} alt={item.title} className="account-card-image" />
-                        <span className={`account-status ${statusKey}`}>{getListingStatusLabel(item)}</span>
+                        <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(item).toLocaleUpperCase('pt-BR')}</span>
                       </div>
                       <div className="account-card-body">
                         <h3>{item.title}</h3>
                         <p className="account-card-location">{item.location}</p>
-                        <p className="account-card-type">{propertyCategoryLabels[item.property_category] || getListingTypeLabel(item.type)} · {item.purpose === 'aluguel' || item.type === 'aluguel' ? 'Aluguel' : 'Venda'}</p>
+                        <p className="account-card-type"><span aria-hidden="true">{propertyType.icon}</span> {propertyType.label}</p>
+                        <p className="account-status-text">Status: {getListingStatusLabel(item)}</p>
                         {accountFilter === 'review' && <p className="account-card-submitted">Enviado em {item.created_at ? new Intl.DateTimeFormat('pt-BR').format(new Date(item.created_at)) : 'data indisponível'}</p>}
-                        <strong className="account-card-price">{item.price}</strong>
+                        <strong className={`account-card-price purpose-price purpose-${purpose}`}>{item.price}</strong>
                         <div className="account-card-meta">
                           <span><i aria-hidden="true">🛏</i><b>{item.bedrooms || 0}</b><small>Quartos</small></span>
                           <span><i aria-hidden="true">🚿</i><b>{item.bathrooms || 1}</b><small>Banheiros</small></span>
@@ -1775,8 +1764,9 @@ function App() {
                 className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
               />
             ))}
-            <span className="hero-listing-badge" translate="no">
-              {getListingTypeLabel(activeHeroListing.type)}
+            <span className={`hero-listing-badge purpose-badge purpose-${getListingPurpose(activeHeroListing)}`} translate="no">
+              <span>{getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}</span>
+              <span className="hero-listing-property-type">{getListingPropertyType(activeHeroListing).icon} {getListingPropertyType(activeHeroListing).label}</span>
             </span>
             {heroCarouselListings.length > 1 && (
               <>
@@ -1921,7 +1911,7 @@ function App() {
           <MapLayerSelector />
 
           {filteredListings.map((item) => (
-            <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(typeColors[item.type])}>
+            <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}>
               <MapListingPopup listing={item} />
             </Marker>
           ))}
@@ -1989,7 +1979,7 @@ function App() {
                 <div className="announcement-step-heading"><span>2</span><div><h3>Dados do imóvel</h3><p>Informe as principais características do seu imóvel.</p></div></div>
                 <div className="announcement-fields announcement-fields-property">
                   <div className="form-group field-title"><label htmlFor="title">Título do anúncio <i>*</i></label><input id="title" name="title" value={announcement.title} onChange={(event) => setAnnouncement({ ...announcement, title: event.target.value })} placeholder="Ex.: Casa térrea com garagem" required /></div>
-                  <fieldset className="form-group field-purpose"><legend>Finalidade <i>*</i></legend><div className="announcement-purpose-control">
+                  <fieldset className="form-group field-purpose"><legend>Finalidade <i>*</i></legend><div className={`announcement-purpose-control purpose-${announcement.type === 'aluguel' ? 'aluguel' : 'venda'}`}>
                     <label className={announcement.type !== 'aluguel' ? 'active' : ''}><input type="radio" name="purpose" checked={announcement.type !== 'aluguel'} onChange={() => setAnnouncement((current) => ({ ...current, type: 'venda' }))} />Venda</label>
                     <label className={announcement.type === 'aluguel' ? 'active' : ''}><input type="radio" name="purpose" checked={announcement.type === 'aluguel'} onChange={() => setAnnouncement((current) => ({ ...current, type: 'aluguel' }))} />Aluguel</label>
                   </div></fieldset>
@@ -2046,7 +2036,7 @@ function App() {
                     <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     {announcementMapFullscreenOpen && <MapLayerSelector />}
                     <AnnouncementMapClick onSelect={(coordinates) => { setAnnouncementCoordinates(coordinates); setLocationConfirmed(true); setAddressMessage('Localização marcada. Você pode ajustar o marcador no mapa.') }} />
-                    <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(typeColors[announcement.type])} />
+                    <Marker position={announcementCoordinates} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setAnnouncementCoordinates([position.lat, position.lng]); setLocationConfirmed(true); setAddressMessage('Ponto ajustado manualmente. Essa será a localização publicada.') } }} icon={createMarkerIcon(purposeColors[getListingPurpose(announcement)])} />
                   </MapContainer>
                   <small className={`announcement-map-status${locationConfirmed ? ' confirmed' : ''}`}>{locationConfirmed ? `Coordenadas: ${announcementCoordinates[0].toFixed(5)}, ${announcementCoordinates[1].toFixed(5)}` : 'Marque a localização exata do seu imóvel.'}</small>
                 </div>
@@ -2158,16 +2148,16 @@ function App() {
             <div className="modal-content">
               <div className="modal-badges">
                 <span className="modal-badge available">{selectedListing.status}</span>
-                <span className="modal-badge">{selectedListing.type}</span>
+                <span className={`modal-badge purpose-badge purpose-${getListingPurpose(selectedListing)}`}>{getListingPurposeLabel(selectedListing)}</span>
               </div>
               <h2 id="property-modal-title">{selectedListing.title}</h2>
-              <p className="modal-price">{selectedListing.price}</p>
+              <p className={`modal-price purpose-price purpose-${getListingPurpose(selectedListing)}`}>{selectedListing.price}</p>
 
               <div className="property-facts">
                 <div><strong>{selectedListing.bedrooms || '-'}</strong><span>Quartos</span></div>
                 <div><strong>{formatArea(selectedListing.area)}</strong><span>Área</span></div>
                 <div><strong>{selectedListing.neighborhood}</strong><span>Bairro</span></div>
-                <div><strong>{selectedListing.type}</strong><span>Tipo</span></div>
+                <div><strong>{getListingPropertyType(selectedListing).icon} {getListingPropertyType(selectedListing).label}</strong><span>Tipo do imóvel</span></div>
               </div>
 
               <h3>Descrição</h3>

@@ -1,4 +1,6 @@
 :root {
+  --purpose-sale: #087cf0;
+  --purpose-rent: #078c59;
   font-family: Inter, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;

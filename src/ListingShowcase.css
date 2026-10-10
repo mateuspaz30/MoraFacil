@@ -91,7 +91,7 @@
   max-width: calc(100% - 20px);
   border-radius: 7px;
   padding: 0.3rem 0.55rem;
-  background: #087cf0;
+  background: var(--purpose-sale);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
@@ -99,17 +99,8 @@
   white-space: nowrap;
 }
 
-.showcase-type-badge.type-aluguel {
-  background: #087c45;
-}
-
-.showcase-type-badge.type-terreno {
-  background: #f28a22;
-}
-
-.showcase-type-badge.type-ponto_comercial {
-  background: #64748b;
-}
+.showcase-type-badge.purpose-aluguel { background: var(--purpose-rent); }
+.showcase-type-badge.purpose-venda { background: var(--purpose-sale); }
 
 .showcase-property-body {
   display: flex;
@@ -137,6 +128,17 @@
   font-size: 0.88rem;
   line-height: 1.3;
   overflow-wrap: anywhere;
+}
+
+.showcase-property-type {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #52657d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .showcase-property-price {
@@ -432,6 +434,10 @@
 
   .showcase-property-location {
     font-size: 0.68rem;
+  }
+
+  .showcase-property-type {
+    font-size: 0.64rem;
   }
 
   .showcase-property-price {
@@ -753,4 +759,14 @@
   .listing-detail-information-card { order: 5; width: 100%; padding: 15px; }
   .listing-gallery-lightbox { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 4px; padding: 48px 8px; }
   .listing-gallery-lightbox > .listing-gallery-arrow { width: 32px; height: 32px; }
+}
+
+.showcase-property-price.purpose-price.purpose-venda,
+.listing-detail-price-card .listing-detail-price.purpose-price.purpose-venda {
+  color: var(--purpose-sale);
+}
+
+.showcase-property-price.purpose-price.purpose-aluguel,
+.listing-detail-price-card .listing-detail-price.purpose-price.purpose-aluguel {
+  color: var(--purpose-rent);
 }
