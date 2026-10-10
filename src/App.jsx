@@ -1636,7 +1636,7 @@ function App() {
         <section className="filters-bar search-panel">
         <FilterSelect
           id="search-location"
-          label="Onde você quer morar?"
+          label="Cidade"
           value={draftFilters.search}
           options={['Ipuã-SP', 'Guaíra-SP']}
           emphasized

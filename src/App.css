@@ -2987,7 +2987,7 @@
   order: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: auto auto auto auto auto;
+  grid-template-rows: repeat(6, auto);
   align-content: space-between;
   gap: 4px 14px;
   width: 100%;
@@ -3182,7 +3182,8 @@
   }
 
   .home-search-grid .search-panel .field.filter-search label {
-    font-size: 1.24rem;
+    font-size: 0.72rem;
+    font-weight: 750;
   }
 
   .home-search-grid .search-panel .field label { font-size: 0.72rem; }
@@ -3215,7 +3216,7 @@
   }
 
   .home-search-grid .search-panel .field.filter-search label {
-    font-size: 1.1rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -4046,7 +4047,9 @@
 
   .home-search-grid .search-panel .filter-select-control,
   .home-search-grid .search-panel .filter-select-control.emphasized {
-    min-height: 40px;
+    min-height: 36px;
+    padding-right: 34px;
+    padding-left: 42px;
   }
 
   .home-search-grid .search-panel .filter-select-control.emphasized {
@@ -4054,7 +4057,8 @@
   }
 
   .home-search-grid .search-panel .field.filter-search label {
-    font-size: 1.12rem;
+    font-size: 0.72rem;
+    font-weight: 750;
   }
 
   .home-search-grid .search-panel .results-counter {
