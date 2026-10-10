@@ -25,6 +25,10 @@ Os visitantes continuam navegando sem conta. O login só é solicitado ao public
 
 Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores podem selecionar anúncios publicados em “Meus Imóveis”, ativar “Destacar na página inicial” e definir sua ordem. Apenas anúncios aprovados e destacados aparecem no carrossel.
 
+## Bairros controlados
+
+Em bancos existentes, execute [`supabase/migrations/20261010_create_managed_neighborhoods.sql`](supabase/migrations/20261010_create_managed_neighborhoods.sql) no SQL Editor do Supabase. A migração cria e preenche a tabela de bairros, associa os bairros existentes aos anúncios e impede novos anúncios com bairros ausentes ou inativos. Se houver anúncios sem bairro, preencha esse dado antes de executar a migração. Administradores gerenciam os bairros em “Meus Imóveis” > “Bairros”. Bairros vinculados a anúncios não podem ser excluídos; desative-os para impedir novos usos.
+
 ## Verificação
 
 ```bash

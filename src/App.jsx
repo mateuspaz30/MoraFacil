@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -148,6 +148,15 @@ const sampleListings = [
 ]
 
 const approvedSampleListings = sampleListings.map((listing) => ({ ...listing, status: 'aprovado' }))
+const defaultNeighborhoods = [...new Set(sampleListings.map((listing) => listing.neighborhood))]
+  .sort((first, second) => first.localeCompare(second, 'pt-BR'))
+  .map((name) => ({ name, active: true }))
+const normalizeNeighborhoodName = (name) => String(name || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+  .replace(/\s+/g, ' ')
+  .toLocaleLowerCase('pt-BR')
 const isApprovedListing = (listing) => ['aprovado', 'disponível', 'disponivel', 'ativo'].includes(String(listing.status || '').trim().toLocaleLowerCase('pt-BR'))
 
 const typeColors = {
@@ -499,6 +508,15 @@ function App() {
   const [publishedListings, setPublishedListings] = useState([])
   const [featuredListings, setFeaturedListings] = useState([])
   const [featuredListingsStatus, setFeaturedListingsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
+  const [neighborhoods, setNeighborhoods] = useState(() => isSupabaseConfigured ? [] : defaultNeighborhoods)
+  const [neighborhoodsStatus, setNeighborhoodsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
+  const [neighborhoodsError, setNeighborhoodsError] = useState('')
+  const [neighborhoodDraft, setNeighborhoodDraft] = useState('')
+  const [editingNeighborhoodName, setEditingNeighborhoodName] = useState(null)
+  const [neighborhoodSaving, setNeighborhoodSaving] = useState(false)
+  const [neighborhoodActionName, setNeighborhoodActionName] = useState(null)
+  const [neighborhoodManagerError, setNeighborhoodManagerError] = useState('')
+  const [neighborhoodManagerMessage, setNeighborhoodManagerMessage] = useState('')
   const [announcement, setAnnouncement] = useState(emptyAnnouncement)
   const [announcementOpen, setAnnouncementOpen] = useState(false)
   const [announcementPhotos, setAnnouncementPhotos] = useState([])
@@ -565,6 +583,32 @@ function App() {
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publicPublishedListings : approvedSampleListings)
     : [...approvedSampleListings, ...userListings.filter(isApprovedListing)]
+  const activeNeighborhoodNames = neighborhoods
+    .filter((neighborhood) => neighborhood.active)
+    .map((neighborhood) => neighborhood.name)
+  const announcementNeighborhoodOptions = [
+    ...activeNeighborhoodNames,
+    ...(editingListingId && announcement.neighborhood && !activeNeighborhoodNames.includes(announcement.neighborhood)
+      ? [announcement.neighborhood]
+      : []),
+  ]
+  const updateNeighborhoodList = useCallback((nextNeighborhoods, renamedNeighborhood = null) => {
+    const availableNeighborhoods = new Set(nextNeighborhoods
+      .filter((neighborhood) => neighborhood.active)
+      .map((neighborhood) => neighborhood.name))
+    const preserveAvailableFilter = (filters) => {
+      let neighborhood = filters.neighborhood
+      if (renamedNeighborhood && neighborhood === renamedNeighborhood.from) {
+        neighborhood = renamedNeighborhood.to
+      }
+      return neighborhood === 'Qualquer bairro' || availableNeighborhoods.has(neighborhood)
+        ? { ...filters, neighborhood }
+        : { ...filters, neighborhood: 'Qualquer bairro' }
+    }
+    setNeighborhoods(nextNeighborhoods)
+    setDraftFilters(preserveAvailableFilter)
+    setAppliedFilters(preserveAvailableFilter)
+  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -585,6 +629,7 @@ function App() {
         setModerationMessage('')
         setFeaturedDrafts({})
       }
+      if (event === 'SIGNED_OUT') setAccountFilter('all')
       setAuthUser(session?.user || null)
     })
 
@@ -593,6 +638,37 @@ function App() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!supabase) return undefined
+
+    let mounted = true
+    const loadNeighborhoods = async () => {
+      setNeighborhoodsStatus('loading')
+      setNeighborhoodsError('')
+      try {
+        const { data, error } = await supabase
+          .from('neighborhoods')
+          .select('name, active')
+          .order('name', { ascending: true })
+
+        if (error) throw error
+        if (!mounted) return
+        updateNeighborhoodList((data || []).map((item) => ({ name: item.name, active: item.active })))
+        setNeighborhoodsStatus('loaded')
+      } catch (error) {
+        console.error('Falha ao carregar os bairros cadastrados:', error)
+        if (!mounted) return
+        setNeighborhoodsError(`Não foi possível carregar os bairros. Execute supabase/migrations/20261010_create_managed_neighborhoods.sql no Supabase. Detalhe: ${error.message}`)
+        setNeighborhoodsStatus('error')
+      }
+    }
+
+    loadNeighborhoods()
+    return () => {
+      mounted = false
+    }
+  }, [isAdmin, updateNeighborhoodList])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -761,7 +837,10 @@ function App() {
       parking_spaces: String(listing.parking_spaces ?? listing.garages ?? ''),
       price: String(listing.price || '').replace(/\D/g, ''),
       area: String(listing.area || '').replace(/\D/g, ''),
-    } : emptyAnnouncement)
+    } : {
+      ...emptyAnnouncement,
+      neighborhood: activeNeighborhoodNames[0] || '',
+    })
     const listingPhotos = listing?.images?.length
       ? listing.images.map((url, index) => ({ url, name: `Foto ${index + 1}` }))
       : listing?.image ? [{ url: listing.image, name: 'Foto principal' }] : []
@@ -878,13 +957,18 @@ function App() {
         return
       }
       const city = data.localidade === 'Guaíra' ? 'Guaíra-SP' : 'Ipuã-SP'
+      const cepNeighborhood = activeNeighborhoodNames.find((name) => (
+        normalizeNeighborhoodName(name) === normalizeNeighborhoodName(data.bairro)
+      ))
       setAnnouncement((current) => ({
         ...current,
         city,
         street: data.logradouro || current.street,
-        neighborhood: data.bairro || current.neighborhood,
+        neighborhood: cepNeighborhood || current.neighborhood,
       }))
-      setAddressMessage('Endereço encontrado. Confira o número da casa.')
+      setAddressMessage(data.bairro && !cepNeighborhood
+        ? `O CEP retornou “${data.bairro}”, que não está cadastrado como bairro ativo. Selecione um bairro da lista.`
+        : 'Endereço encontrado. Confira o número da casa.')
     } catch {
       setAddressMessage('Não foi possível consultar o CEP agora.')
     } finally {
@@ -948,6 +1032,11 @@ function App() {
     event.preventDefault()
     if (announcementSubmitting) return
     setAnnouncementError('')
+    const selectedNeighborhood = neighborhoods.find((item) => item.name === announcement.neighborhood)
+    if (!selectedNeighborhood || (!selectedNeighborhood.active && !editingListingId)) {
+      setAnnouncementError('Selecione um bairro cadastrado e ativo antes de continuar.')
+      return
+    }
     setAnnouncementSubmitting(true)
     const cityCenter = cityCoordinates[announcement.city] || neighborhoodCoordinates[announcement.neighborhood] || mapCenter
     let coordinates = announcementCoordinates || cityCenter
@@ -1040,6 +1129,107 @@ function App() {
     }
     closeAnnouncementForm(true)
     setAnnouncementSuccess(true)
+  }
+
+  const saveNeighborhood = async (event) => {
+    event.preventDefault()
+    const name = neighborhoodDraft.trim().replace(/\s+/g, ' ')
+    if (!name) {
+      setNeighborhoodManagerError('Informe o nome do bairro.')
+      return
+    }
+    if (neighborhoods.some((item) => (
+      item.name !== editingNeighborhoodName
+      && normalizeNeighborhoodName(item.name) === normalizeNeighborhoodName(name)
+    ))) {
+      setNeighborhoodManagerError('Já existe um bairro com esse nome.')
+      return
+    }
+
+    setNeighborhoodSaving(true)
+    setNeighborhoodManagerError('')
+    setNeighborhoodManagerMessage('')
+    try {
+      const query = editingNeighborhoodName
+        ? supabase.from('neighborhoods').update({ name }).eq('name', editingNeighborhoodName)
+        : supabase.from('neighborhoods').insert({ name, active: true })
+      const { data, error } = await query.select('name, active').single()
+      if (error) throw error
+
+      const nextNeighborhoods = [...neighborhoods.filter((item) => item.name !== editingNeighborhoodName), data]
+        .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))
+      updateNeighborhoodList(nextNeighborhoods, editingNeighborhoodName ? {
+        from: editingNeighborhoodName,
+        to: data.name,
+      } : null)
+      if (editingNeighborhoodName) {
+        const previousName = editingNeighborhoodName
+        setAnnouncement((current) => current.neighborhood === previousName ? { ...current, neighborhood: data.name } : current)
+      }
+      setNeighborhoodDraft('')
+      setEditingNeighborhoodName(null)
+      setNeighborhoodManagerMessage(`Bairro “${data.name}” salvo.`)
+    } catch (error) {
+      console.error('Falha ao salvar bairro:', error)
+      setNeighborhoodManagerError(`Não foi possível salvar o bairro. ${error.message}`)
+    } finally {
+      setNeighborhoodSaving(false)
+    }
+  }
+
+  const toggleNeighborhood = async (neighborhood) => {
+    setNeighborhoodActionName(neighborhood.name)
+    setNeighborhoodManagerError('')
+    setNeighborhoodManagerMessage('')
+    try {
+      const { data, error } = await supabase
+        .from('neighborhoods')
+        .update({ active: !neighborhood.active })
+        .eq('name', neighborhood.name)
+        .select('name, active')
+        .single()
+      if (error) throw error
+      updateNeighborhoodList(neighborhoods.map((item) => item.name === data.name ? data : item))
+      if (!data.active && announcement.neighborhood === data.name && !editingListingId) {
+        setAnnouncement((current) => ({
+          ...current,
+          neighborhood: activeNeighborhoodNames.find((name) => name !== data.name) || '',
+        }))
+      }
+      setNeighborhoodManagerMessage(`Bairro “${data.name}” ${data.active ? 'ativado' : 'desativado'}.`)
+    } catch (error) {
+      console.error('Falha ao alterar status do bairro:', error)
+      setNeighborhoodManagerError(`Não foi possível alterar o status do bairro. ${error.message}`)
+    } finally {
+      setNeighborhoodActionName(null)
+    }
+  }
+
+  const deleteNeighborhood = async (neighborhood) => {
+    if (!window.confirm(`Excluir o bairro “${neighborhood.name}”? Bairros vinculados a imóveis não podem ser excluídos; nesse caso, desative-o.`)) return
+
+    setNeighborhoodActionName(neighborhood.name)
+    setNeighborhoodManagerError('')
+    setNeighborhoodManagerMessage('')
+    try {
+      const { error } = await supabase.from('neighborhoods').delete().eq('name', neighborhood.name)
+      if (error) throw error
+      updateNeighborhoodList(neighborhoods.filter((item) => item.name !== neighborhood.name))
+      if (!editingListingId && announcement.neighborhood === neighborhood.name) {
+        setAnnouncement((current) => ({
+          ...current,
+          neighborhood: activeNeighborhoodNames.find((name) => name !== neighborhood.name) || '',
+        }))
+      }
+      setNeighborhoodManagerMessage(`Bairro “${neighborhood.name}” excluído.`)
+    } catch (error) {
+      console.error('Falha ao excluir bairro:', error)
+      setNeighborhoodManagerError(error.code === '23503'
+        ? `O bairro “${neighborhood.name}” está vinculado a um ou mais imóveis. Desative-o para removê-lo das opções.`
+        : `Não foi possível excluir o bairro. ${error.message}`)
+    } finally {
+      setNeighborhoodActionName(null)
+    }
   }
 
   const handleAuthSubmit = async (event) => {
@@ -1346,9 +1536,41 @@ function App() {
                 <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({pendingListings.length})</button>}
+                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'neighborhoods' ? ' active' : ''}`} onClick={() => { setAccountFilter('neighborhoods'); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Bairros</button>}
               </div>
             </div>
-            {visibleAccountListings.length === 0 ? (
+            {isAdmin && accountFilter === 'neighborhoods' ? (
+              <section className="neighborhood-manager" aria-label="Gerenciar bairros">
+                <div className="neighborhood-manager-heading">
+                  <div><h3>Gerenciar bairros</h3><p>Os bairros ativos ficam disponíveis nos filtros e no cadastro de imóveis.</p></div>
+                </div>
+                <form className="neighborhood-manager-form" onSubmit={saveNeighborhood}>
+                  <label htmlFor="neighborhood-name">{editingNeighborhoodName ? 'Editar bairro' : 'Novo bairro'}</label>
+                  <div>
+                    <input id="neighborhood-name" value={neighborhoodDraft} onChange={(event) => setNeighborhoodDraft(event.target.value)} placeholder="Nome do bairro" maxLength={100} required />
+                    <button type="submit" disabled={neighborhoodSaving || neighborhoodsStatus !== 'loaded'}>{neighborhoodSaving ? 'Salvando…' : editingNeighborhoodName ? 'Salvar alterações' : 'Adicionar bairro'}</button>
+                    {editingNeighborhoodName && <button type="button" className="neighborhood-cancel" onClick={() => { setEditingNeighborhoodName(null); setNeighborhoodDraft('') }}>Cancelar</button>}
+                  </div>
+                </form>
+                {neighborhoodManagerError && <p className="neighborhood-manager-feedback error" role="alert">{neighborhoodManagerError}</p>}
+                {neighborhoodManagerMessage && <p className="neighborhood-manager-feedback" role="status">{neighborhoodManagerMessage}</p>}
+                {neighborhoodsError && <p className="neighborhood-manager-feedback error" role="alert">{neighborhoodsError}</p>}
+                {neighborhoodsStatus === 'loading' ? <p className="account-empty">Carregando bairros…</p> : neighborhoodsStatus === 'error' ? null : neighborhoods.length === 0 ? <p className="account-empty">Nenhum bairro cadastrado.</p> : (
+                  <div className="neighborhood-manager-list">
+                    {neighborhoods.map((neighborhood) => (
+                      <article className={`neighborhood-manager-item${neighborhood.active ? '' : ' inactive'}`} key={neighborhood.name}>
+                        <div><strong>{neighborhood.name}</strong><span>{neighborhood.active ? 'Ativo' : 'Inativo'}</span></div>
+                        <div className="neighborhood-manager-actions">
+                          <button type="button" onClick={() => { setEditingNeighborhoodName(neighborhood.name); setNeighborhoodDraft(neighborhood.name); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Editar</button>
+                          <button type="button" disabled={neighborhoodActionName === neighborhood.name} onClick={() => toggleNeighborhood(neighborhood)}>{neighborhoodActionName === neighborhood.name ? 'Aguarde…' : neighborhood.active ? 'Desativar' : 'Ativar'}</button>
+                          <button type="button" className="delete" disabled={neighborhoodActionName === neighborhood.name} onClick={() => deleteNeighborhood(neighborhood)}>Excluir</button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : visibleAccountListings.length === 0 ? (
               <div className="account-empty">{accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
             ) : (
               <div className="account-dashboard-grid">
@@ -1655,7 +1877,7 @@ function App() {
           id="search-neighborhood"
           label="Bairro"
           value={draftFilters.neighborhood}
-          options={['Qualquer bairro', 'Centro', 'Jardim das Flores', 'Zona Norte', 'Jardim Primavera', 'Residencial Santana']}
+          options={['Qualquer bairro', ...activeNeighborhoodNames]}
           icon="pin"
           onChange={(neighborhood) => setDraftFilters({ ...draftFilters, neighborhood })}
         />
@@ -1789,7 +2011,7 @@ function App() {
                   <div className="form-group"><label htmlFor="cep">CEP <i>*</i></label><input id="cep" name="cep" inputMode="numeric" value={announcement.cep} onChange={(event) => updateAnnouncementAddressField('cep', event.target.value.replace(/\D/g, '').slice(0, 8))} onBlur={lookupCep} placeholder="Ex.: 14610-000" required /><small className="announcement-field-message">{addressLoading ? 'Consultando CEP...' : addressMessage || 'O endereço será preenchido quando disponível.'}</small></div>
                   <div className="form-group field-street"><label htmlFor="street">Rua <i>*</i></label><input id="street" name="street" value={announcement.street} onChange={(event) => updateAnnouncementAddressField('street', event.target.value)} placeholder="Ex.: Rua das Flores" required /></div>
                   <div className="form-group"><label htmlFor="number">Número <i>*</i></label><input id="number" name="number" value={announcement.number} onChange={(event) => updateAnnouncementAddressField('number', event.target.value)} placeholder="Ex.: 123" required /></div>
-                  <div className="form-group"><label htmlFor="neighborhood">Bairro <i>*</i></label><input id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} placeholder="Ex.: Centro" required /></div>
+                  <div className="form-group"><label htmlFor="neighborhood">Bairro <i>*</i></label><select id="neighborhood" name="neighborhood" value={announcement.neighborhood} onChange={(event) => setAnnouncement({ ...announcement, neighborhood: event.target.value })} required disabled={neighborhoodsStatus !== 'loaded' || (!editingListingId && activeNeighborhoodNames.length === 0)}><option value="" disabled>Selecione um bairro</option>{announcementNeighborhoodOptions.map((name) => <option key={name} value={name}>{name}{!activeNeighborhoodNames.includes(name) ? ' (inativo; anúncio existente)' : ''}</option>)}</select>{neighborhoodsStatus === 'loading' && <small className="announcement-field-message">Carregando bairros cadastrados...</small>}{neighborhoodsError && <small className="announcement-field-message">{neighborhoodsError}</small>}</div>
                 </div>
               </section>
 
