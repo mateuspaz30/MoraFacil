@@ -81,7 +81,6 @@ export function ListingShowcase({ listings, city }) {
     <section className="property-showcase" aria-labelledby="property-showcase-title">
       <div className="property-showcase-heading">
         <h2 id="property-showcase-title">{heading}</h2>
-        <a href="#imoveis-disponiveis">Ver todos os imóveis <span aria-hidden="true">→</span></a>
       </div>
       <div className="property-showcase-grid" id="imoveis-disponiveis">
         {listings.map((listing) => {
