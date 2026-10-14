@@ -358,7 +358,11 @@ export function ListingDetailPage({ listing }) {
             <h1>{listing.title}</h1>
             <div className="listing-detail-address-line"><span aria-hidden="true">⌖</span><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
             <button type="button" className="listing-share-trigger" onClick={() => { setShareFeedback(''); setShareOpen(true) }}>
-              <span aria-hidden="true">↗</span> Compartilhar imóvel
+              <svg className="share-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 15V3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 7L12 3L16 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 10H5C3.9 10 3 10.9 3 12V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V12C21 10.9 20.1 10 19 10H17" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg> Compartilhar imóvel
             </button>
           </div>
           <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
