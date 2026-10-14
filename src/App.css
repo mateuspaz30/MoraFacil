@@ -4683,7 +4683,7 @@
 }
 
 .property-badge--sale { background: #2f80ed; }
-.property-badge--rent { background: #22c55e; }
+.property-badge--rent { background: var(--purpose-rent); }
 
 .property-badge__icon {
   display: block;
