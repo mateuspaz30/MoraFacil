@@ -74,6 +74,48 @@ export const getListingSlugFromPath = () => {
   return route === 'imovel' ? decodeURIComponent(slug || '') : ''
 }
 
+function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
+  const images = [...new Set([
+    ...(Array.isArray(listing.images) ? listing.images : []),
+    listing.image,
+  ].filter(Boolean))]
+  const [imageIndex, setImageIndex] = useState(0)
+
+  const changeImage = (event, direction) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setImageIndex((current) => (current + direction + images.length) % images.length)
+  }
+
+  return (
+    <div className="showcase-property-image">
+      <a className="showcase-property-image-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
+        {images[imageIndex] && (
+          <img
+            src={images[imageIndex]}
+            srcSet={getResponsiveImageSet(images[imageIndex])}
+            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 980px) calc(50vw - 36px), (max-width: 1400px) calc(33vw - 30px), 430px"
+            alt={`${listing.title}, foto ${imageIndex + 1}`}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+      </a>
+      {images.length > 1 && (
+        <>
+          <button type="button" className="showcase-gallery-arrow previous" aria-label="Foto anterior" onClick={(event) => changeImage(event, -1)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 9 12l6 6" /></svg>
+          </button>
+          <button type="button" className="showcase-gallery-arrow next" aria-label="Próxima foto" onClick={(event) => changeImage(event, 1)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function ListingShowcase({ listings, city }) {
   const heading = city ? `Imóveis disponíveis em ${city}` : 'Imóveis disponíveis'
 
@@ -84,7 +126,6 @@ export function ListingShowcase({ listings, city }) {
       </div>
       <div className="property-showcase-grid" id="imoveis-disponiveis">
         {listings.map((listing) => {
-          const image = listing.image || ''
           const slug = getListingSlug(listing)
           const url = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(slug)}/`
           const purpose = getListingPurpose(listing)
@@ -102,20 +143,8 @@ export function ListingShowcase({ listings, city }) {
 
           return (
             <article className="showcase-property-card" key={listing.id}>
+              <ShowcasePropertyImage listing={listing} purpose={purpose} purposeLabel={purposeLabel} url={url} />
               <a className="showcase-property-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
-                <div className="showcase-property-image">
-                  {image && (
-                    <img
-                      src={image}
-                      srcSet={getResponsiveImageSet(image)}
-                      sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 980px) calc(50vw - 36px), (max-width: 1400px) calc(33vw - 30px), 430px"
-                      alt={`${listing.title} em ${getListingLocation(listing)}`}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  )}
-                  <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
-                </div>
                 <div className="showcase-property-body">
                   <h3>{listing.title}</h3>
                   <p className="showcase-property-location">⌖ {getListingLocation(listing)}</p>
