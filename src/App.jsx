@@ -1764,8 +1764,8 @@ function App() {
                 className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
               />
             ))}
-            <span className="hero-listing-badge" translate="no">
-              <span className={`hero-listing-purpose purpose-${getListingPurpose(activeHeroListing)}`}>{getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}</span>
+            <span className={`hero-listing-badge purpose-${getListingPurpose(activeHeroListing)}`} translate="no">
+              <span className="hero-listing-purpose">{getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}</span>
               <span className="hero-listing-property-type">
                 <span aria-hidden="true">{getListingPropertyType(activeHeroListing).icon}</span>
                 {getListingPropertyType(activeHeroListing).key === 'ponto_comercial' ? 'COMERCIAL' : getListingPropertyType(activeHeroListing).label.toLocaleUpperCase('pt-BR')}
