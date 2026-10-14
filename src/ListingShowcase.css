@@ -812,7 +812,6 @@
 .listing-share-action.telegram .listing-share-action-icon { background: #1da1d8; }
 .listing-share-action.telegram .listing-share-action-icon svg { fill: currentColor; stroke: none; }
 .listing-share-action.email .listing-share-action-icon { background: #08709b; }
-.listing-share-action.more .listing-share-action-icon { border: 1px solid #dfe6ee; background: #f4f7fb; color: #52657d; }
 .listing-share-feedback { display: flex; align-items: center; min-height: 48px; margin: 14px 0 0; border-radius: 10px; padding: 10px 13px; background: #eaf7f0; color: #187344; font-size: 0.78rem; font-weight: 700; }
 .listing-share-feedback.error { background: #fff0f0; color: #a62d37; }
 

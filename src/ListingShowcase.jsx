@@ -239,25 +239,6 @@ export function ListingDetailPage({ listing }) {
     }
   }
 
-  const shareUsingDevice = async () => {
-    if (!navigator.share) {
-      setShareFeedback('O compartilhamento do dispositivo não está disponível neste navegador.')
-      return
-    }
-    try {
-      await navigator.share({
-        title: listing.title,
-        text: `Confira este imóvel no Mora Fácil: ${listing.title}`,
-        url,
-      })
-      setShareFeedback('')
-    } catch (error) {
-      if (error.name === 'AbortError') return
-      console.error('Falha ao abrir o compartilhamento do dispositivo:', error)
-      setShareFeedback('Não foi possível abrir as opções de compartilhamento.')
-    }
-  }
-
   useEffect(() => {
     if (!shareOpen) return undefined
 
@@ -506,10 +487,6 @@ export function ListingDetailPage({ listing }) {
                 <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg></span>
                 <span><strong>E-mail</strong><small>Envie por e-mail.</small></span>
               </a>
-              <button type="button" className="listing-share-action more" onClick={shareUsingDevice}>
-                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg></span>
-                <span><strong>Mais opções</strong><small>Outros aplicativos.</small></span>
-              </button>
             </div>
             <p className={`listing-share-feedback${shareFeedback && !shareFeedback.startsWith('Link copiado') ? ' error' : ''}`} role="status" aria-live="polite">{shareFeedback || 'Divulgue boas oportunidades! Ajude alguém a encontrar o imóvel ideal.'}</p>
           </section>
