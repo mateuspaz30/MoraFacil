@@ -1764,12 +1764,11 @@ function App() {
                 className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
               />
             ))}
-            <span className={`hero-listing-badge purpose-${getListingPurpose(activeHeroListing)}`} translate="no">
-              <span className="hero-listing-purpose">{getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}</span>
-              <span className="hero-listing-property-type">
-                <span aria-hidden="true">{getListingPropertyType(activeHeroListing).icon}</span>
-                {getListingPropertyType(activeHeroListing).key === 'ponto_comercial' ? 'COMERCIAL' : getListingPropertyType(activeHeroListing).label.toLocaleUpperCase('pt-BR')}
-              </span>
+            <span className={`property-badge property-badge--${getListingPurpose(activeHeroListing) === 'aluguel' ? 'rent' : 'sale'}`} translate="no">
+              <svg className="property-badge__icon" viewBox="0 0 12 12" aria-hidden="true">
+                <path fill="currentColor" fillRule="evenodd" d="M11.32 5.14 6.86.68A2.3 2.3 0 0 0 5.23 0H1.2C.54 0 0 .54 0 1.2v4.03c0 .61.24 1.2.67 1.63l4.46 4.46a1.64 1.64 0 0 0 2.32 0l3.87-3.87a1.64 1.64 0 0 0 0-2.31ZM3.3 1.4a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Z" />
+              </svg>
+              {getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}
             </span>
             {heroCarouselListings.length > 1 && (
               <>
