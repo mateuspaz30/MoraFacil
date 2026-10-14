@@ -174,7 +174,10 @@ export function ListingShowcase({ listings, city }) {
 export function ListingDetailPage({ listing }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareFeedback, setShareFeedback] = useState('')
   const touchStartX = useRef(null)
+  const shareCloseButtonRef = useRef(null)
   const city = getCityLabel(listing.city)
   const neighborhood = listing.neighborhood || ''
   const streetLine = [listing.street, listing.number].filter(Boolean).join(', ')
@@ -203,10 +206,73 @@ export function ListingDetailPage({ listing }) {
     ? new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(listing.created_at))
     : 'Data não informada'
   const visibleThumbnails = galleryImages.slice(1, 4)
+  const shareText = `Confira este imóvel no Mora Fácil:\n\n${listing.title}\n${url}`
+  const emailShareUrl = `mailto:?subject=${encodeURIComponent('Confira este imóvel no Mora Fácil')}&body=${encodeURIComponent(`${listing.title}\n${url}`)}`
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(listing.title)}`
 
   const changeImage = (direction) => {
     setActiveImageIndex((current) => (current + direction + galleryImages.length) % galleryImages.length)
   }
+
+  const copyListingUrl = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        const input = document.createElement('textarea')
+        input.value = url
+        input.setAttribute('readonly', '')
+        input.style.position = 'fixed'
+        input.style.opacity = '0'
+        document.body.append(input)
+        input.select()
+        const copied = document.execCommand('copy')
+        input.remove()
+        if (!copied) throw new Error('O navegador não permitiu copiar o link.')
+      }
+      setShareFeedback('Link copiado com sucesso')
+    } catch (error) {
+      console.error('Falha ao copiar o link do imóvel:', error)
+      setShareFeedback('Não foi possível copiar o link. Tente novamente.')
+    }
+  }
+
+  const shareUsingDevice = async () => {
+    if (!navigator.share) {
+      setShareFeedback('O compartilhamento do dispositivo não está disponível neste navegador.')
+      return
+    }
+    try {
+      await navigator.share({
+        title: listing.title,
+        text: `Confira este imóvel no Mora Fácil: ${listing.title}`,
+        url,
+      })
+      setShareFeedback('')
+    } catch (error) {
+      if (error.name === 'AbortError') return
+      console.error('Falha ao abrir o compartilhamento do dispositivo:', error)
+      setShareFeedback('Não foi possível abrir as opções de compartilhamento.')
+    }
+  }
+
+  useEffect(() => {
+    if (!shareOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    shareCloseButtonRef.current?.focus()
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setShareOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [shareOpen])
 
   const handleGalleryTouchStart = (event) => {
     touchStartX.current = event.touches[0]?.clientX ?? null
@@ -310,6 +376,9 @@ export function ListingDetailPage({ listing }) {
           <div>
             <h1>{listing.title}</h1>
             <div className="listing-detail-address-line"><span aria-hidden="true">⌖</span><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
+            <button type="button" className="listing-share-trigger" onClick={() => { setShareFeedback(''); setShareOpen(true) }}>
+              <span aria-hidden="true">↗</span> Compartilhar imóvel
+            </button>
           </div>
           <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
         </div>
@@ -384,6 +453,68 @@ export function ListingDetailPage({ listing }) {
           </section>
         </aside>
       </article>
+
+      {shareOpen && (
+        <div
+          className="listing-share-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShareOpen(false)
+          }}
+        >
+          <section className="listing-share-dialog" role="dialog" aria-modal="true" aria-labelledby="listing-share-title" aria-describedby="listing-share-description">
+            <button ref={shareCloseButtonRef} type="button" className="listing-share-close" aria-label="Fechar compartilhamento" onClick={() => setShareOpen(false)}>×</button>
+            <header className="listing-share-header">
+              <h2 id="listing-share-title">Compartilhar imóvel</h2>
+              <p id="listing-share-description">Compartilhe este imóvel com quem você quiser.</p>
+            </header>
+            <article className="listing-share-summary">
+              {listing.image || galleryImages[0]
+                ? <img src={listing.image || galleryImages[0]} alt={listing.title} />
+                : <div className="listing-share-image-empty">Foto não disponível</div>}
+              <div className="listing-share-summary-content">
+                <span className={`listing-share-purpose purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+                <h3>{listing.title}</h3>
+                <p className="listing-share-location"><span aria-hidden="true">⌖</span>{getListingLocation(listing)}</p>
+                <strong className={`listing-share-price purpose-price purpose-${purpose}`}>{price}</strong>
+                <div className="listing-share-features" aria-label="Características do imóvel">
+                  <span><i aria-hidden="true">🛏</i>{bedrooms}</span>
+                  <span><i aria-hidden="true">🚿</i>{bathrooms}</span>
+                  <span><i aria-hidden="true">🚗</i>{parking}</span>
+                  <span><i aria-hidden="true">📐</i>{area} m²</span>
+                </div>
+              </div>
+            </article>
+            <div className="listing-share-actions" aria-label="Opções de compartilhamento">
+              <button type="button" className="listing-share-action copy" onClick={copyListingUrl}>
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.07 0l3-3A5 5 0 0 0 13 2.93l-1.72 1.72M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21.07l1.72-1.72" /></svg></span>
+                <span><strong>{shareFeedback === 'Link copiado com sucesso' ? 'Link copiado!' : 'Copiar link'}</strong><small>{shareFeedback === 'Link copiado com sucesso' ? 'Pronto para compartilhar.' : 'Copie o link deste imóvel.'}</small></span>
+              </button>
+              <a className="listing-share-action whatsapp" href={whatsappShareUrl} target="_blank" rel="noreferrer">
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L4 20l1-3.7a8.5 8.5 0 1 1 15.5-4.6Z" /><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" /></svg></span>
+                <span><strong>WhatsApp</strong><small>Compartilhe pelo WhatsApp.</small></span>
+              </a>
+              <a className="listing-share-action facebook" href={facebookShareUrl} target="_blank" rel="noreferrer">
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 8h3V4.2c-.5-.1-1.7-.2-3.2-.2-3.2 0-5.3 1.9-5.3 5.5V12H5v4h3.5v8h4.2v-8h3.5l.6-4h-4.1V9.9c0-1.2.3-1.9 1.3-1.9Z" /></svg></span>
+                <span><strong>Facebook</strong><small>Compartilhe no Facebook.</small></span>
+              </a>
+              <a className="listing-share-action telegram" href={telegramShareUrl} target="_blank" rel="noreferrer">
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m22 3-3.4 18-6.8-5.2-3.7 3.5.6-6.7L19 5.2 7.2 14l-5.4-1.8L22 3Z" /></svg></span>
+                <span><strong>Telegram</strong><small>Compartilhe no Telegram.</small></span>
+              </a>
+              <a className="listing-share-action email" href={emailShareUrl}>
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg></span>
+                <span><strong>E-mail</strong><small>Envie por e-mail.</small></span>
+              </a>
+              <button type="button" className="listing-share-action more" onClick={shareUsingDevice}>
+                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg></span>
+                <span><strong>Mais opções</strong><small>Outros aplicativos.</small></span>
+              </button>
+            </div>
+            <p className={`listing-share-feedback${shareFeedback && !shareFeedback.startsWith('Link copiado') ? ' error' : ''}`} role="status" aria-live="polite">{shareFeedback || 'Divulgue boas oportunidades! Ajude alguém a encontrar o imóvel ideal.'}</p>
+          </section>
+        </div>
+      )}
 
       {galleryOpen && <div className="listing-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Galeria de fotos" onClick={(event) => { if (event.target === event.currentTarget) setGalleryOpen(false) }}>
         <button type="button" className="listing-gallery-lightbox-close" aria-label="Fechar galeria" onClick={() => setGalleryOpen(false)}>×</button>
