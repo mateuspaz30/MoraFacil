@@ -444,6 +444,16 @@
 }
 
 @media (max-width: 640px) {
+  .showcase-gallery-arrow {
+    width: 28px;
+    height: 28px;
+  }
+
+  .showcase-gallery-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .property-showcase-heading {
     align-items: flex-start;
     flex-direction: column;
