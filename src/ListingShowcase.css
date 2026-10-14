@@ -773,7 +773,8 @@
 .listing-detail-address-copy p { display: block; margin: 0 0 3px; color: #2f4663; font-size: 0.95rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
 .listing-detail-address-copy p.address-street { color: #0f2345; font-size: 1.12rem; font-weight: 800; }
 .listing-detail-address-copy > a { display: inline-block; margin-top: 6px; color: #078c59; font-size: 0.86rem; font-weight: 750; text-decoration: none; }
-.listing-share-trigger { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; border: 0; padding: 0; background: transparent; color: #087cf0; cursor: pointer; font: inherit; font-size: 0.86rem; font-weight: 750; transition: color 150ms ease; }
+.listing-share-toolbar { display: flex; width: 100%; justify-content: flex-end; }
+.listing-share-trigger { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 0; background: transparent; color: #087cf0; cursor: pointer; font: inherit; font-size: 0.86rem; font-weight: 750; transition: color 150ms ease; }
 .listing-share-trigger:hover { color: #0755a3; text-decoration: underline; }
 .share-icon { width: 18px; height: 18px; color: currentColor; flex-shrink: 0; display: block; }
 

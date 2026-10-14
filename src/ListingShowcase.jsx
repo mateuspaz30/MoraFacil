@@ -357,6 +357,13 @@ export function ListingDetailPage({ listing }) {
           <div>
             <h1>{listing.title}</h1>
             <div className="listing-detail-address-line"><span aria-hidden="true">⌖</span><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
+          </div>
+          <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
+        </div>
+      </header>
+      <article className="listing-detail-layout">
+        <div className="listing-detail-primary-column">
+          <div className="listing-share-toolbar">
             <button type="button" className="listing-share-trigger" onClick={() => { setShareFeedback(''); setShareOpen(true) }}>
               <svg className="share-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 15V3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -365,11 +372,6 @@ export function ListingDetailPage({ listing }) {
               </svg> Compartilhar imóvel
             </button>
           </div>
-          <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
-        </div>
-      </header>
-      <article className="listing-detail-layout">
-        <div className="listing-detail-primary-column">
           <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
             <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
               {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
