@@ -416,7 +416,7 @@ export function ListingDetailPage({ listing }) {
           </section>
 
           <section className="listing-detail-address-card listing-detail-card">
-            <div className="listing-detail-address-copy"><h2><LocationPinIcon />Endereço</h2>
+            <div className="listing-detail-address-copy"><h2>Endereço</h2>
               <p className="address-street"><LocationPinIcon /> {fullAddress}</p>
               {neighborhood && <p>{neighborhood}</p>}
               <p>{city}</p>
