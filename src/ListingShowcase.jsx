@@ -436,7 +436,7 @@ export function ListingDetailPage({ listing }) {
 
           <section className="listing-detail-advertiser-card">
             <h2>Anunciante</h2>
-            <div className="listing-detail-advertiser"><span>{String(listing.advertiser || 'M').trim().charAt(0).toLocaleUpperCase('pt-BR')}</span><div><strong>{listing.advertiser || 'Anunciante particular'}</strong><small>♢ Anunciante particular</small></div></div>
+            <div className="listing-detail-advertiser"><span>{String(listing.advertiser || 'A').trim().charAt(0).toLocaleUpperCase('pt-BR')}</span><div><strong>{listing.advertiser || 'Anunciante'}</strong></div></div>
           </section>
 
           <section className="listing-detail-information-card listing-detail-card">
