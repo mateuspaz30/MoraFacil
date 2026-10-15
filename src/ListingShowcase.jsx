@@ -398,7 +398,12 @@ export function ListingDetailPage({ listing }) {
           </section>
 
           <section className="listing-detail-description listing-detail-card">
-            <h2><span aria-hidden="true">▤</span>Sobre este imóvel</h2>
+            <h2><svg className="section-title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 13h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 17h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>Sobre este imóvel</h2>
             <p>{description}</p>
           </section>
 
@@ -427,7 +432,12 @@ export function ListingDetailPage({ listing }) {
           </section>
 
           <section className="listing-detail-information-card listing-detail-card">
-            <h2><span aria-hidden="true">▤</span>Informações do imóvel</h2>
+            <h2><svg className="section-title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 13h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 17h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>Informações do imóvel</h2>
             <ul className="listing-detail-info-grid">
               <li><span aria-hidden="true">{purpose === 'aluguel' ? '🔑' : '🛒'}</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
               <li><span aria-hidden="true">{propertyType.icon}</span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
