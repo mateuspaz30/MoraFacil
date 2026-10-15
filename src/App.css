@@ -2701,6 +2701,7 @@
   font-size: 0.76rem;
   line-height: 1.4;
 }
+.account-card-location .location-icon { margin-right: 4px; }
 
 .account-card-price {
   margin-top: 12px;

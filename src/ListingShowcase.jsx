@@ -36,6 +36,14 @@ export const getListingLocation = (listing) => {
   return `${neighborhood || 'Ipuã'}, ${city}`
 }
 
+function LocationPinIcon({ className = '' }) {
+  return (
+    <svg className={`location-icon ${className}`.trim()} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2C8.686 2 6 4.686 6 8c0 4.5 6 12 6 12s6-7.5 6-12c0-3.314-2.686-6-6-6zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5z" />
+    </svg>
+  )
+}
+
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
 const formatPrice = (price, type) => {
@@ -147,7 +155,7 @@ export function ListingShowcase({ listings, city }) {
               <a className="showcase-property-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
                 <div className="showcase-property-body">
                   <h3>{listing.title}</h3>
-                  <p className="showcase-property-location">⌖ {getListingLocation(listing)}</p>
+                  <p className="showcase-property-location"><LocationPinIcon />{getListingLocation(listing)}</p>
                   <p className="showcase-property-type"><span aria-hidden="true">{propertyType.icon}</span> {propertyType.label}</p>
                   <strong className={`showcase-property-price purpose-price purpose-${purpose}`}>{formatPrice(listing.price, purpose)}</strong>
                   <div className="showcase-property-features" aria-label="Características do imóvel">
@@ -356,7 +364,7 @@ export function ListingDetailPage({ listing }) {
         <div className="listing-detail-titlebar">
           <div>
             <h1>{listing.title}</h1>
-            <div className="listing-detail-address-line"><span aria-hidden="true">⌖</span><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
+            <div className="listing-detail-address-line"><LocationPinIcon /><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
           </div>
           <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
         </div>
@@ -408,8 +416,8 @@ export function ListingDetailPage({ listing }) {
           </section>
 
           <section className="listing-detail-address-card listing-detail-card">
-            <div className="listing-detail-address-copy"><h2><span aria-hidden="true">⌖</span>Endereço</h2>
-              <p className="address-street"><span aria-hidden="true">📍</span> {fullAddress}</p>
+            <div className="listing-detail-address-copy"><h2><LocationPinIcon />Endereço</h2>
+              <p className="address-street"><LocationPinIcon /> {fullAddress}</p>
               {neighborhood && <p>{neighborhood}</p>}
               <p>{city}</p>
               {listing.cep && <p>CEP {listing.cep}</p>}
@@ -472,7 +480,7 @@ export function ListingDetailPage({ listing }) {
               <div className="listing-share-summary-content">
                 <span className={`listing-share-purpose purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
                 <h3>{listing.title}</h3>
-                <p className="listing-share-location"><span aria-hidden="true">⌖</span>{getListingLocation(listing)}</p>
+                <p className="listing-share-location"><LocationPinIcon />{getListingLocation(listing)}</p>
                 <strong className={`listing-share-price purpose-price purpose-${purpose}`}>{price}</strong>
                 <div className="listing-share-features" aria-label="Características do imóvel">
                   <span><i aria-hidden="true">🛏</i>{bedrooms}</span>
