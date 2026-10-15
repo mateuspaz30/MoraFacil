@@ -835,6 +835,14 @@
 .listing-detail-info-grid strong { overflow: hidden; color: #0f2345; font-size: 0.92rem; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .listing-detail-info-grid small { color: #697d96; font-size: 0.7rem; line-height: 1.2; }
 
+@media (min-width: 981px) {
+  .listing-detail-information-card h2 { font-size: 1.18rem; }
+  .listing-detail-information-card h2 > .section-title-icon { width: 20px; height: 20px; }
+  .listing-detail-info-grid > li > span { font-size: 1.18rem; }
+  .listing-detail-info-grid strong { font-size: 1.04rem; }
+  .listing-detail-info-grid small { font-size: 0.78rem; }
+}
+
 .listing-gallery-lightbox { position: fixed; inset: 0; z-index: 2000; display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; justify-items: center; gap: 12px; padding: 48px 20px; background: rgba(6, 18, 34, 0.94); }
 .listing-gallery-lightbox > img { display: block; max-width: min(100%, 1200px); max-height: calc(100vh - 100px); object-fit: contain; grid-column: 2; }
 .listing-gallery-lightbox > .listing-gallery-arrow { position: static; transform: none; }
