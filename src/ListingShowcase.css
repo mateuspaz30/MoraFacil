@@ -630,6 +630,10 @@
   margin: 14px auto 48px;
 }
 
+@media (min-width: 981px) {
+  .listing-detail-layout { margin-top: 6px; }
+}
+
 .listing-detail-primary-column,
 .listing-detail-sidebar {
   display: flex;
