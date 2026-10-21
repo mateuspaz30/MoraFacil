@@ -56,6 +56,25 @@
   box-shadow: 0 8px 22px rgba(18, 61, 95, 0.1);
 }
 
+@media (min-width: 981px) and (hover: hover) and (pointer: fine) {
+  .showcase-property-card {
+    transform-origin: center;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    cursor: pointer;
+  }
+
+  .showcase-property-card:hover {
+    z-index: 1;
+    transform: scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@media (min-width: 981px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .showcase-property-card { transition: box-shadow 0.25s ease; }
+  .showcase-property-card:hover { transform: none; }
+}
+
 .showcase-property-link {
   display: flex;
   flex: 1;
