@@ -875,14 +875,15 @@
 .listing-gallery-lightbox > span { position: absolute; bottom: 14px; color: #fff; font-size: 0.85rem; }
 
 .site-footer {
-  width: 100vw;
-  margin: 48px 0 -48px calc(50% - 50vw);
+  width: calc(100% + 44px);
+  margin: 48px -22px -48px;
   padding: 26px 0 16px;
   background: linear-gradient(135deg, #071d34 0%, #0e3452 70%, #0a2440 100%);
   color: #fff;
   text-align: center;
 }
 
+.listing-detail-page + .site-footer { width: min(calc(100% - 56px), 1500px); margin: 48px auto 0; }
 .site-footer-container { width: min(100%, 1180px); margin: 0 auto; padding: 0 22px; box-sizing: border-box; }
 .site-footer-content { display: flex; flex-direction: column; align-items: center; }
 .site-footer-brand { display: flex; align-items: center; justify-content: center; gap: 14px; }
@@ -941,6 +942,8 @@
 
 @media (max-width: 600px) {
   .site-footer { margin-top: 34px; margin-bottom: -34px; padding: 22px 0 16px; }
+  .real-estate-shell > .site-footer { width: calc(100% + 28px); margin-right: -14px; margin-left: -14px; }
+  .listing-detail-page + .site-footer { width: calc(100% - 32px); margin: 34px auto 0; }
   .site-footer-container { padding: 0 14px; }
   .site-footer-brand { gap: 10px; }
   .site-footer-brand img { width: 54px; height: 54px; border-radius: 13px; }
