@@ -7,7 +7,7 @@ import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase } from './ListingShowcase.jsx'
+import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -2176,6 +2176,7 @@ function App() {
           </section>
         </div>
       )}
+      <SiteFooter />
     </div>
   )
 }

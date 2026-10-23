@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './ListingShowcase.css'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
+import logo from './assets/logo.png'
 
 export const PORTAL_CITY = 'Ipuã-SP'
 
@@ -34,6 +35,32 @@ export const getListingLocation = (listing) => {
     .replace(new RegExp(`\\s+(?:de\\s+)?${cityName}(?:-SP)?$`, 'i'), '')
     .trim()
   return `${neighborhood || 'Ipuã'}, ${city}`
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="site-footer-content">
+        <div className="site-footer-brand">
+          <img src={logo} alt="Logo Mora Fácil" />
+          <span>Mora <strong>Fácil</strong></span>
+        </div>
+        <p className="site-footer-tagline">Seu próximo imóvel está aqui.</p>
+        <div className="site-footer-contacts">
+          <a href="mailto:contato@morafacil.com.br">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="m4 7 8 6 8-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            contato@morafacil.com.br
+          </a>
+          <span className="site-footer-divider" aria-hidden="true" />
+          <a href="tel:+5516999999999">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 16.5v3a1.5 1.5 0 0 1-1.65 1.5A18.9 18.9 0 0 1 11.1 18a18.6 18.6 0 0 1-5.7-5.7 18.9 18.9 0 0 1-3-8.3A1.5 1.5 0 0 1 3.9 2.3h3a1.5 1.5 0 0 1 1.5 1.3c.1 1 .4 2 .7 2.9a1.5 1.5 0 0 1-.3 1.6L7.5 9.4a15 15 0 0 0 5.7 5.7l1.3-1.3a1.5 1.5 0 0 1 1.6-.3c.9.3 1.9.6 2.9.7a1.5 1.5 0 0 1 1.3 1.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            (16) 9 9999-9999
+          </a>
+        </div>
+      </div>
+      <div className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</div>
+    </footer>
+  )
 }
 
 function LocationPinIcon({ className = '' }) {
@@ -356,6 +383,7 @@ export function ListingDetailPage({ listing }) {
   }
 
   return (
+    <>
     <main className="listing-detail-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="listing-detail-header">
@@ -526,5 +554,7 @@ export function ListingDetailPage({ listing }) {
         <span>{activeImageIndex + 1} / {galleryImages.length}</span>
       </div>}
     </main>
+    <SiteFooter />
+    </>
   )
 }
