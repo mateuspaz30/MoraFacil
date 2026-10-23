@@ -4,6 +4,28 @@
   padding: 0 22px 48px;
 }
 
+.brand-curve-surface {
+  --brand-curve-large: 50%;
+  --brand-curve-small: 12px;
+}
+
+.brand-curve-bottom {
+  border-bottom: 4px solid #8bea45;
+  border-radius: 0 0 var(--brand-curve-large) var(--brand-curve-small);
+}
+
+.brand-curve-top {
+  border-top: 4px solid #8bea45;
+  border-radius: var(--brand-curve-small) var(--brand-curve-large) 0 0;
+}
+
+@media (max-width: 640px) {
+  .brand-curve-surface {
+    --brand-curve-large: 28%;
+    --brand-curve-small: 18px;
+  }
+}
+
 .top-header {
   position: relative;
   display: flex;
@@ -2004,8 +2026,6 @@
     min-height: 154px;
     margin: 0 -22px 20px;
     padding: 22px 48px 20px;
-    border-bottom: 4px solid #8bea45;
-    border-radius: 0 0 50% 12px;
     background: linear-gradient(140deg, #061d35 0%, #0a3658 64%, #0b2947 100%);
   }
 
@@ -2300,8 +2320,6 @@
     gap: 0;
     margin: 0 -14px 18px;
     padding: 22px 20px 18px;
-    border-bottom: 4px solid #8bea45;
-    border-radius: 0 0 28% 18px;
     background: linear-gradient(140deg, #061d35 0%, #0a3658 70%, #0b2947 100%);
     overflow: hidden;
   }

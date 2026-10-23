@@ -1745,7 +1745,7 @@ function App() {
         </div>
       )}
 
-      <section className="hero-content" aria-label="Encontre seu próximo lar">
+      <section className="hero-content brand-curve-surface brand-curve-bottom" aria-label="Encontre seu próximo lar">
         <div className="hero-copy">
           <h2>Encontre seu<br /><span>próximo lar.</span></h2>
           <p>Imóveis do seu jeito, perto de você.</p>
