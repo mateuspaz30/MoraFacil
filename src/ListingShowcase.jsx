@@ -40,6 +40,17 @@ export const getListingLocation = (listing) => {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
+      <svg className="site-footer-curve" viewBox="0 0 1200 240" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="site-footer-gradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#071d34" />
+            <stop offset="70%" stopColor="#0e3452" />
+            <stop offset="100%" stopColor="#0a2440" />
+          </linearGradient>
+        </defs>
+        <path d="M0 20 H520 C760 20 920 0 1200 0 V240 H0 Z" fill="url(#site-footer-gradient)" />
+        <path d="M0 20 H520 C760 20 920 0 1200 0" fill="none" stroke="#8bea45" strokeWidth="4" />
+      </svg>
       <div className="site-footer-container">
         <div className="site-footer-content">
           <div className="site-footer-brand">
