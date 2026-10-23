@@ -16,7 +16,7 @@
 
 .brand-curve-top {
   border-top: 4px solid #8bea45;
-  border-radius: var(--brand-curve-small) var(--brand-curve-large) 0 0;
+  border-radius: var(--brand-curve-small) var(--brand-curve-small) 0 0;
 }
 
 @media (max-width: 640px) {
