@@ -876,25 +876,26 @@
 
 .site-footer {
   width: 100vw;
-  margin: 48px 0 0 calc(50% - 50vw);
-  padding: 32px 28px 18px;
+  margin: 48px 0 -48px calc(50% - 50vw);
+  padding: 46px 0 24px;
   background: linear-gradient(135deg, #071d34 0%, #0e3452 70%, #0a2440 100%);
   color: #fff;
   text-align: center;
 }
 
+.site-footer-container { width: min(100%, 1180px); margin: 0 auto; padding: 0 22px; box-sizing: border-box; }
 .site-footer-content { display: flex; flex-direction: column; align-items: center; }
 .site-footer-brand { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .site-footer-brand img { display: block; width: 64px; height: 64px; border-radius: 15px; object-fit: cover; }
 .site-footer-brand > span { color: #fff; font-size: 2.65rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
 .site-footer-brand strong { color: #8bea45; }
-.site-footer-tagline { margin: 10px 0 22px; color: #e6edf5; font-size: 1.1rem; font-weight: 400; }
-.site-footer-contacts { display: flex; align-items: center; justify-content: center; gap: 28px; }
+.site-footer-tagline { margin: 14px 0 30px; color: #e6edf5; font-size: 1.1rem; font-weight: 400; }
+.site-footer-contacts { display: flex; align-items: center; justify-content: center; gap: 32px; }
 .site-footer-contacts a { display: inline-flex; align-items: center; gap: 10px; color: #f3f7fb; font-size: 1rem; text-decoration: none; }
 .site-footer-contacts a:hover { color: #8bea45; }
 .site-footer-contacts svg { display: block; width: 22px; height: 22px; flex: 0 0 22px; color: #8bea45; }
 .site-footer-divider { width: 1px; height: 34px; background: rgba(214, 226, 238, 0.55); }
-.site-footer-copyright { max-width: 1800px; margin: 28px auto 0; border-top: 1px solid rgba(214, 226, 238, 0.55); padding-top: 15px; color: #e0e8f0; font-size: 0.82rem; letter-spacing: 0.02em; }
+.site-footer-copyright { margin: 36px 0 0; border-top: 1px solid rgba(214, 226, 238, 0.55); padding-top: 18px; color: #e0e8f0; font-size: 0.82rem; letter-spacing: 0.02em; }
 
 @media (max-width: 760px) {
   .listing-detail-header { padding: 12px 16px 4px; }
@@ -939,16 +940,17 @@
 }
 
 @media (max-width: 600px) {
-  .site-footer { margin-top: 34px; padding: 26px 16px 16px; }
+  .site-footer { margin-top: 34px; margin-bottom: -34px; padding: 32px 0 20px; }
+  .site-footer-container { padding: 0 14px; }
   .site-footer-brand { gap: 10px; }
   .site-footer-brand img { width: 48px; height: 48px; border-radius: 12px; }
   .site-footer-brand > span { font-size: 2rem; }
-  .site-footer-tagline { margin: 9px 0 18px; font-size: 0.92rem; }
+  .site-footer-tagline { margin: 12px 0 24px; font-size: 0.92rem; }
   .site-footer-contacts { flex-direction: column; gap: 12px; }
   .site-footer-contacts a { gap: 8px; font-size: 0.85rem; }
   .site-footer-contacts svg { width: 19px; height: 19px; flex-basis: 19px; }
   .site-footer-divider { width: 36px; height: 1px; }
-  .site-footer-copyright { margin-top: 22px; padding-top: 13px; font-size: 0.72rem; }
+  .site-footer-copyright { margin-top: 28px; padding-top: 15px; font-size: 0.72rem; }
 }
 
 .showcase-property-price.purpose-price.purpose-venda,
