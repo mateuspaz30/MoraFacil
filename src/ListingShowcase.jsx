@@ -208,13 +208,14 @@ export function ListingShowcase({ listings, city }) {
   )
 }
 
-export function ListingDetailPage({ listing }) {
+export function ListingDetailPage({ listing, onView }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareFeedback, setShareFeedback] = useState('')
   const touchStartX = useRef(null)
   const shareCloseButtonRef = useRef(null)
+  const recordedListingIdRef = useRef(null)
   const city = getCityLabel(listing.city)
   const neighborhood = listing.neighborhood || ''
   const streetLine = [listing.street, listing.number].filter(Boolean).join(', ')
@@ -249,6 +250,12 @@ export function ListingDetailPage({ listing }) {
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(listing.title)}`
+
+  useEffect(() => {
+    if (!listing.user_id || recordedListingIdRef.current === listing.id) return
+    recordedListingIdRef.current = listing.id
+    onView?.(listing)
+  }, [listing, onView])
 
   const changeImage = (direction) => {
     setActiveImageIndex((current) => (current + direction + galleryImages.length) % galleryImages.length)

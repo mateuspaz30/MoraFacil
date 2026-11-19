@@ -1690,11 +1690,37 @@ function App() {
       .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isApprovedListing(item))
       .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
     : []
+  const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
+  const recordListingView = useCallback(async (listing) => {
+    if (!supabase || !listing.user_id) return
+
+    try {
+      const { data, error } = await supabase.rpc('increment_listing_views', {
+        target_listing_id: listing.id,
+      })
+      if (error) throw error
+      if (data === null) return
+
+      const visualizacoes = Number(data) || 0
+      setPublishedListings((current) => current.map((item) => (
+        item.id === listing.id
+          ? { ...item, visualizacoes: Math.max(Number(item.visualizacoes) || 0, visualizacoes) }
+          : item
+      )))
+      setUserListings((current) => current.map((item) => (
+        item.id === listing.id
+          ? { ...item, visualizacoes: Math.max(Number(item.visualizacoes) || 0, visualizacoes) }
+          : item
+      )))
+    } catch (error) {
+      console.error('Falha ao registrar visualização do imóvel:', error)
+    }
+  }, [])
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
     const routeListing = listings.find((item) => getListingSlug(item) === routeSlug)
-    if (routeListing) return <ListingDetailPage listing={routeListing} />
+    if (routeListing) return <ListingDetailPage listing={routeListing} onView={recordListingView} />
   }
 
   return (
@@ -1769,18 +1795,30 @@ function App() {
                   <button type="button" className="my-area-logout" onClick={handleLogout}>Sair</button>
                 </header>
                 {accountSection === 'overview' && (
-                  <section className="my-area-welcome">
-                    <span className="my-area-welcome-icon" aria-hidden="true">⌂</span>
-                    <div>
-                      <p>Bem-vindo à sua área</p>
-                      <h2>Olá, {accountDisplayName}</h2>
-                      <span>Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
-                    </div>
-                    <div className="my-area-quick-links">
-                      <button type="button" onClick={() => setAccountSection('listings')}>Ver Meus Imóveis <span aria-hidden="true">→</span></button>
-                      <button type="button" onClick={() => setAccountSection('account')}>Consultar Minha Conta <span aria-hidden="true">→</span></button>
-                    </div>
-                  </section>
+                  <>
+                    <section className="my-area-welcome">
+                      <span className="my-area-welcome-icon" aria-hidden="true">⌂</span>
+                      <div>
+                        <p>Bem-vindo à sua área</p>
+                        <h2>Olá, {accountDisplayName}</h2>
+                        <span>Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
+                      </div>
+                      <div className="my-area-quick-links">
+                        <button type="button" onClick={() => setAccountSection('listings')}>Ver Meus Imóveis <span aria-hidden="true">→</span></button>
+                        <button type="button" onClick={() => setAccountSection('account')}>Consultar Minha Conta <span aria-hidden="true">→</span></button>
+                      </div>
+                    </section>
+                    <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon" aria-hidden="true">⌂</span>
+                        <div><small>Imóveis Cadastrados</small><strong>{userListings.length}</strong></div>
+                      </article>
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon views" aria-hidden="true">◉</span>
+                        <div><small>Visualizações Totais</small><strong>{totalListingViews}</strong></div>
+                      </article>
+                    </section>
+                  </>
                 )}
                 {accountSection === 'account' && (
                   <section className="my-area-panel" aria-labelledby="my-area-account-title">
@@ -1925,6 +1963,7 @@ function App() {
                           <span><i aria-hidden="true">🚗</i><b>{item.parking_spaces || item.garages || 0}</b><small>Vagas</small></span>
                           <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
                         </div>
+                        <p className="account-card-views"><span aria-hidden="true">◉</span> Visualizações <strong>{Number(item.visualizacoes) || 0}</strong></p>
                         {statusKey === 'rejected' && <div className="account-rejection-reason"><strong>Motivo da reprovação</strong><p>{item.motivo_reprovacao || 'O administrador solicitou ajustes no anúncio.'}</p></div>}
                       </div>
                       <div className="account-card-actions">

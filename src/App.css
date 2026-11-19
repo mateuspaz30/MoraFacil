@@ -4685,6 +4685,60 @@
   margin-left: 8px;
 }
 
+.my-area-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.my-area-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+  border: 1px solid #e1e9f1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 7px 22px rgba(14, 47, 76, 0.045);
+}
+
+.my-area-stat-icon {
+  display: grid;
+  flex: 0 0 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 12px;
+  background: #e7f4ff;
+  color: #087cf0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.my-area-stat-icon.views {
+  background: #e9f8ef;
+  color: #078c59;
+}
+
+.my-area-stat-card small,
+.my-area-stat-card strong {
+  display: block;
+}
+
+.my-area-stat-card small {
+  color: #71849a;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.my-area-stat-card strong {
+  margin-top: 3px;
+  color: #12345a;
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+
 .my-area-panel {
   padding: clamp(20px, 3vw, 32px);
 }
@@ -4848,6 +4902,26 @@ dl.my-area-profile-grid > div {
   color: #71849a;
 }
 
+.account-card-views {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: #66809b;
+  font-size: 0.68rem;
+}
+
+.account-card-views span {
+  color: #078c59;
+  font-size: 0.9rem;
+}
+
+.account-card-views strong {
+  margin-left: auto;
+  color: #12345a;
+  font-size: 0.78rem;
+}
+
 .my-area-guest {
   display: grid;
   min-height: 100vh;
@@ -4944,6 +5018,31 @@ dl.my-area-profile-grid > div {
   .my-area-welcome {
     gap: 12px;
     padding: 20px 16px;
+  }
+
+  .my-area-stats-grid {
+    gap: 10px;
+  }
+
+  .my-area-stat-card {
+    min-height: 88px;
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .my-area-stat-icon {
+    flex-basis: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+  }
+
+  .my-area-stat-card small {
+    font-size: 0.65rem;
+  }
+
+  .my-area-stat-card strong {
+    font-size: 1.25rem;
   }
 
   .my-area-welcome-icon {
