@@ -4548,16 +4548,16 @@
 
 .my-area-nav button > .my-area-nav-icon {
   display: grid;
-  flex: 0 0 20px;
-  width: 20px;
-  height: 20px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
   place-items: center;
 }
 
 .my-area-nav-icon svg {
   display: block;
-  width: 19px;
-  height: 19px;
+  width: 24px;
+  height: 24px;
   text-align: center;
 }
 
@@ -4571,15 +4571,32 @@
   box-shadow: inset 3px 0 #8bea45;
 }
 
-.my-area-home-link {
+.my-area-sidebar-footer {
+  display: grid;
+  gap: 8px;
   margin-top: auto;
+}
+
+.my-area-sidebar-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
   border: 0;
   background: transparent;
   color: #b7cde0;
-  padding: 8px 4px;
+  padding: 6px 4px;
   cursor: pointer;
   font-size: 0.8rem;
   text-align: left;
+}
+
+.my-area-sidebar-action:hover {
+  color: #fff;
+}
+
+.my-area-sidebar-action svg {
+  flex: 0 0 24px;
 }
 
 .my-area-main {
@@ -4654,20 +4671,8 @@
   background: #79da32;
 }
 
-.my-area-create-listing > span {
-  font-size: 1.3rem;
-  line-height: 1;
-}
-
-.my-area-logout {
-  border: 1px solid #d9e3ed;
-  border-radius: 9px;
-  background: #fff;
-  color: #31516d;
-  padding: 0.58rem 0.92rem;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 700;
+.my-area-create-listing svg {
+  flex: 0 0 24px;
 }
 
 .my-area-welcome,
@@ -4791,20 +4796,17 @@
   place-items: center;
   border-radius: 16px;
   background: #e7f4ff;
-  color: #087cf0;
-  font-size: 1.8rem;
-  font-weight: 800;
+  color: #0a3d74;
 }
 
 .my-area-stat-icon.views {
-  background: #e9f8ef;
-  color: #078c59;
+  background: #e7f4ff;
+  color: #0a3d74;
 }
 
 .my-area-stat-icon.whatsapp {
   background: #e9f8ef;
-  color: #078c59;
-  font-size: 1.45rem;
+  color: #25d366;
 }
 
 .my-area-stat-card small,
@@ -4994,30 +4996,40 @@
 }
 
 .my-area-table-metric {
+  display: table-cell;
   color: #314b65;
   font-size: 0.82rem !important;
   text-align: center;
 }
 
-.my-area-table-metric span {
+.my-area-table-metric svg {
   margin-right: 6px;
-  color: #087cf0;
-  font-size: 0.9rem;
+  color: #0a3d74;
+  vertical-align: middle;
 }
 
-.my-area-table-metric.whatsapp span {
-  color: #08a849;
+.my-area-table-metric.whatsapp svg {
+  color: #25d366;
 }
 
 .my-area-manage-listing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid #b9c9d8;
   border-radius: 8px;
   background: #fff;
   color: #23415f;
-  padding: 7px 10px;
+  padding: 6px 10px;
   cursor: pointer;
   font-size: 0.7rem;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+.my-area-manage-listing svg {
+  flex: 0 0 24px;
 }
 
 .my-area-manage-listing:hover {
@@ -5329,18 +5341,34 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-nav button > .my-area-nav-icon {
-    flex-basis: 16px;
-    width: 16px;
-    height: 16px;
+    flex-basis: 24px;
+    width: 24px;
+    height: 24px;
   }
 
   .my-area-nav-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
   }
 
-  .my-area-home-link {
-    display: none;
+  .my-area-sidebar-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 0;
+  }
+
+  .my-area-sidebar-action {
+    min-height: 32px;
+    gap: 6px;
+    padding: 4px 2px;
+    font-size: 0.72rem;
+  }
+
+  .my-area-sidebar-action svg {
+    flex-basis: 20px;
+    width: 20px;
+    height: 20px;
   }
 
   .my-area-main {
@@ -5393,7 +5421,6 @@ dl.my-area-profile-grid > div {
     flex-basis: 48px;
     height: 48px;
     border-radius: 13px;
-    font-size: 1.5rem;
   }
 
   .my-area-stat-card small {

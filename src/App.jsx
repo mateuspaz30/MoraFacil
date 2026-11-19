@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { ArrowLeft, Building2, Eye, Home, House, LogOut, MessageCircle, Plus, Settings2, User } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -1798,10 +1799,10 @@ function App() {
                 </div>
                 <nav className="my-area-nav">
                   {[
-                    ['overview', 'overview', 'Visão Geral'],
-                    ['listings', 'listings', 'Meus Imóveis'],
-                    ['account', 'account', 'Minha Conta'],
-                  ].map(([section, icon, label]) => (
+                    ['overview', House, 'Visão Geral'],
+                    ['listings', Building2, 'Meus Imóveis'],
+                    ['account', User, 'Minha Conta'],
+                  ].map(([section, Icon, label]) => (
                     <button
                       key={section}
                       type="button"
@@ -1810,14 +1811,15 @@ function App() {
                       onClick={() => { setAccountSection(section); setProfileMessage('') }}
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
-                        {icon === 'overview' ? <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h6V4H4v9Zm10 7h6V11h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-                          : icon === 'listings' ? <svg viewBox="0 0 24 24" fill="none"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-                            : <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8" /><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>}
+                        <Icon size={24} strokeWidth={2.2} />
                       </span>{label}
                     </button>
                   ))}
                 </nav>
-                <button type="button" className="my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}>← Voltar ao portal</button>
+                <div className="my-area-sidebar-footer">
+                  <button type="button" className="my-area-sidebar-action my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}><ArrowLeft size={24} strokeWidth={2.2} />Voltar ao portal</button>
+                  <button type="button" className="my-area-sidebar-action" onClick={handleLogout}><LogOut size={24} strokeWidth={2.2} />Sair</button>
+                </div>
               </aside>
               <main className="my-area-main">
                 <header className={`my-area-topbar${accountSection === 'overview' ? ' overview' : ''}`}>
@@ -1827,23 +1829,22 @@ function App() {
                     {accountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
-                    {accountSection === 'overview' && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><span aria-hidden="true">＋</span> Cadastrar Imóvel</button>}
-                    <button type="button" className="my-area-logout" onClick={handleLogout}>Sair</button>
+                    {accountSection === 'overview' && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={24} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
                 {accountSection === 'overview' && (
                   <>
                     <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
                       <article className="my-area-stat-card">
-                        <span className="my-area-stat-icon" aria-hidden="true">⌂</span>
+                        <span className="my-area-stat-icon" aria-hidden="true"><Home size={28} strokeWidth={2.2} /></span>
                         <div><small>Imóveis Cadastrados</small><strong>{userListings.length}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
-                        <span className="my-area-stat-icon views" aria-hidden="true">◉</span>
+                        <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
                         <div><small>Visualizações Totais</small><strong>{totalListingViews}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
-                        <span className="my-area-stat-icon whatsapp" aria-hidden="true">💬</span>
+                        <span className="my-area-stat-icon whatsapp" aria-hidden="true"><MessageCircle size={28} strokeWidth={2.2} /></span>
                         <div><small>Cliques WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
                       </article>
                     </section>
@@ -1874,15 +1875,15 @@ function App() {
                                     <tr key={item.id}>
                                       <td>
                                         <div className="my-area-table-property">
-                                          {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="my-area-table-image-placeholder" aria-hidden="true">⌂</span>}
+                                          {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="my-area-table-image-placeholder" aria-hidden="true"><Home size={24} strokeWidth={2.2} /></span>}
                                           <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)} · {getListingPurposeLabel(item)}</small></div>
                                         </div>
                                       </td>
                                       <td className="my-area-table-price">{item.price}</td>
                                       <td><span className={`my-area-listing-status ${statusKey}`}><i aria-hidden="true" />{statusLabel}</span></td>
-                                      <td className="my-area-table-metric"><span aria-hidden="true">◉</span>{Number(item.visualizacoes) || 0}</td>
-                                      <td className="my-area-table-metric whatsapp"><span aria-hidden="true">◉</span>{Number(item.whatsapp_clicks) || 0}</td>
-                                      <td><button type="button" className="my-area-manage-listing" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}>⚙ Gerenciar</button></td>
+                                      <td className="my-area-table-metric"><Eye size={24} strokeWidth={2.2} aria-hidden="true" />{Number(item.visualizacoes) || 0}</td>
+                                      <td className="my-area-table-metric whatsapp"><MessageCircle size={24} strokeWidth={2.2} aria-hidden="true" />{Number(item.whatsapp_clicks) || 0}</td>
+                                      <td><button type="button" className="my-area-manage-listing" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}><Settings2 size={24} strokeWidth={2.2} aria-hidden="true" />Gerenciar</button></td>
                                     </tr>
                                   )
                                 })}
