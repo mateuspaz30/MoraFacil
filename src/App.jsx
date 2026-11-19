@@ -1432,27 +1432,12 @@ function App() {
       return
     }
 
-    if (['pessoa_fisica', 'corretor'].includes(accountUserType) && !hasValidCpf(profileEditForm.cpf || '')) {
-      setProfileMessage('Informe um CPF válido.')
-      return
+    const updates = { telefone: onlyDigits(profileEditForm.phone || '') }
+    if (['pessoa_fisica', 'corretor'].includes(accountUserType)) {
+      updates.nome_completo = profileEditForm.name.trim()
     }
-    if (accountUserType === 'corretor' && !hasValidCreci(profileEditForm.creci || '')) {
-      setProfileMessage('Informe um CRECI válido.')
-      return
-    }
-    if (accountUserType === 'imobiliaria' && !hasValidCnpj(profileEditForm.cnpj || '')) {
-      setProfileMessage('Informe um CNPJ válido.')
-      return
-    }
-
-    const updates = {
-      nome_completo: ['pessoa_fisica', 'corretor'].includes(accountUserType) ? profileEditForm.name.trim() : null,
-      cpf: ['pessoa_fisica', 'corretor'].includes(accountUserType) ? onlyDigits(profileEditForm.cpf || '') : null,
-      creci: accountUserType === 'corretor' ? profileEditForm.creci.trim().toUpperCase() : null,
-      telefone: onlyDigits(profileEditForm.phone || ''),
-      nome_imobiliaria: accountUserType === 'imobiliaria' ? profileEditForm.companyName.trim() : null,
-      cnpj: accountUserType === 'imobiliaria' ? onlyDigits(profileEditForm.cnpj || '') : null,
-      nome_responsavel: accountUserType === 'imobiliaria' ? profileEditForm.responsibleName.trim() : null,
+    if (accountUserType === 'imobiliaria') {
+      updates.nome_responsavel = profileEditForm.responsibleName.trim()
     }
 
     setProfileSaving(true)
@@ -1486,11 +1471,7 @@ function App() {
   const startProfileEditing = () => {
     setProfileEditForm({
       name: accountProfile.name,
-      cpf: formatCpf(accountProfile.cpf),
-      creci: accountProfile.creci,
       phone: formatPhone(accountProfile.phone),
-      companyName: accountProfile.companyName,
-      cnpj: formatCnpj(accountProfile.cnpj),
       responsibleName: accountProfile.responsibleName,
     })
     setProfileEditing(true)
@@ -1813,19 +1794,19 @@ function App() {
                       <form className="my-area-profile-grid" onSubmit={saveProfile}>
                         {accountUserType === 'imobiliaria' ? (
                           <>
-                            <label className="form-group">Nome da Imobiliária<input value={profileEditForm.companyName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, companyName: event.target.value }))} required /></label>
-                            <label className="form-group">CNPJ<input inputMode="numeric" value={profileEditForm.cnpj || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, cnpj: formatCnpj(event.target.value) }))} maxLength="18" required /></label>
+                            <label className="form-group my-area-readonly-field">Nome da Imobiliária 🔒<input value={accountProfile.companyName} readOnly aria-readonly="true" /></label>
+                            <label className="form-group my-area-readonly-field">CNPJ 🔒<input value={formatCnpj(accountProfile.cnpj)} readOnly aria-readonly="true" /></label>
                             <label className="form-group">Responsável<input value={profileEditForm.responsibleName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, responsibleName: event.target.value }))} required /></label>
                           </>
                         ) : (
                           <>
                             <label className="form-group">Nome<input value={profileEditForm.name || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, name: event.target.value }))} required /></label>
-                            <label className="form-group">CPF<input inputMode="numeric" value={profileEditForm.cpf || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, cpf: formatCpf(event.target.value) }))} maxLength="14" required /></label>
-                            {accountUserType === 'corretor' && <label className="form-group">CRECI<input value={profileEditForm.creci || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, creci: event.target.value }))} required /></label>}
+                            <label className="form-group my-area-readonly-field">CPF 🔒<input value={formatCpf(accountProfile.cpf)} readOnly aria-readonly="true" /></label>
+                            {accountUserType === 'corretor' && <label className="form-group my-area-readonly-field">CRECI 🔒<input value={accountProfile.creci} readOnly aria-readonly="true" /></label>}
                           </>
                         )}
                         <label className="form-group">Telefone<input type="tel" inputMode="tel" value={profileEditForm.phone || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, phone: formatPhone(event.target.value) }))} maxLength="15" required /></label>
-                        <label className="form-group">E-mail<input type="email" value={accountProfile.email} readOnly /></label>
+                        <label className="form-group my-area-readonly-field">E-mail 🔒<input type="email" value={accountProfile.email} readOnly aria-readonly="true" /></label>
                         <div className="my-area-profile-actions">
                           <button type="button" className="cancel-form-btn" onClick={() => { setProfileEditing(false); setProfileMessage('') }}>Cancelar</button>
                           <button type="submit" className="submit-form-btn" disabled={profileSaving}>{profileSaving ? 'Salvando…' : 'Salvar Dados'}</button>
@@ -1836,18 +1817,18 @@ function App() {
                         {accountUserType === 'imobiliaria' ? (
                           <>
                             <div><dt>Nome da Imobiliária</dt><dd>{accountProfile.companyName || 'Não informado'}</dd></div>
-                            <div><dt>CNPJ</dt><dd>{formatCnpj(accountProfile.cnpj) || 'Não informado'}</dd></div>
+                            <div><dt>CNPJ 🔒</dt><dd>{formatCnpj(accountProfile.cnpj) || 'Não informado'}</dd></div>
                             <div><dt>Responsável</dt><dd>{accountProfile.responsibleName || 'Não informado'}</dd></div>
                           </>
                         ) : (
                           <>
                             <div><dt>Nome</dt><dd>{accountProfile.name || 'Não informado'}</dd></div>
-                            <div><dt>CPF</dt><dd>{formatCpf(accountProfile.cpf) || 'Não informado'}</dd></div>
-                            {accountUserType === 'corretor' && <div><dt>CRECI</dt><dd>{accountProfile.creci || 'Não informado'}</dd></div>}
+                            <div><dt>CPF 🔒</dt><dd>{formatCpf(accountProfile.cpf) || 'Não informado'}</dd></div>
+                            {accountUserType === 'corretor' && <div><dt>CRECI 🔒</dt><dd>{accountProfile.creci || 'Não informado'}</dd></div>}
                           </>
                         )}
                         <div><dt>Telefone</dt><dd>{formatPhone(accountProfile.phone) || 'Não informado'}</dd></div>
-                        <div><dt>E-mail</dt><dd>{accountProfile.email}</dd></div>
+                        <div><dt>E-mail 🔒</dt><dd>{accountProfile.email}</dd></div>
                       </dl>
                     )}
                   </section>

@@ -4780,9 +4780,12 @@ dl.my-area-profile-grid > div {
   outline: 3px solid rgba(7, 140, 89, 0.12);
 }
 
-.my-area-profile-grid .form-group input[readonly] {
+.my-area-profile-grid .my-area-readonly-field input[readonly] {
+  border-color: #d7dee7;
   background: #edf2f7;
-  color: #71849a;
+  color: #687b8f;
+  cursor: not-allowed;
+  box-shadow: inset 0 1px 2px rgba(20, 42, 64, 0.04);
 }
 
 .my-area-profile-actions {

@@ -23,7 +23,7 @@ Os visitantes continuam navegando sem conta. O login só é solicitado ao public
 
 ## Perfis de usuário
 
-O cadastro permite escolher entre pessoa física, corretor e imobiliária. Para bancos existentes, execute [`supabase/migrations/20261119_add_user_profiles.sql`](supabase/migrations/20261119_add_user_profiles.sql) e [`supabase/migrations/20261119_enable_user_profile_updates.sql`](supabase/migrations/20261119_enable_user_profile_updates.sql), nesta ordem, no SQL Editor do Supabase. As migrações criam os perfis vinculados às contas, validam CPF/CNPJ/CRECI, impedem identificadores duplicados e permitem que cada usuário atualize seus próprios dados.
+O cadastro permite escolher entre pessoa física, corretor e imobiliária. Para bancos existentes, execute [`supabase/migrations/20261119_add_user_profiles.sql`](supabase/migrations/20261119_add_user_profiles.sql), [`supabase/migrations/20261119_enable_user_profile_updates.sql`](supabase/migrations/20261119_enable_user_profile_updates.sql) e [`supabase/migrations/20261119_make_account_identifiers_immutable.sql`](supabase/migrations/20261119_make_account_identifiers_immutable.sql), nesta ordem, no SQL Editor do Supabase. As migrações criam os perfis vinculados às contas, validam CPF/CNPJ/CRECI, impedem duplicidades, permitem a edição de dados não permanentes e bloqueiam alterações de CPF, CNPJ, CRECI e e-mail.
 
 Usuários autenticados podem acessar a área pessoal em `/minha-area` para consultar seus imóveis e dados cadastrais.
 
