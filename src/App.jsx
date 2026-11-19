@@ -1692,6 +1692,9 @@ function App() {
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
   const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
+  const latestUserListings = [...userListings]
+    .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
+    .slice(0, 3)
   const recordListingView = useCallback(async (listing) => {
     if (!supabase || !listing.user_id) return
 
@@ -1795,9 +1798,9 @@ function App() {
                 </div>
                 <nav className="my-area-nav">
                   {[
-                    ['overview', '⌂', 'Visão Geral'],
-                    ['listings', '⌂', 'Meus Imóveis'],
-                    ['account', '♙', 'Minha Conta'],
+                    ['overview', 'overview', 'Visão Geral'],
+                    ['listings', 'listings', 'Meus Imóveis'],
+                    ['account', 'account', 'Minha Conta'],
                   ].map(([section, icon, label]) => (
                     <button
                       key={section}
@@ -1806,31 +1809,30 @@ function App() {
                       aria-current={accountSection === section ? 'page' : undefined}
                       onClick={() => { setAccountSection(section); setProfileMessage('') }}
                     >
-                      <span aria-hidden="true">{icon}</span>{label}
+                      <span className="my-area-nav-icon" aria-hidden="true">
+                        {icon === 'overview' ? <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h6V4H4v9Zm10 7h6V11h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+                          : icon === 'listings' ? <svg viewBox="0 0 24 24" fill="none"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+                            : <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8" /><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>}
+                      </span>{label}
                     </button>
                   ))}
                 </nav>
                 <button type="button" className="my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}>← Voltar ao portal</button>
               </aside>
               <main className="my-area-main">
-                <header className="my-area-topbar">
-                  <div>
-                    <span>Área do usuário</span>
+                <header className={`my-area-topbar${accountSection === 'overview' ? ' overview' : ''}`}>
+                  <div className="my-area-heading-copy">
+                    <span>{accountSection === 'overview' ? 'Minha Área' : 'Área do usuário'}</span>
                     <h1>{accountSection === 'overview' ? 'Visão Geral' : accountSection === 'listings' ? 'Meus Imóveis' : 'Minha Conta'}</h1>
+                    {accountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
                   </div>
-                  <button type="button" className="my-area-logout" onClick={handleLogout}>Sair</button>
+                  <div className="my-area-topbar-actions">
+                    {accountSection === 'overview' && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><span aria-hidden="true">＋</span> Cadastrar Imóvel</button>}
+                    <button type="button" className="my-area-logout" onClick={handleLogout}>Sair</button>
+                  </div>
                 </header>
                 {accountSection === 'overview' && (
                   <>
-                    <section className="my-area-welcome">
-                      <span className="my-area-welcome-icon" aria-hidden="true">⌂</span>
-                      <div>
-                        <p>Minha Área</p>
-                        <h2>Olá, {accountDisplayName}</h2>
-                        <span className="my-area-account-type">Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
-                        <p className="my-area-welcome-description">Bem-vindo à sua área de gerenciamento. Acompanhe seus imóveis e métricas em um só lugar.</p>
-                      </div>
-                    </section>
                     <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon" aria-hidden="true">⌂</span>
@@ -1845,6 +1847,55 @@ function App() {
                         <div><small>Cliques WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
                       </article>
                     </section>
+                    <section className="my-area-recent-listings" aria-labelledby="my-area-recent-title">
+                      <header className="my-area-recent-heading">
+                        <h2 id="my-area-recent-title">Últimos imóveis cadastrados</h2>
+                        <button type="button" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}>Ver todos <span aria-hidden="true">→</span></button>
+                      </header>
+                      {latestUserListings.length ? (
+                        <>
+                          <div className="my-area-table-scroll">
+                            <table className="my-area-listings-table">
+                              <thead>
+                                <tr>
+                                  <th scope="col">Imóvel</th>
+                                  <th scope="col">Preço</th>
+                                  <th scope="col">Status</th>
+                                  <th scope="col">Visualizações</th>
+                                  <th scope="col">WhatsApp</th>
+                                  <th scope="col">Ações</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {latestUserListings.map((item) => {
+                                  const statusKey = getListingStatusKey(item)
+                                  const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Pendente' : 'Inativo'
+                                  return (
+                                    <tr key={item.id}>
+                                      <td>
+                                        <div className="my-area-table-property">
+                                          {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="my-area-table-image-placeholder" aria-hidden="true">⌂</span>}
+                                          <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)} · {getListingPurposeLabel(item)}</small></div>
+                                        </div>
+                                      </td>
+                                      <td className="my-area-table-price">{item.price}</td>
+                                      <td><span className={`my-area-listing-status ${statusKey}`}><i aria-hidden="true" />{statusLabel}</span></td>
+                                      <td className="my-area-table-metric"><span aria-hidden="true">◉</span>{Number(item.visualizacoes) || 0}</td>
+                                      <td className="my-area-table-metric whatsapp"><span aria-hidden="true">◉</span>{Number(item.whatsapp_clicks) || 0}</td>
+                                      <td><button type="button" className="my-area-manage-listing" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}>⚙ Gerenciar</button></td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                          <footer className="my-area-table-footer">Exibindo {latestUserListings.length} de {userListings.length} imóveis</footer>
+                        </>
+                      ) : (
+                        <p className="my-area-recent-empty">Você ainda não cadastrou imóveis.</p>
+                      )}
+                    </section>
+                    <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                   </>
                 )}
                 {accountSection === 'account' && (
