@@ -4621,8 +4621,8 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
-  padding: clamp(22px, 4vw, 38px);
+  gap: 16px;
+  padding: clamp(20px, 3vw, 28px);
 }
 
 .my-area-welcome-icon {
@@ -4645,21 +4645,40 @@
   color: #078c59;
   font-size: 0.82rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .my-area-welcome h2 {
-  margin: 4px 0 8px;
+  margin: 4px 0 7px;
   color: #12345a;
-  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
 }
 
-.my-area-welcome > div > span {
+.my-area-welcome .my-area-account-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #dce8f3;
+  border-radius: 999px;
+  background: #f5f9fd;
   color: #60758a;
-  font-size: 0.85rem;
+  padding: 5px 10px;
+  font-size: 0.76rem;
 }
 
-.my-area-welcome > div > span strong {
+.my-area-welcome .my-area-account-type strong {
   color: #12345a;
+}
+
+.my-area-welcome .my-area-welcome-description {
+  margin: 10px 0 0;
+  color: #71849a;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 .my-area-quick-links {
@@ -4695,24 +4714,24 @@
 .my-area-stat-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 112px;
+  gap: 17px;
+  min-height: 132px;
   border: 1px solid #e1e9f1;
   border-radius: 14px;
   background: #fff;
-  padding: 20px;
-  box-shadow: 0 7px 22px rgba(14, 47, 76, 0.045);
+  padding: 22px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
 }
 
 .my-area-stat-icon {
   display: grid;
-  flex: 0 0 46px;
-  height: 46px;
+  flex: 0 0 58px;
+  height: 58px;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #e7f4ff;
   color: #087cf0;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   font-weight: 800;
 }
 
@@ -4724,7 +4743,7 @@
 .my-area-stat-icon.whatsapp {
   background: #e9f8ef;
   color: #078c59;
-  font-size: 1.15rem;
+  font-size: 1.45rem;
 }
 
 .my-area-stat-card small,
@@ -4734,14 +4753,18 @@
 
 .my-area-stat-card small {
   color: #71849a;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
 }
 
 .my-area-stat-card strong {
-  margin-top: 3px;
+  margin-top: 6px;
   color: #12345a;
-  font-size: 1.55rem;
+  font-size: clamp(1.8rem, 3vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
   line-height: 1.1;
 }
 
@@ -5032,32 +5055,33 @@ dl.my-area-profile-grid > div {
 
   .my-area-welcome {
     gap: 12px;
-    padding: 20px 16px;
+    padding: 18px 16px;
   }
 
   .my-area-stats-grid {
     gap: 10px;
+    grid-template-columns: 1fr;
   }
 
   .my-area-stat-card {
-    min-height: 88px;
-    gap: 9px;
-    padding: 12px;
+    min-height: 96px;
+    gap: 14px;
+    padding: 16px;
   }
 
   .my-area-stat-icon {
-    flex-basis: 36px;
-    height: 36px;
-    border-radius: 10px;
-    font-size: 1.1rem;
+    flex-basis: 48px;
+    height: 48px;
+    border-radius: 13px;
+    font-size: 1.5rem;
   }
 
   .my-area-stat-card small {
-    font-size: 0.65rem;
+    font-size: 0.66rem;
   }
 
   .my-area-stat-card strong {
-    font-size: 1.25rem;
+    font-size: 1.75rem;
   }
 
   .my-area-welcome-icon {

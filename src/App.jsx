@@ -1825,13 +1825,10 @@ function App() {
                     <section className="my-area-welcome">
                       <span className="my-area-welcome-icon" aria-hidden="true">⌂</span>
                       <div>
-                        <p>Bem-vindo à sua área</p>
+                        <p>Minha Área</p>
                         <h2>Olá, {accountDisplayName}</h2>
-                        <span>Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
-                      </div>
-                      <div className="my-area-quick-links">
-                        <button type="button" onClick={() => setAccountSection('listings')}>Ver Meus Imóveis <span aria-hidden="true">→</span></button>
-                        <button type="button" onClick={() => setAccountSection('account')}>Consultar Minha Conta <span aria-hidden="true">→</span></button>
+                        <span className="my-area-account-type">Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
+                        <p className="my-area-welcome-description">Bem-vindo à sua área de gerenciamento. Acompanhe seus imóveis e métricas em um só lugar.</p>
                       </div>
                     </section>
                     <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
