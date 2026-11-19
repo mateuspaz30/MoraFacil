@@ -21,6 +21,12 @@ Sem Supabase configurado, o modo local usa o armazenamento do navegador para tes
 
 Os visitantes continuam navegando sem conta. O login só é solicitado ao publicar ou gerenciar anúncios.
 
+## Perfis de usuário
+
+O cadastro permite escolher entre pessoa física, corretor e imobiliária. Para bancos existentes, execute [`supabase/migrations/20261119_add_user_profiles.sql`](supabase/migrations/20261119_add_user_profiles.sql) e [`supabase/migrations/20261119_enable_user_profile_updates.sql`](supabase/migrations/20261119_enable_user_profile_updates.sql), nesta ordem, no SQL Editor do Supabase. As migrações criam os perfis vinculados às contas, validam CPF/CNPJ/CRECI, impedem identificadores duplicados e permitem que cada usuário atualize seus próprios dados.
+
+Usuários autenticados podem acessar a área pessoal em `/minha-area` para consultar seus imóveis e dados cadastrais.
+
 ## Anúncios em destaque na Home
 
 Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores podem selecionar anúncios publicados em “Meus Imóveis”, ativar “Destacar na página inicial” e definir sua ordem. Apenas anúncios aprovados e destacados aparecem no carrossel.

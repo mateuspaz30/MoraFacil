@@ -161,6 +161,85 @@ const normalizeNeighborhoodName = (name) => String(name || '')
 const isApprovedListing = (listing) => ['aprovado', 'disponível', 'disponivel', 'ativo'].includes(String(listing.status || '').trim().toLocaleLowerCase('pt-BR'))
 
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
+const getAppBasePath = () => {
+  const basePath = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`
+  return basePath
+}
+const getRelativeAppPath = (pathname) => {
+  const basePath = getAppBasePath()
+  return pathname.startsWith(basePath)
+    ? pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '')
+    : pathname.replace(/^\/+|\/+$/g, '')
+}
+const getAccountTypeLabel = (userType) => ({
+  pessoa_fisica: 'Pessoa Física',
+  corretor: 'Corretor',
+  imobiliaria: 'Imobiliária',
+})[userType] || 'Conta'
+const emptyAuthForm = {
+  userType: '',
+  name: '',
+  cpf: '',
+  creci: '',
+  phone: '',
+  email: '',
+  password: '',
+  companyName: '',
+  cnpj: '',
+  responsibleName: '',
+}
+const onlyDigits = (value) => value.replace(/\D/g, '')
+const formatCpf = (value) => {
+  const digits = onlyDigits(value).slice(0, 11)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+}
+const formatCnpj = (value) => {
+  const digits = onlyDigits(value).slice(0, 14)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+  if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`
+  if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
+}
+const formatPhone = (value) => {
+  const digits = onlyDigits(value).slice(0, 11)
+  if (digits.length <= 2) return digits ? `(${digits}${digits.length === 2 ? ')' : ''}` : ''
+  if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{0,4})(\d{0,4})$/, (_, area, first, last) => (
+    `(${area}) ${first}${last ? `-${last}` : ''}`
+  ))
+  return digits.replace(/^(\d{2})(\d{5})(\d{0,4})$/, (_, area, first, last) => (
+    `(${area}) ${first}${last ? `-${last}` : ''}`
+  ))
+}
+const hasValidCpf = (value) => {
+  const cpf = onlyDigits(value)
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false
+  const checkDigit = (length) => {
+    const sum = cpf.slice(0, length).split('').reduce((total, digit, index) => (
+      total + Number(digit) * (length + 1 - index)
+    ), 0)
+    const remainder = (sum * 10) % 11
+    return remainder === 10 ? 0 : remainder
+  }
+  return checkDigit(9) === Number(cpf[9]) && checkDigit(10) === Number(cpf[10])
+}
+const hasValidCnpj = (value) => {
+  const cnpj = onlyDigits(value)
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false
+  const checkDigit = (length) => {
+    const weights = length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    const sum = cnpj.slice(0, length).split('').reduce((total, digit, index) => (
+      total + Number(digit) * weights[index]
+    ), 0)
+    const remainder = sum % 11
+    return remainder < 2 ? 0 : 11 - remainder
+  }
+  return checkDigit(12) === Number(cnpj[12]) && checkDigit(13) === Number(cnpj[13])
+}
+const hasValidCreci = (value) => /^(?:\d{6}(?:-[a-z])?|CRECI\/[a-z]{2}\s+\d{6})$/i.test(value.trim())
 
 function FilterIcon({ name }) {
   if (name === 'pin') return <svg className="location-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.686 2 6 4.686 6 8c0 4.5 6 12 6 12s6-7.5 6-12c0-3.314-2.686-6-6-6zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5z" /></svg>
@@ -512,11 +591,19 @@ function App() {
   const [announcementSuccess, setAnnouncementSuccess] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+  const [userProfileError, setUserProfileError] = useState('')
+  const [profileEditing, setProfileEditing] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState('')
+  const [profileEditForm, setProfileEditForm] = useState({})
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
-  const [accountOpen, setAccountOpen] = useState(false)
+  const [accountSection, setAccountSection] = useState('overview')
+  const [currentPath, setCurrentPath] = useState(window.location.pathname)
   const [authMode, setAuthMode] = useState('login')
-  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' })
+  const [authForm, setAuthForm] = useState(emptyAuthForm)
+  const [authSignupStep, setAuthSignupStep] = useState('profile')
   const [authMessage, setAuthMessage] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
@@ -554,6 +641,22 @@ function App() {
     window.addEventListener('pageshow', resetHomePropertyType)
     return () => window.removeEventListener('pageshow', resetHomePropertyType)
   }, [])
+
+  useEffect(() => {
+    const updateCurrentPath = () => setCurrentPath(window.location.pathname)
+    window.addEventListener('popstate', updateCurrentPath)
+    return () => window.removeEventListener('popstate', updateCurrentPath)
+  }, [])
+
+  const navigateToPath = (path) => {
+    window.history.pushState({}, '', path)
+    setCurrentPath(window.location.pathname)
+  }
+  const openMyArea = (section = 'overview') => {
+    setAccountSection(section)
+    navigateToPath(`${getAppBasePath()}minha-area`)
+  }
+  const isMyAreaRoute = getRelativeAppPath(currentPath) === 'minha-area'
 
   useEffect(() => {
     if (!mapFullscreenOpen && !announcementMapFullscreenOpen) return undefined
@@ -614,6 +717,9 @@ function App() {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         setModerationMessage('')
         setFeaturedDrafts({})
+        setUserProfile(null)
+        setUserProfileError('')
+        setProfileEditing(false)
       }
       if (event === 'SIGNED_OUT') setAccountFilter('all')
       setAuthUser(session?.user || null)
@@ -624,6 +730,28 @@ function App() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!authUser) return undefined
+
+    let mounted = true
+    const loadUserProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel')
+          .eq('user_id', authUser.id)
+          .maybeSingle()
+        if (error) throw error
+        if (mounted) setUserProfile(data)
+      } catch (error) {
+        console.error('Falha ao carregar os dados da conta:', error)
+        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira se a migração de perfis foi aplicada. ${error.message}`)
+      }
+    }
+    loadUserProfile()
+    return () => { mounted = false }
+  }, [authUser])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -726,7 +854,7 @@ function App() {
         }))
         setPublishedListings(normalizedListings)
         setUserListings(authUser
-          ? (isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
+          ? normalizedListings.filter((item) => item.user_id === authUser.id)
           : [])
       }
     }
@@ -1107,7 +1235,7 @@ function App() {
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
       const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), parking_spaces: Number(item.parking_spaces ?? item.garages) || 0, owner: item.user_id === authUser.id }))
       setPublishedListings(normalizedListings)
-      setUserListings(isAdmin ? normalizedListings : normalizedListings.filter((item) => item.user_id === authUser.id))
+      setUserListings(normalizedListings.filter((item) => item.user_id === authUser.id))
     } else {
       setUserListings((current) => editingListingId
         ? current.map((item) => item.id === editingListingId ? listing : item)
@@ -1220,6 +1348,24 @@ function App() {
 
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
+    if (authMode === 'signup') {
+      if (!authForm.userType) {
+        setAuthMessage('Selecione seu perfil para continuar.')
+        return
+      }
+      if (['pessoa_fisica', 'corretor'].includes(authForm.userType) && !hasValidCpf(authForm.cpf)) {
+        setAuthMessage('Informe um CPF válido.')
+        return
+      }
+      if (authForm.userType === 'corretor' && !hasValidCreci(authForm.creci)) {
+        setAuthMessage('Informe um CRECI válido.')
+        return
+      }
+      if (authForm.userType === 'imobiliaria' && !hasValidCnpj(authForm.cnpj)) {
+        setAuthMessage('Informe um CNPJ válido.')
+        return
+      }
+    }
     if (!supabase) {
       setAuthMessage('O acesso à conta estará disponível assim que o serviço for configurado.')
       return
@@ -1233,7 +1379,16 @@ function App() {
         : await supabase.auth.signUp({
           email: authForm.email,
           password: authForm.password,
-          options: { data: { full_name: authForm.name } },
+          options: { data: {
+            full_name: authForm.name || authForm.responsibleName,
+            tipo_usuario: authForm.userType,
+            cpf: authForm.cpf ? onlyDigits(authForm.cpf) : null,
+            creci: authForm.creci.trim().toUpperCase() || null,
+            telefone: onlyDigits(authForm.phone),
+            nome_imobiliaria: authForm.companyName.trim() || null,
+            cnpj: authForm.cnpj ? onlyDigits(authForm.cnpj) : null,
+            nome_responsavel: authForm.responsibleName.trim() || null,
+          } },
         })
     } catch (error) {
       setAuthMessage(`Não foi possível conectar ao Supabase. Confira a URL do projeto e tente novamente. (${error.message})`)
@@ -1242,14 +1397,104 @@ function App() {
     }
 
     if (result.error) {
-      setAuthMessage(`Supabase: ${result.error.message}`)
+      const errorText = result.error.message.toLowerCase()
+      if (result.error.code === '23505' || errorText.includes('duplicate key')) {
+        setAuthMessage(errorText.includes('cnpj')
+          ? 'Este CNPJ já possui uma conta cadastrada.'
+          : errorText.includes('creci')
+            ? 'Este CRECI já possui uma conta cadastrada.'
+            : errorText.includes('cpf')
+              ? 'Este CPF já possui uma conta cadastrada.'
+              : `Não foi possível concluir o cadastro. ${result.error.message}`)
+      } else if (errorText.includes('informe um cpf válido')) {
+        setAuthMessage('Informe um CPF válido.')
+      } else if (errorText.includes('informe um creci válido')) {
+        setAuthMessage('Informe um CRECI válido.')
+      } else if (errorText.includes('informe um cnpj válido')) {
+        setAuthMessage('Informe um CNPJ válido.')
+      } else {
+        setAuthMessage(`Supabase: ${result.error.message}`)
+      }
     } else if (authMode === 'signup' && !result.data.session) {
       setAuthMessage('Conta criada. Confira seu e-mail para confirmar o cadastro.')
     } else {
       setAuthOpen(false)
-      setAuthForm({ name: '', email: '', password: '' })
+      setAuthForm(emptyAuthForm)
+      setAuthSignupStep('profile')
     }
     setAuthLoading(false)
+  }
+
+  const saveProfile = async (event) => {
+    event.preventDefault()
+    if (!supabase || !authUser) {
+      setProfileMessage('É necessário entrar na conta para editar os dados.')
+      return
+    }
+
+    if (['pessoa_fisica', 'corretor'].includes(accountUserType) && !hasValidCpf(profileEditForm.cpf || '')) {
+      setProfileMessage('Informe um CPF válido.')
+      return
+    }
+    if (accountUserType === 'corretor' && !hasValidCreci(profileEditForm.creci || '')) {
+      setProfileMessage('Informe um CRECI válido.')
+      return
+    }
+    if (accountUserType === 'imobiliaria' && !hasValidCnpj(profileEditForm.cnpj || '')) {
+      setProfileMessage('Informe um CNPJ válido.')
+      return
+    }
+
+    const updates = {
+      nome_completo: ['pessoa_fisica', 'corretor'].includes(accountUserType) ? profileEditForm.name.trim() : null,
+      cpf: ['pessoa_fisica', 'corretor'].includes(accountUserType) ? onlyDigits(profileEditForm.cpf || '') : null,
+      creci: accountUserType === 'corretor' ? profileEditForm.creci.trim().toUpperCase() : null,
+      telefone: onlyDigits(profileEditForm.phone || ''),
+      nome_imobiliaria: accountUserType === 'imobiliaria' ? profileEditForm.companyName.trim() : null,
+      cnpj: accountUserType === 'imobiliaria' ? onlyDigits(profileEditForm.cnpj || '') : null,
+      nome_responsavel: accountUserType === 'imobiliaria' ? profileEditForm.responsibleName.trim() : null,
+    }
+
+    setProfileSaving(true)
+    setProfileMessage('')
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('user_id', authUser.id)
+        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel')
+        .single()
+      if (error) throw error
+      setUserProfile(data)
+      setProfileEditing(false)
+      setProfileMessage('Dados atualizados com sucesso.')
+    } catch (error) {
+      console.error('Falha ao atualizar os dados da conta:', error)
+      const message = String(error.message || '').toLowerCase()
+      setProfileMessage(message.includes('cpf') || message.includes('user_profiles_cpf')
+        ? 'Este CPF já possui uma conta cadastrada.'
+        : message.includes('cnpj') || message.includes('user_profiles_cnpj')
+          ? 'Este CNPJ já possui uma conta cadastrada.'
+          : message.includes('creci') || message.includes('user_profiles_creci')
+            ? 'Este CRECI já possui uma conta cadastrada.'
+            : `Não foi possível atualizar seus dados. ${error.message}`)
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
+  const startProfileEditing = () => {
+    setProfileEditForm({
+      name: accountProfile.name,
+      cpf: formatCpf(accountProfile.cpf),
+      creci: accountProfile.creci,
+      phone: formatPhone(accountProfile.phone),
+      companyName: accountProfile.companyName,
+      cnpj: formatCnpj(accountProfile.cnpj),
+      responsibleName: accountProfile.responsibleName,
+    })
+    setProfileEditing(true)
+    setProfileMessage('')
   }
 
   const handleLogout = async () => {
@@ -1258,7 +1503,6 @@ function App() {
     setUserListings([])
     setModerationMessage('')
     setFeaturedDrafts({})
-    setAccountOpen(false)
   }
 
   const removeUserListing = async (id) => {
@@ -1412,10 +1656,31 @@ function App() {
   }, [])
 
   const userFirstName = (() => {
-    const source = authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'visitante'
+    const metadata = authUser?.user_metadata || {}
+    const profile = userProfile?.user_id === authUser?.id ? userProfile : null
+    const userType = profile?.tipo_usuario || metadata.tipo_usuario
+    const displayName = userType === 'imobiliaria'
+      ? profile?.nome_imobiliaria || metadata.nome_imobiliaria
+      : profile?.nome_completo || metadata.full_name
+    const source = displayName || authUser?.email?.split('@')[0] || 'visitante'
     const first = source.trim().split(' ')[0]
     return first.charAt(0).toUpperCase() + first.slice(1)
   })()
+  const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
+  const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
+  const accountDisplayName = accountUserType === 'imobiliaria'
+    ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
+    : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
+  const accountProfile = {
+    name: accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || '',
+    cpf: accountUserProfile?.cpf || authUser?.user_metadata?.cpf || '',
+    creci: accountUserProfile?.creci || authUser?.user_metadata?.creci || '',
+    phone: accountUserProfile?.telefone || authUser?.user_metadata?.telefone || '',
+    companyName: accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || '',
+    cnpj: accountUserProfile?.cnpj || authUser?.user_metadata?.cnpj || '',
+    responsibleName: accountUserProfile?.nome_responsavel || authUser?.user_metadata?.nome_responsavel || '',
+    email: authUser?.email || '',
+  }
 
   const getListingStatusKey = (item) => {
     const status = String(item.status || '').trim().toLocaleLowerCase('pt-BR')
@@ -1474,40 +1739,125 @@ function App() {
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
           <span className="header-divider" aria-hidden="true" />
-          <button type="button" className="header-avatar" aria-label={authUser ? `Abrir conta de ${userFirstName}` : 'Abrir acesso à conta'} onClick={() => authUser ? setAccountOpen(true) : setAuthOpen(true)}>{userFirstName.charAt(0)}</button>
+          <button type="button" className="header-avatar" aria-label={authUser ? 'Abrir Minha Área' : 'Abrir acesso à conta'} onClick={() => authUser ? openMyArea() : setAuthOpen(true)}>{userFirstName.charAt(0)}</button>
           <button type="button" className="menu-toggle" aria-label="Abrir menu lateral" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}>
             <svg className="menu-toggle-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
           {isSupabaseConfigured && !authUser && <button type="button" className="account-btn" onClick={() => setAuthOpen(true)}>Entrar</button>}
         </div>
 
-        {accountOpen && authUser && (
-          <section className="account-popover" aria-label="Minha conta">
-            <button type="button" className="account-close" onClick={() => setAccountOpen(false)} aria-label="Fechar conta">×</button>
-            <div className="account-dashboard-header">
-              <div className="account-dashboard-brand">
-                <img src={logo} alt="" />
-                <strong>Mora <span>Fácil</span></strong>
-              </div>
-            </div>
-            <div className="account-dashboard-heading">
-              <h2>Meus Imóveis</h2>
-              <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
-            </div>
-            <div className="account-metrics" aria-label="Resumo dos anúncios">
-              <article className="account-metric-card">
-                <strong>{userListings.length}</strong>
-                <span>Total</span>
-              </article>
-              <article className="account-metric-card active">
-                <strong>{activeListings.length}</strong>
-                <span>Publicados</span>
-              </article>
-              <article className="account-metric-card completed">
-                <strong>{completedListings.length}</strong>
-                <span>Concluídos</span>
-              </article>
-            </div>
+        {isMyAreaRoute && (
+          <section className="account-popover account-page" aria-label="Minha Área">
+            {authUser ? (
+            <>
+            <div className="my-area-layout">
+              <aside className="my-area-sidebar" aria-label="Navegação da Minha Área">
+                <button type="button" className="my-area-brand" onClick={() => navigateToPath(getAppBasePath())}>
+                  <img src={logo} alt="" />
+                  <strong>Mora <span>Fácil</span></strong>
+                </button>
+                <div className="my-area-user">
+                  <span className="my-area-avatar">{userFirstName.charAt(0)}</span>
+                  <div><strong>{accountDisplayName}</strong><small>{getAccountTypeLabel(accountUserType)}</small></div>
+                </div>
+                <nav className="my-area-nav">
+                  {[
+                    ['overview', '⌂', 'Visão Geral'],
+                    ['listings', '⌂', 'Meus Imóveis'],
+                    ['account', '♙', 'Minha Conta'],
+                  ].map(([section, icon, label]) => (
+                    <button
+                      key={section}
+                      type="button"
+                      className={accountSection === section ? 'active' : ''}
+                      aria-current={accountSection === section ? 'page' : undefined}
+                      onClick={() => { setAccountSection(section); setProfileMessage('') }}
+                    >
+                      <span aria-hidden="true">{icon}</span>{label}
+                    </button>
+                  ))}
+                </nav>
+                <button type="button" className="my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}>← Voltar ao portal</button>
+              </aside>
+              <main className="my-area-main">
+                <header className="my-area-topbar">
+                  <div>
+                    <span>Área do usuário</span>
+                    <h1>{accountSection === 'overview' ? 'Visão Geral' : accountSection === 'listings' ? 'Meus Imóveis' : 'Minha Conta'}</h1>
+                  </div>
+                  <button type="button" className="my-area-logout" onClick={handleLogout}>Sair</button>
+                </header>
+                {accountSection === 'overview' && (
+                  <section className="my-area-welcome">
+                    <span className="my-area-welcome-icon" aria-hidden="true">⌂</span>
+                    <div>
+                      <p>Bem-vindo à sua área</p>
+                      <h2>Olá, {accountDisplayName}</h2>
+                      <span>Tipo de conta: <strong>{getAccountTypeLabel(accountUserType)}</strong></span>
+                    </div>
+                    <div className="my-area-quick-links">
+                      <button type="button" onClick={() => setAccountSection('listings')}>Ver Meus Imóveis <span aria-hidden="true">→</span></button>
+                      <button type="button" onClick={() => setAccountSection('account')}>Consultar Minha Conta <span aria-hidden="true">→</span></button>
+                    </div>
+                  </section>
+                )}
+                {accountSection === 'account' && (
+                  <section className="my-area-panel" aria-labelledby="my-area-account-title">
+                    <div className="my-area-panel-heading">
+                      <div><h2 id="my-area-account-title">Dados da conta</h2><p>Confira os dados cadastrados no seu perfil.</p></div>
+                      {!profileEditing && <button type="button" className="my-area-edit-button" onClick={startProfileEditing}>Editar Dados</button>}
+                    </div>
+                    {userProfileError && <p className="my-area-feedback error" role="alert">{userProfileError}</p>}
+                    {profileMessage && <p className="my-area-feedback" role="status">{profileMessage}</p>}
+                    {profileEditing ? (
+                      <form className="my-area-profile-grid" onSubmit={saveProfile}>
+                        {accountUserType === 'imobiliaria' ? (
+                          <>
+                            <label className="form-group">Nome da Imobiliária<input value={profileEditForm.companyName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, companyName: event.target.value }))} required /></label>
+                            <label className="form-group">CNPJ<input inputMode="numeric" value={profileEditForm.cnpj || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, cnpj: formatCnpj(event.target.value) }))} maxLength="18" required /></label>
+                            <label className="form-group">Responsável<input value={profileEditForm.responsibleName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, responsibleName: event.target.value }))} required /></label>
+                          </>
+                        ) : (
+                          <>
+                            <label className="form-group">Nome<input value={profileEditForm.name || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, name: event.target.value }))} required /></label>
+                            <label className="form-group">CPF<input inputMode="numeric" value={profileEditForm.cpf || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, cpf: formatCpf(event.target.value) }))} maxLength="14" required /></label>
+                            {accountUserType === 'corretor' && <label className="form-group">CRECI<input value={profileEditForm.creci || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, creci: event.target.value }))} required /></label>}
+                          </>
+                        )}
+                        <label className="form-group">Telefone<input type="tel" inputMode="tel" value={profileEditForm.phone || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, phone: formatPhone(event.target.value) }))} maxLength="15" required /></label>
+                        <label className="form-group">E-mail<input type="email" value={accountProfile.email} readOnly /></label>
+                        <div className="my-area-profile-actions">
+                          <button type="button" className="cancel-form-btn" onClick={() => { setProfileEditing(false); setProfileMessage('') }}>Cancelar</button>
+                          <button type="submit" className="submit-form-btn" disabled={profileSaving}>{profileSaving ? 'Salvando…' : 'Salvar Dados'}</button>
+                        </div>
+                      </form>
+                    ) : (
+                      <dl className="my-area-profile-grid">
+                        {accountUserType === 'imobiliaria' ? (
+                          <>
+                            <div><dt>Nome da Imobiliária</dt><dd>{accountProfile.companyName || 'Não informado'}</dd></div>
+                            <div><dt>CNPJ</dt><dd>{formatCnpj(accountProfile.cnpj) || 'Não informado'}</dd></div>
+                            <div><dt>Responsável</dt><dd>{accountProfile.responsibleName || 'Não informado'}</dd></div>
+                          </>
+                        ) : (
+                          <>
+                            <div><dt>Nome</dt><dd>{accountProfile.name || 'Não informado'}</dd></div>
+                            <div><dt>CPF</dt><dd>{formatCpf(accountProfile.cpf) || 'Não informado'}</dd></div>
+                            {accountUserType === 'corretor' && <div><dt>CRECI</dt><dd>{accountProfile.creci || 'Não informado'}</dd></div>}
+                          </>
+                        )}
+                        <div><dt>Telefone</dt><dd>{formatPhone(accountProfile.phone) || 'Não informado'}</dd></div>
+                        <div><dt>E-mail</dt><dd>{accountProfile.email}</dd></div>
+                      </dl>
+                    )}
+                  </section>
+                )}
+                {accountSection === 'listings' && (
+                  <>
+                    <div className="account-dashboard-heading">
+                      <h2>Meus Imóveis</h2>
+                      <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
+                    </div>
             {ownFeaturedListings.map((item) => (
               <p className="moderation-message" role="status" key={item.id}>
                 Seu anúncio “{item.title}” está destacado na posição {item.ordem_destaque} da Home.
@@ -1654,9 +2004,9 @@ function App() {
                           </div>
                         ) : (
                           <>
-                            {statusKey === 'rejected' && <button type="button" className="correct-listing-button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Corrigir anúncio</button>}
+                            {statusKey === 'rejected' && <button type="button" className="correct-listing-button" onClick={() => openAnnouncementForm(item)}>Corrigir anúncio</button>}
                             {statusKey === 'published' && <button type="button" onClick={() => completeListing(item)}>Marcar concluído</button>}
-                            {statusKey !== 'completed' && statusKey !== 'rejected' && <button type="button" onClick={() => { openAnnouncementForm(item); setAccountOpen(false) }}>Editar anúncio</button>}
+                            {statusKey !== 'completed' && statusKey !== 'rejected' && <button type="button" onClick={() => openAnnouncementForm(item)}>Editar anúncio</button>}
                             <button type="button" className="delete" onClick={() => removeUserListing(item.id)}>Excluir</button>
                           </>
                         )}
@@ -1664,6 +2014,20 @@ function App() {
                     </article>
                   )
                 })}
+              </div>
+            )}
+                  </>
+                )}
+              </main>
+            </div>
+            </>
+            ) : (
+              <div className="my-area-guest">
+                <img src={logo} alt="" />
+                <h1>Entre para acessar sua área</h1>
+                <p>Faça login ou crie sua conta para gerenciar seus imóveis e dados cadastrais.</p>
+                <button type="button" className="submit-form-btn" onClick={() => { setAuthMode('login'); setAuthMessage(''); setAuthOpen(true) }}>Entrar na conta</button>
+                <button type="button" className="my-area-guest-home" onClick={() => navigateToPath(getAppBasePath())}>Voltar ao portal</button>
               </div>
             )}
           </section>
@@ -1689,9 +2053,9 @@ function App() {
               </div>
             </div>
             {authUser ? (
-              <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); setAccountOpen(true) }}>
+              <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); openMyArea() }}>
                 <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
-                <span className="mobile-menu-action-label">Ver imóveis cadastrados</span>
+                <span className="mobile-menu-action-label">Minha Área</span>
                 <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
               </button>
             ) : (
@@ -1701,7 +2065,7 @@ function App() {
                   <span className="mobile-menu-action-label">Entrar na conta</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
                 </button>
-                <button type="button" className="mobile-menu-secondary" onClick={() => { setMobileMenuOpen(false); setAuthMode('signup'); setAuthMessage(''); setAuthOpen(true) }}>
+                <button type="button" className="mobile-menu-secondary" onClick={() => { setMobileMenuOpen(false); setAuthForm(emptyAuthForm); setAuthSignupStep('profile'); setAuthMode('signup'); setAuthMessage(''); setAuthOpen(true) }}>
                   <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
                   <span className="mobile-menu-action-label">Criar conta</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
@@ -2088,7 +2452,7 @@ function App() {
                 setAnnouncementSuccess(false)
                 if (authUser) {
                   setAccountFilter('all')
-                  setAccountOpen(true)
+                  openMyArea('listings')
                 } else {
                   setAuthMode('login')
                   setAuthOpen(true)
@@ -2111,26 +2475,110 @@ function App() {
             </div>
             <form className="announcement-form" onSubmit={handleAuthSubmit}>
               {authMode === 'signup' && (
-                <div className="form-group">
-                  <label htmlFor="auth-name">Nome completo</label>
-                  <input id="auth-name" type="text" value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} placeholder="Seu nome" required />
-                </div>
+                authSignupStep === 'profile' ? (
+                  <div className="auth-profile-step">
+                    <fieldset className="auth-profile-options">
+                      <legend>Qual é o seu perfil?</legend>
+                      {[
+                        ['pessoa_fisica', '🏠', 'Quero anunciar meu imóvel'],
+                        ['corretor', '👨‍💼', 'Sou corretor de imóveis'],
+                        ['imobiliaria', '🏢', 'Sou uma imobiliária'],
+                      ].map(([value, icon, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          className={`auth-profile-option${authForm.userType === value ? ' selected' : ''}`}
+                          aria-pressed={authForm.userType === value}
+                          onClick={() => { setAuthForm((current) => ({ ...current, userType: value })); setAuthMessage('') }}
+                        >
+                          <span aria-hidden="true">{icon}</span>{label}
+                        </button>
+                      ))}
+                    </fieldset>
+                    {authMessage && <p className="auth-message" role="alert">{authMessage}</p>}
+                    <div className="form-actions">
+                      <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
+                      <button
+                        type="button"
+                        className="submit-form-btn"
+                        disabled={!authForm.userType}
+                        onClick={() => { setAuthSignupStep('details'); setAuthMessage('') }}
+                      >
+                        Continuar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" className="auth-back" onClick={() => { setAuthSignupStep('profile'); setAuthMessage('') }}>← Alterar perfil</button>
+                    {authForm.userType === 'imobiliaria' ? (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="auth-company-name">Nome da Imobiliária</label>
+                          <input id="auth-company-name" type="text" value={authForm.companyName} onChange={(event) => setAuthForm((current) => ({ ...current, companyName: event.target.value }))} autoComplete="organization" required />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="auth-cnpj">CNPJ</label>
+                          <input id="auth-cnpj" type="text" inputMode="numeric" value={authForm.cnpj} onChange={(event) => setAuthForm((current) => ({ ...current, cnpj: formatCnpj(event.target.value) }))} placeholder="00.000.000/0000-00" maxLength="18" aria-required="true" />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="auth-responsible">Nome do Responsável</label>
+                          <input id="auth-responsible" type="text" value={authForm.responsibleName} onChange={(event) => setAuthForm((current) => ({ ...current, responsibleName: event.target.value }))} autoComplete="name" required />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="auth-name">Nome Completo</label>
+                          <input id="auth-name" type="text" value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} autoComplete="name" required />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="auth-cpf">CPF</label>
+                          <input id="auth-cpf" type="text" inputMode="numeric" value={authForm.cpf} onChange={(event) => setAuthForm((current) => ({ ...current, cpf: formatCpf(event.target.value) }))} placeholder="000.000.000-00" maxLength="14" aria-required="true" />
+                        </div>
+                        {authForm.userType === 'corretor' && (
+                          <div className="form-group">
+                            <label htmlFor="auth-creci">CRECI</label>
+                            <input id="auth-creci" type="text" value={authForm.creci} onChange={(event) => setAuthForm((current) => ({ ...current, creci: event.target.value }))} placeholder="123456, 123456-F ou CRECI/SP 123456" aria-required="true" />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <div className="form-group">
+                      <label htmlFor="auth-phone">Telefone</label>
+                      <input id="auth-phone" type="tel" inputMode="tel" value={authForm.phone} onChange={(event) => setAuthForm((current) => ({ ...current, phone: formatPhone(event.target.value) }))} placeholder="(00) 00000-0000" maxLength="15" autoComplete="tel" required />
+                    </div>
+                  </>
+                )
               )}
-              <div className="form-group">
-                <label htmlFor="auth-email">E-mail</label>
-                <input id="auth-email" type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="voce@email.com" required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="auth-password">Senha</label>
-                <input id="auth-password" type="password" minLength="6" value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} placeholder="Mínimo de 6 caracteres" required />
-              </div>
+              {(authMode === 'login' || authSignupStep === 'details') && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="auth-email">E-mail</label>
+                    <input id="auth-email" type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} placeholder="voce@email.com" autoComplete="email" required />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="auth-password">Senha</label>
+                    <input id="auth-password" type="password" minLength="6" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} placeholder="Mínimo de 6 caracteres" autoComplete={authMode === 'login' ? 'current-password' : 'new-password'} required />
+                  </div>
+                </>
+              )}
               {authMessage && <p className="auth-message" role="alert">{authMessage}</p>}
               {!isSupabaseConfigured && <p className="auth-message">A autenticação ainda precisa ser configurada no Supabase antes de ficar disponível.</p>}
-              <div className="form-actions">
-                <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
-                <button type="submit" className="submit-form-btn" disabled={!isSupabaseConfigured || authLoading}>{authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Criar conta'}</button>
-              </div>
-              <button type="button" className="auth-switch" onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthMessage('') }}>
+              {(authMode === 'login' || authSignupStep === 'details') && (
+                <div className="form-actions">
+                  <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
+                  <button type="submit" className="submit-form-btn" disabled={!isSupabaseConfigured || authLoading}>{authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Criar conta'}</button>
+                </div>
+              )}
+              <button type="button" className="auth-switch" onClick={() => {
+                if (authMode === 'login') {
+                  setAuthForm(emptyAuthForm)
+                  setAuthSignupStep('profile')
+                }
+                setAuthMode(authMode === 'login' ? 'signup' : 'login')
+                setAuthMessage('')
+              }}>
                 {authMode === 'login' ? 'Ainda não tenho conta' : 'Já tenho uma conta'}
               </button>
             </form>
