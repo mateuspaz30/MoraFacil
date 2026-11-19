@@ -111,6 +111,23 @@ export const getListingSlugFromPath = () => {
   return route === 'imovel' ? decodeURIComponent(slug || '') : ''
 }
 
+const openTrackedContact = async (event, onTrack) => {
+  event.preventDefault()
+  const { href, target } = event.currentTarget
+  const newWindow = target === '_blank' ? window.open('about:blank', '_blank') : null
+
+  try {
+    await onTrack?.()
+  } finally {
+    if (target === '_blank' && newWindow) {
+      newWindow.opener = null
+      newWindow.location.href = href
+    } else {
+      window.location.href = href
+    }
+  }
+}
+
 function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
   const images = [...new Set([
     ...(Array.isArray(listing.images) ? listing.images : []),
@@ -208,7 +225,7 @@ export function ListingShowcase({ listings, city }) {
   )
 }
 
-export function ListingDetailPage({ listing, onView }) {
+export function ListingDetailPage({ listing, onView, onContactClick }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -468,8 +485,8 @@ export function ListingDetailPage({ listing, onView }) {
           <section className="listing-detail-price-card">
             <span className="listing-detail-eyebrow">Valor do imóvel</span>
             <strong className={`listing-detail-price purpose-price purpose-${purpose}`}>{price}</strong>
-            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
-            {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
+            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer" onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
+            {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`} onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
           </section>
 
           <section className="listing-detail-advertiser-card">

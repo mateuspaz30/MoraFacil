@@ -29,6 +29,8 @@ Usuários autenticados podem acessar a área pessoal em `/minha-area` para consu
 
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_view_count.sql`](supabase/migrations/20261119_add_listing_view_count.sql) no SQL Editor do Supabase. A migração adiciona o contador de visualizações e a função atômica que o incrementa ao abrir os detalhes de um imóvel aprovado.
 
+Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_whatsapp_clicks.sql`](supabase/migrations/20261119_add_listing_whatsapp_clicks.sql) no SQL Editor do Supabase. A migração adiciona o contador de cliques de contato e a função atômica que o incrementa ao clicar em um botão de contato de um imóvel aprovado.
+
 ## Anúncios em destaque na Home
 
 Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores podem selecionar anúncios publicados em “Meus Imóveis”, ativar “Destacar na página inicial” e definir sua ordem. Apenas anúncios aprovados e destacados aparecem no carrossel.

@@ -370,6 +370,7 @@ create table public.listings (
   latitude double precision not null,
   longitude double precision not null,
   visualizacoes integer not null default 0 check (visualizacoes >= 0),
+  whatsapp_clicks integer not null default 0 check (whatsapp_clicks >= 0),
   created_at timestamptz not null default now()
 );
 
@@ -394,6 +395,28 @@ $$;
 
 revoke all on function public.increment_listing_views(bigint) from public, anon, authenticated;
 grant execute on function public.increment_listing_views(bigint) to anon, authenticated;
+
+create or replace function public.increment_listing_whatsapp_clicks(target_listing_id bigint)
+returns integer
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  click_count integer;
+begin
+  update public.listings as listing
+  set whatsapp_clicks = listing.whatsapp_clicks + 1
+  where listing.id = target_listing_id
+    and listing.status = 'aprovado'
+  returning listing.whatsapp_clicks into click_count;
+
+  return click_count;
+end;
+$$;
+
+revoke all on function public.increment_listing_whatsapp_clicks(bigint) from public, anon, authenticated;
+grant execute on function public.increment_listing_whatsapp_clicks(bigint) to anon, authenticated;
 
 alter table public.listings enable row level security;
 

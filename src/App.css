@@ -4687,7 +4687,7 @@
 
 .my-area-stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 18px;
 }
@@ -4719,6 +4719,12 @@
 .my-area-stat-icon.views {
   background: #e9f8ef;
   color: #078c59;
+}
+
+.my-area-stat-icon.whatsapp {
+  background: #e9f8ef;
+  color: #078c59;
+  font-size: 1.15rem;
 }
 
 .my-area-stat-card small,
@@ -4902,7 +4908,8 @@ dl.my-area-profile-grid > div {
   color: #71849a;
 }
 
-.account-card-views {
+.account-card-views,
+.account-card-whatsapp {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -4911,15 +4918,23 @@ dl.my-area-profile-grid > div {
   font-size: 0.68rem;
 }
 
-.account-card-views span {
+.account-card-views span,
+.account-card-whatsapp span {
   color: #078c59;
   font-size: 0.9rem;
 }
 
-.account-card-views strong {
+.account-card-views strong,
+.account-card-whatsapp strong {
   margin-left: auto;
   color: #12345a;
   font-size: 0.78rem;
+}
+
+@media (max-width: 1000px) {
+  .my-area-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .my-area-guest {

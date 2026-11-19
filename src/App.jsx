@@ -1691,6 +1691,7 @@ function App() {
       .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
+  const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
   const recordListingView = useCallback(async (listing) => {
     if (!supabase || !listing.user_id) return
 
@@ -1716,11 +1717,36 @@ function App() {
       console.error('Falha ao registrar visualização do imóvel:', error)
     }
   }, [])
+  const recordWhatsAppClick = useCallback(async (listing) => {
+    if (!supabase || !listing.user_id) return
+
+    try {
+      const { data, error } = await supabase.rpc('increment_listing_whatsapp_clicks', {
+        target_listing_id: listing.id,
+      })
+      if (error) throw error
+      if (data === null) return
+
+      const whatsappClicks = Number(data) || 0
+      setPublishedListings((current) => current.map((item) => (
+        item.id === listing.id
+          ? { ...item, whatsapp_clicks: Math.max(Number(item.whatsapp_clicks) || 0, whatsappClicks) }
+          : item
+      )))
+      setUserListings((current) => current.map((item) => (
+        item.id === listing.id
+          ? { ...item, whatsapp_clicks: Math.max(Number(item.whatsapp_clicks) || 0, whatsappClicks) }
+          : item
+      )))
+    } catch (error) {
+      console.error('Falha ao registrar clique no WhatsApp do imóvel:', error)
+    }
+  }, [])
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
     const routeListing = listings.find((item) => getListingSlug(item) === routeSlug)
-    if (routeListing) return <ListingDetailPage listing={routeListing} onView={recordListingView} />
+    if (routeListing) return <ListingDetailPage listing={routeListing} onView={recordListingView} onContactClick={recordWhatsAppClick} />
   }
 
   return (
@@ -1816,6 +1842,10 @@ function App() {
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon views" aria-hidden="true">◉</span>
                         <div><small>Visualizações Totais</small><strong>{totalListingViews}</strong></div>
+                      </article>
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon whatsapp" aria-hidden="true">💬</span>
+                        <div><small>Cliques WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
                       </article>
                     </section>
                   </>
@@ -1964,6 +1994,7 @@ function App() {
                           <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
                         </div>
                         <p className="account-card-views"><span aria-hidden="true">◉</span> Visualizações <strong>{Number(item.visualizacoes) || 0}</strong></p>
+                        <p className="account-card-whatsapp"><span aria-hidden="true">💬</span> Cliques WhatsApp <strong>{Number(item.whatsapp_clicks) || 0}</strong></p>
                         {statusKey === 'rejected' && <div className="account-rejection-reason"><strong>Motivo da reprovação</strong><p>{item.motivo_reprovacao || 'O administrador solicitou ajustes no anúncio.'}</p></div>}
                       </div>
                       <div className="account-card-actions">
