@@ -604,6 +604,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [accountSection, setAccountSection] = useState('overview')
+  const [recentListingsExpanded, setRecentListingsExpanded] = useState(false)
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
   const [authMode, setAuthMode] = useState('login')
   const [authForm, setAuthForm] = useState(emptyAuthForm)
@@ -1698,7 +1699,7 @@ function App() {
   const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
-    .slice(0, 3)
+  const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
   const recordListingView = useCallback(async (listing) => {
     if (!supabase || !listing.user_id) return
 
@@ -1853,10 +1854,19 @@ function App() {
                     </section>
                     <section className="my-area-recent-listings" aria-labelledby="my-area-recent-title">
                       <header className="my-area-recent-heading">
-                        <h2 id="my-area-recent-title">Últimos imóveis cadastrados</h2>
-                        <button type="button" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}>Ver todos <span aria-hidden="true">→</span></button>
+                        <h2 id="my-area-recent-title">{recentListingsExpanded ? 'Todos os imóveis' : 'Últimos imóveis cadastrados'}</h2>
+                        {latestUserListings.length > 3 && (
+                          <button
+                            type="button"
+                            aria-expanded={recentListingsExpanded}
+                            onClick={() => setRecentListingsExpanded((expanded) => !expanded)}
+                          >
+                            {recentListingsExpanded ? 'Ver menos' : `Ver todos os ${latestUserListings.length} imóveis`}
+                            <span aria-hidden="true">{recentListingsExpanded ? '↑' : '→'}</span>
+                          </button>
+                        )}
                       </header>
-                      {latestUserListings.length ? (
+                      {visibleRecentListings.length ? (
                         <>
                           <div className="my-area-table-scroll">
                             <table className="my-area-listings-table">
@@ -1871,7 +1881,7 @@ function App() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {latestUserListings.map((item) => {
+                                {visibleRecentListings.map((item) => {
                                   const statusKey = getListingStatusKey(item)
                                   const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Pendente' : 'Inativo'
                                   return (
@@ -1893,7 +1903,7 @@ function App() {
                               </tbody>
                             </table>
                           </div>
-                          <footer className="my-area-table-footer">Exibindo {latestUserListings.length} de {userListings.length} imóveis</footer>
+                          <footer className="my-area-table-footer">Exibindo {visibleRecentListings.length} de {userListings.length} imóveis</footer>
                         </>
                       ) : (
                         <p className="my-area-recent-empty">Você ainda não cadastrou imóveis.</p>
