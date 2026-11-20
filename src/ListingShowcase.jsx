@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bath, BedDouble, CalendarDays, Car, MapPin, Ruler } from 'lucide-react'
+import { Bath, BedDouble, CalendarDays, Car, Heart, MapPin, Ruler } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
@@ -86,6 +86,25 @@ const formatPublishedDate = (date) => {
   }).format(new Date(date))
 }
 
+export function FavoriteButton({ listing, isFavorite = false, isBusy = false, onToggle }) {
+  return (
+    <button
+      type="button"
+      className={`favorite-toggle${isFavorite ? ' active' : ''}`}
+      aria-label={isFavorite ? `Remover ${listing.title} dos favoritos` : `Adicionar ${listing.title} aos favoritos`}
+      aria-pressed={isFavorite}
+      disabled={isBusy}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onToggle?.(listing)
+      }}
+    >
+      <Heart size={22} strokeWidth={2.2} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
+    </button>
+  )
+}
+
 const formatPrice = (price, type) => {
   const numericPrice = Number(String(price || '').replace(/\D/g, '')) || 0
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
@@ -139,7 +158,7 @@ const openTrackedContact = async (event, onTrack) => {
   }
 }
 
-function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
+function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite, isBusy, onToggleFavorite }) {
   const images = [...new Set([
     ...(Array.isArray(listing.images) ? listing.images : []),
     listing.image,
@@ -168,6 +187,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
         )}
         <span className={`showcase-type-badge account-status-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
       </a>
+      <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={isBusy} onToggle={onToggleFavorite} />
       {images.length > 1 && (
         <>
           <button type="button" className="showcase-gallery-arrow previous" aria-label="Foto anterior" onClick={(event) => changeImage(event, -1)}>
@@ -182,15 +202,32 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
   )
 }
 
-export function ListingShowcase({ listings, city }) {
-  const heading = city ? `Imóveis disponíveis em ${city}` : 'Imóveis disponíveis'
+export function ListingShowcase({
+  listings,
+  city,
+  heading: customHeading,
+  showHeading = true,
+  emptyMessage,
+  favoriteListingIds = [],
+  favoriteActionId = null,
+  favoriteMessage = '',
+  onToggleFavorite,
+}) {
+  const heading = customHeading || (city ? `Imóveis disponíveis em ${city}` : 'Imóveis disponíveis')
 
   return (
-    <section className="property-showcase" aria-labelledby="property-showcase-title">
-      <div className="property-showcase-heading">
+    <section
+      className="property-showcase"
+      aria-labelledby={showHeading ? 'property-showcase-title' : undefined}
+      aria-label={showHeading ? undefined : heading}
+    >
+      {showHeading && <div className="property-showcase-heading">
         <h2 id="property-showcase-title">{heading}</h2>
-      </div>
-      <div className="property-showcase-grid" id="imoveis-disponiveis">
+      </div>}
+      {favoriteMessage && <p className="favorite-feedback" role="alert">{favoriteMessage}</p>}
+      {listings.length === 0
+        ? emptyMessage && <p className="favorite-empty">{emptyMessage}</p>
+        : <div className="property-showcase-grid" id="imoveis-disponiveis">
         {listings.map((listing) => {
           const slug = getListingSlug(listing)
           const url = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(slug)}/`
@@ -198,13 +235,22 @@ export function ListingShowcase({ listings, city }) {
           const purposeLabel = getListingPurposeLabel(listing)
           const propertyType = getListingPropertyType(listing)
           const createdAt = formatPublishedDate(listing.created_at)
+          const isFavorite = favoriteListingIds.some((id) => String(id) === String(listing.id))
           const bedrooms = Number(listing.bedrooms) || 0
           const bathrooms = Number(listing.bathrooms) || 0
           const parking = Number(listing.parking_spaces || listing.garages) || 0
 
           return (
             <article className="showcase-property-card account-dashboard-card standard-listing-card" key={listing.id}>
-              <ShowcasePropertyImage listing={listing} purpose={purpose} purposeLabel={purposeLabel} url={url} />
+              <ShowcasePropertyImage
+                listing={listing}
+                purpose={purpose}
+                purposeLabel={purposeLabel}
+                url={url}
+                isFavorite={isFavorite}
+                isBusy={favoriteActionId !== null}
+                onToggleFavorite={onToggleFavorite}
+              />
               <a className="showcase-property-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
                 <div className="showcase-property-body standard-listing-card-body">
                   <h3>{listing.title}</h3>
@@ -226,12 +272,12 @@ export function ListingShowcase({ listings, city }) {
             </article>
           )
         })}
-      </div>
+      </div>}
     </section>
   )
 }
 
-export function ListingDetailPage({ listing, onView, onContactClick }) {
+export function ListingDetailPage({ listing, onView, onContactClick, isFavorite, favoriteBusy, favoriteMessage, onToggleFavorite }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -445,6 +491,7 @@ export function ListingDetailPage({ listing, onView, onContactClick }) {
             <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
               {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
               <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+              <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={favoriteBusy} onToggle={onToggleFavorite} />
               {galleryImages.length > 1 && <>
                 <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
                 <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
@@ -465,6 +512,7 @@ export function ListingDetailPage({ listing, onView, onContactClick }) {
               })}
             </div>}
           </section>
+          {favoriteMessage && <p className="favorite-feedback listing-favorite-feedback" role="alert">{favoriteMessage}</p>}
 
           <section className="listing-detail-description listing-detail-card">
             <h2><svg className="section-title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">

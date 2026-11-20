@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Eye, Home, House, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Eye, Heart, Home, House, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -12,7 +12,7 @@ import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purp
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
+import { FavoriteButton, getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -461,7 +461,7 @@ function AnnouncementMapFocus({ focus }) {
   return null
 }
 
-function MapListingPopup({ listing }) {
+function MapListingPopup({ listing, isFavorite, favoriteBusy, onToggleFavorite }) {
   const map = useMap()
   const touchStartX = useRef(null)
   const images = [...new Set([
@@ -496,6 +496,7 @@ function MapListingPopup({ listing }) {
         >
           {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
           <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+          <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={favoriteBusy} onToggle={onToggleFavorite} />
           <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
           {images.length > 1 && (
             <>
@@ -596,6 +597,11 @@ function App() {
   const [announcementSuccess, setAnnouncementSuccess] = useState(false)
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
+  const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
+  const [favoriteActionId, setFavoriteActionId] = useState(null)
+  const [favoriteMessage, setFavoriteMessage] = useState('')
+  const pendingFavoriteListingRef = useRef(null)
+  const [favoriteReturnPath, setFavoriteReturnPath] = useState('')
   const [userProfile, setUserProfile] = useState(null)
   const [userProfileError, setUserProfileError] = useState('')
   const [profileEditing, setProfileEditing] = useState(false)
@@ -664,6 +670,11 @@ function App() {
     setAccountSection(section)
     navigateToPath(`${getAppBasePath()}minha-area`)
   }
+  const closeAuthModal = () => {
+    setAuthOpen(false)
+    pendingFavoriteListingRef.current = null
+    setFavoriteReturnPath('')
+  }
   const isMyAreaRoute = getRelativeAppPath(currentPath) === 'minha-area'
 
   useEffect(() => {
@@ -727,6 +738,7 @@ function App() {
         setFeaturedDrafts({})
         setUserProfile(null)
         setUserProfileError('')
+        setFavoriteMessage('')
         setProfileEditing(false)
       }
       if (event === 'SIGNED_OUT') setAccountFilter('all')
@@ -869,6 +881,35 @@ function App() {
 
     loadUserListings()
   }, [authUser, isAdmin])
+
+  useEffect(() => {
+    if (!authUser) return undefined
+
+    let mounted = true
+    const loadFavorites = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', authUser.id)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        if (mounted) {
+          setFavoriteData({ userId: authUser.id, ids: (data || []).map((favorite) => favorite.listing_id) })
+          setFavoriteMessage('')
+        }
+      } catch (error) {
+        console.error('Falha ao carregar os imóveis favoritos:', error)
+        if (mounted) {
+          setFavoriteData({ userId: authUser.id, ids: [] })
+          setFavoriteMessage(`Não foi possível carregar seus favoritos. Execute supabase/migrations/20261120_create_favorites.sql no Supabase. ${error.message}`)
+        }
+      }
+    }
+
+    loadFavorites()
+    return () => { mounted = false }
+  }, [authUser])
 
   const selectedCity = appliedFilters.search.trim()
   const selectedCityKey = selectedCity.toLocaleLowerCase('pt-BR').replace(/-sp$/i, '')
@@ -1429,6 +1470,10 @@ function App() {
       setAuthOpen(false)
       setAuthForm(emptyAuthForm)
       setAuthSignupStep('profile')
+      if (favoriteReturnPath) {
+        navigateToPath(favoriteReturnPath)
+        setFavoriteReturnPath('')
+      }
     }
     setAuthLoading(false)
   }
@@ -1658,7 +1703,7 @@ function App() {
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
   const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
-  const visibleAccountSection = isStandardAccount && accountSection !== 'account' ? 'listings' : accountSection
+  const visibleAccountSection = isStandardAccount && !['account', 'favorites'].includes(accountSection) ? 'listings' : accountSection
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -1708,6 +1753,74 @@ function App() {
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
   const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
+  const favoriteListingIds = favoriteData.userId === authUser?.id ? favoriteData.ids : []
+  const favoriteListingsLoading = Boolean(authUser && favoriteData.userId !== authUser.id)
+  const favoriteListings = favoriteListingIds
+    .map((id) => publicPublishedListings.find((item) => String(item.id) === String(id)))
+    .filter(Boolean)
+
+  const handleToggleFavorite = useCallback(async (listing) => {
+    if (!authUser) {
+      pendingFavoriteListingRef.current = listing
+      setAuthMode('login')
+      setAuthMessage('Entre na sua conta para salvar imóveis nos favoritos.')
+      setAuthOpen(true)
+      if (getRelativeAppPath(window.location.pathname).startsWith('imovel/')) {
+        setFavoriteReturnPath(window.location.pathname)
+        navigateToPath(getAppBasePath())
+      }
+      return
+    }
+    if (favoriteActionId !== null) return
+    if (favoriteData.userId !== authUser.id) return
+    if (!supabase) {
+      setFavoriteMessage('Não foi possível acessar o serviço de favoritos. Tente novamente mais tarde.')
+      return
+    }
+    if (!listing.user_id) {
+      setFavoriteMessage('Este anúncio de demonstração não pode ser salvo nos favoritos.')
+      return
+    }
+
+    setFavoriteActionId(listing.id)
+    setFavoriteMessage('')
+    const isFavorite = favoriteData.ids.some((id) => String(id) === String(listing.id))
+    try {
+      const { error } = isFavorite
+        ? await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', authUser.id)
+          .eq('listing_id', listing.id)
+        : await supabase
+          .from('favorites')
+          .insert({ user_id: authUser.id, listing_id: listing.id })
+      if (error) throw error
+
+      setFavoriteData((current) => {
+        const currentIds = current.userId === authUser.id ? current.ids : []
+        return {
+          userId: authUser.id,
+          ids: isFavorite
+            ? currentIds.filter((id) => String(id) !== String(listing.id))
+            : [listing.id, ...currentIds],
+        }
+      })
+    } catch (error) {
+      console.error('Falha ao atualizar os imóveis favoritos:', error)
+      setFavoriteMessage(`Não foi possível atualizar seus favoritos. ${error.message}`)
+    } finally {
+      setFavoriteActionId(null)
+    }
+  }, [authUser, favoriteActionId, favoriteData])
+
+  useEffect(() => {
+    if (!authUser || favoriteListingsLoading || !pendingFavoriteListingRef.current) return
+    const listing = pendingFavoriteListingRef.current
+    pendingFavoriteListingRef.current = null
+    handleToggleFavorite(listing)
+  }, [authUser, favoriteListingsLoading, handleToggleFavorite])
+
   const recordListingView = useCallback(async (listing) => {
     if (!supabase || !listing.user_id) return
 
@@ -1762,7 +1875,17 @@ function App() {
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
     const routeListing = listings.find((item) => getListingSlug(item) === routeSlug)
-    if (routeListing) return <ListingDetailPage listing={routeListing} onView={recordListingView} onContactClick={recordWhatsAppClick} />
+    if (routeListing) return (
+      <ListingDetailPage
+        listing={routeListing}
+        onView={recordListingView}
+        onContactClick={recordWhatsAppClick}
+        isFavorite={favoriteListingIds.some((id) => String(id) === String(routeListing.id))}
+        favoriteBusy={favoriteActionId !== null || favoriteListingsLoading}
+        favoriteMessage={favoriteMessage}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    )
   }
 
   return (
@@ -1812,10 +1935,12 @@ function App() {
                 <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}`}>
                   {(isStandardAccount ? [
                     ['listings', Building2, 'Meus Imóveis'],
+                    ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
                   ] : [
                     ['overview', House, 'Visão Geral'],
                     ['listings', Building2, 'Meus Imóveis'],
+                    ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
                   ]).map(([section, Icon, label]) => (
                     <button
@@ -1823,7 +1948,7 @@ function App() {
                       type="button"
                       className={visibleAccountSection === section ? 'active' : ''}
                       aria-current={visibleAccountSection === section ? 'page' : undefined}
-                      onClick={() => { setAccountSection(section); setProfileMessage('') }}
+                      onClick={() => { setAccountSection(section); setProfileMessage(''); setFavoriteMessage('') }}
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
                         <Icon size={28} strokeWidth={2.2} />
@@ -1840,7 +1965,7 @@ function App() {
                 <header className={`my-area-topbar${visibleAccountSection === 'overview' ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
                     <span>{visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>
-                    <h1>{visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : 'Minha Conta'}</h1>
+                    <h1>{visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
                     {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
                     {isStandardAccount && visibleAccountSection === 'listings' && <p>Organize seus anúncios e acompanhe os resultados.</p>}
                   </div>
@@ -1981,6 +2106,24 @@ function App() {
                         <div><dt>E-mail 🔒</dt><dd>{accountProfile.email}</dd></div>
                       </dl>
                     )}
+                  </section>
+                )}
+                {visibleAccountSection === 'favorites' && (
+                  <section className="my-area-favorites" aria-label="Imóveis favoritos">
+                    {favoriteMessage && <p className="my-area-feedback error" role="alert">{favoriteMessage}</p>}
+                    {favoriteListingsLoading
+                      ? <div className="account-empty" role="status">Carregando seus favoritos...</div>
+                      : (
+                        <ListingShowcase
+                          listings={favoriteListings}
+                          heading="Imóveis salvos"
+                          showHeading={false}
+                          emptyMessage={favoriteMessage ? undefined : 'Você ainda não adicionou imóveis aos favoritos.'}
+                          favoriteListingIds={favoriteListingIds}
+                          favoriteActionId={favoriteActionId}
+                          onToggleFavorite={handleToggleFavorite}
+                        />
+                      )}
                   </section>
                 )}
                 {visibleAccountSection === 'listings' && (
@@ -2363,6 +2506,12 @@ function App() {
               </svg>
               {getListingPurposeLabel(activeHeroListing).toLocaleUpperCase('pt-BR')}
             </span>
+            <FavoriteButton
+              listing={activeHeroListing}
+              isFavorite={favoriteListingIds.some((id) => String(id) === String(activeHeroListing.id))}
+              isBusy={favoriteActionId !== null || favoriteListingsLoading}
+              onToggle={handleToggleFavorite}
+            />
             {heroCarouselListings.length > 1 && (
               <>
                 <button
@@ -2507,7 +2656,12 @@ function App() {
 
           {filteredListings.map((item) => (
             <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}>
-              <MapListingPopup listing={item} />
+              <MapListingPopup
+                listing={item}
+                isFavorite={favoriteListingIds.some((id) => String(id) === String(item.id))}
+                favoriteBusy={favoriteActionId !== null || favoriteListingsLoading}
+                onToggleFavorite={handleToggleFavorite}
+              />
             </Marker>
           ))}
         </MapContainer>
@@ -2523,7 +2677,14 @@ function App() {
         ))}
       </div>
 
-      <ListingShowcase listings={filteredListings} city={appliedFilters.search.trim()} />
+      <ListingShowcase
+        listings={filteredListings}
+        city={appliedFilters.search.trim()}
+        favoriteListingIds={favoriteListingIds}
+        favoriteActionId={favoriteListingsLoading ? 'loading' : favoriteActionId}
+        favoriteMessage={favoriteMessage}
+        onToggleFavorite={handleToggleFavorite}
+      />
 
       {announcementOpen && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -2695,12 +2856,12 @@ function App() {
 
       {authOpen && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setAuthOpen(false)
+          if (event.target === event.currentTarget) closeAuthModal()
         }}>
           <section className="property-modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
             <div className="announcement-header">
-              <h2 id="auth-title">{authMode === 'login' ? 'Entrar para anunciar' : 'Criar conta de anunciante'}</h2>
-              <p>Você pode continuar navegando sem cadastro. A conta só é necessária para publicar e acompanhar seus imóveis.</p>
+              <h2 id="auth-title">{authMode === 'login' ? (authMessage.toLocaleLowerCase('pt-BR').includes('favoritos') ? 'Entre para salvar seus favoritos' : 'Entrar para anunciar') : 'Criar conta de anunciante'}</h2>
+              <p>Você pode continuar navegando sem cadastro. Entre para salvar favoritos, publicar e acompanhar seus imóveis.</p>
             </div>
             <form className="announcement-form" onSubmit={handleAuthSubmit}>
               {authMode === 'signup' && (
@@ -2726,7 +2887,7 @@ function App() {
                     </fieldset>
                     {authMessage && <p className="auth-message" role="alert">{authMessage}</p>}
                     <div className="form-actions">
-                      <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
+                      <button type="button" className="cancel-form-btn" onClick={closeAuthModal}>Cancelar</button>
                       <button
                         type="button"
                         className="submit-form-btn"
@@ -2796,7 +2957,7 @@ function App() {
               {!isSupabaseConfigured && <p className="auth-message">A autenticação ainda precisa ser configurada no Supabase antes de ficar disponível.</p>}
               {(authMode === 'login' || authSignupStep === 'details') && (
                 <div className="form-actions">
-                  <button type="button" className="cancel-form-btn" onClick={() => setAuthOpen(false)}>Cancelar</button>
+                  <button type="button" className="cancel-form-btn" onClick={closeAuthModal}>Cancelar</button>
                   <button type="submit" className="submit-form-btn" disabled={!isSupabaseConfigured || authLoading}>{authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Criar conta'}</button>
                 </div>
               )}
