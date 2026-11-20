@@ -461,7 +461,7 @@ function AnnouncementMapFocus({ focus }) {
   return null
 }
 
-function MapListingPopup({ listing, isFavorite, favoriteBusy, onToggleFavorite }) {
+function MapListingPopup({ listing }) {
   const map = useMap()
   const touchStartX = useRef(null)
   const images = [...new Set([
@@ -496,7 +496,6 @@ function MapListingPopup({ listing, isFavorite, favoriteBusy, onToggleFavorite }
         >
           {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
           <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
-          <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={favoriteBusy} onToggle={onToggleFavorite} />
           <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
           {images.length > 1 && (
             <>
@@ -2658,9 +2657,6 @@ function App() {
             <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}>
               <MapListingPopup
                 listing={item}
-                isFavorite={favoriteListingIds.some((id) => String(id) === String(item.id))}
-                favoriteBusy={favoriteActionId !== null || favoriteListingsLoading}
-                onToggleFavorite={handleToggleFavorite}
               />
             </Marker>
           ))}
