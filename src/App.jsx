@@ -1871,6 +1871,14 @@ function App() {
                         <>
                           <div className="my-area-table-scroll">
                             <table className="my-area-listings-table">
+                              <colgroup>
+                                <col className="my-area-column-property" />
+                                <col className="my-area-column-price" />
+                                <col className="my-area-column-status" />
+                                <col className="my-area-column-views" />
+                                <col className="my-area-column-whatsapp" />
+                                <col className="my-area-column-actions" />
+                              </colgroup>
                               <thead>
                                 <tr>
                                   <th scope="col">Imóvel</th>

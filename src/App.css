@@ -4899,10 +4899,32 @@
 
 .my-area-listings-table {
   width: 100%;
-  min-width: 770px;
+  min-width: 900px;
+  table-layout: fixed;
   border-collapse: collapse;
   color: #203b57;
   text-align: left;
+}
+
+.my-area-column-property {
+  width: 33%;
+}
+
+.my-area-column-price {
+  width: 14%;
+}
+
+.my-area-column-status {
+  width: 14%;
+}
+
+.my-area-column-views,
+.my-area-column-whatsapp {
+  width: 12%;
+}
+
+.my-area-column-actions {
+  width: 15%;
 }
 
 .my-area-listings-table th {
@@ -4912,6 +4934,11 @@
   font-size: 0.78rem;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.my-area-listings-table th:not(:first-child),
+.my-area-listings-table td:not(:first-child) {
+  text-align: center;
 }
 
 .my-area-listings-table th:first-child {
@@ -4937,7 +4964,7 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  min-width: 230px;
+  min-width: 0;
 }
 
 .my-area-table-property img,
