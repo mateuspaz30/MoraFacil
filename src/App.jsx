@@ -1910,7 +1910,7 @@ function App() {
             <span className="announce-plus">+</span> Anunciar imóvel
           </button>
           <span className="header-divider" aria-hidden="true" />
-          <button type="button" className="header-avatar" aria-label={authUser ? 'Abrir Minha Área' : 'Abrir acesso à conta'} onClick={() => authUser ? openMyArea() : setAuthOpen(true)}>{userFirstName.charAt(0)}</button>
+          <span className="header-avatar" role="img" aria-label={`Avatar de ${userFirstName}`}>{userFirstName.charAt(0)}</span>
           <button type="button" className="menu-toggle" aria-label="Abrir menu lateral" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}>
             <svg className="menu-toggle-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
@@ -2424,7 +2424,7 @@ function App() {
               </div>
             </div>
             {authUser ? (
-              <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); openMyArea() }}>
+              <button type="button" className={`mobile-menu-primary mobile-menu-account-area${isMyAreaRoute ? ' active' : ''}`} aria-current={isMyAreaRoute ? 'page' : undefined} onClick={() => { setMobileMenuOpen(false); openMyArea() }}>
                 <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
                 <span className="mobile-menu-action-label">Minha Área</span>
                 <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>

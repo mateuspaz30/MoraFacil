@@ -1944,6 +1944,18 @@
   color: #06321f;
 }
 
+.mobile-menu-primary.mobile-menu-account-area {
+  border: 1px solid #46a9e8;
+  background: transparent;
+  color: #fff;
+}
+
+.mobile-menu-primary.mobile-menu-account-area.active {
+  border-color: #8bea45;
+  background: #0b5b91;
+  color: #fff;
+}
+
 .mobile-menu-secondary {
   border: 1px solid #46a9e8;
   background: transparent;
@@ -3135,9 +3147,6 @@
   flex: 0 0 36px;
   width: 36px;
   height: 36px;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
 }
 
 .top-header .header-actions > .menu-toggle {
@@ -3152,7 +3161,6 @@
   display: block;
 }
 
-.header-avatar:focus-visible,
 .menu-toggle:focus-visible {
   outline: 2px solid #8bea45;
   outline-offset: 3px;
