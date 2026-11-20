@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Bath, BedDouble, CalendarDays, Car, MapPin, Ruler } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
@@ -76,6 +77,15 @@ function LocationPinIcon({ className = '' }) {
 
 const formatArea = (area) => `${Number.parseInt(area, 10) || 0} m²`
 
+const formatPublishedDate = (date) => {
+  if (!date || Number.isNaN(new Date(date).getTime())) return 'Data não informada'
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date))
+}
+
 const formatPrice = (price, type) => {
   const numericPrice = Number(String(price || '').replace(/\D/g, '')) || 0
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
@@ -143,7 +153,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
   }
 
   return (
-    <div className="showcase-property-image">
+    <div className="showcase-property-image account-card-image-wrap">
       <a className="showcase-property-image-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
         {images[imageIndex] && (
           <img
@@ -151,11 +161,12 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url }) {
             srcSet={getResponsiveImageSet(images[imageIndex])}
             sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 980px) calc(50vw - 36px), (max-width: 1400px) calc(33vw - 30px), 430px"
             alt={`${listing.title}, foto ${imageIndex + 1}`}
+            className="account-card-image"
             loading="lazy"
             decoding="async"
           />
         )}
-        <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+        <span className={`showcase-type-badge account-status-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
       </a>
       {images.length > 1 && (
         <>
@@ -186,38 +197,32 @@ export function ListingShowcase({ listings, city }) {
           const purpose = getListingPurpose(listing)
           const purposeLabel = getListingPurposeLabel(listing)
           const propertyType = getListingPropertyType(listing)
+          const createdAt = formatPublishedDate(listing.created_at)
           const bedrooms = Number(listing.bedrooms) || 0
           const bathrooms = Number(listing.bathrooms) || 0
           const parking = Number(listing.parking_spaces || listing.garages) || 0
-          const features = [
-            bedrooms > 0 ? `🛏 ${bedrooms} ${bedrooms === 1 ? 'Quarto' : 'Quartos'}` : null,
-            bathrooms > 0 ? `🚿 ${bathrooms} ${bathrooms === 1 ? 'Banheiro' : 'Banheiros'}` : null,
-            parking > 0 ? `🚗 ${parking} ${parking === 1 ? 'Vaga' : 'Vagas'}` : null,
-            `📐 ${formatArea(listing.area)}`,
-          ]
 
           return (
-            <article className="showcase-property-card" key={listing.id}>
+            <article className="showcase-property-card account-dashboard-card standard-listing-card" key={listing.id}>
               <ShowcasePropertyImage listing={listing} purpose={purpose} purposeLabel={purposeLabel} url={url} />
               <a className="showcase-property-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
-                <div className="showcase-property-body">
+                <div className="showcase-property-body standard-listing-card-body">
                   <h3>{listing.title}</h3>
-                  <p className="showcase-property-location"><LocationPinIcon />{getListingLocation(listing)}</p>
-                  <p className="showcase-property-type"><span aria-hidden="true">{propertyType.icon}</span> {propertyType.label}</p>
-                  <strong className={`showcase-property-price purpose-price purpose-${purpose}`}>{formatPrice(listing.price, purpose)}</strong>
-                  <div className="showcase-property-features" aria-label="Características do imóvel">
-                    {features.map((feature, index) => (
-                      <span key={index} className={feature ? '' : 'empty'} aria-hidden={!feature}>
-                        {feature || <span className="showcase-feature-placeholder" />}
-                      </span>
-                    ))}
+                  <p className="showcase-property-location standard-listing-location"><MapPin size={16} strokeWidth={2.2} aria-hidden="true" />{getListingLocation(listing)}</p>
+                  <strong className={`showcase-property-price account-card-price purpose-price purpose-${purpose}`}>{formatPrice(listing.price, purpose)}</strong>
+                  <div className="showcase-property-features standard-listing-features" aria-label="Características do imóvel">
+                    {bedrooms > 0 && <span><BedDouble size={17} strokeWidth={2} aria-hidden="true" />{bedrooms} {bedrooms === 1 ? 'quarto' : 'quartos'}</span>}
+                    {bathrooms > 0 && <span><Bath size={17} strokeWidth={2} aria-hidden="true" />{bathrooms} {bathrooms === 1 ? 'banheiro' : 'banheiros'}</span>}
+                    {parking > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{parking} {parking === 1 ? 'vaga' : 'vagas'}</span>}
+                    <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{formatArea(listing.area)}</span>
                     {propertyType.key === 'terreno' && listing.description?.toLowerCase().includes('pronto para construir') && (
                       <span className="showcase-land-note">✅ Pronto para construir</span>
                     )}
                   </div>
+                  <p className="showcase-property-date standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
                 </div>
               </a>
-              <a className="showcase-property-cta" href={url}>Saiba mais <span aria-hidden="true">→</span></a>
+              <a className="showcase-property-cta" href={url}>Saiba Mais <span aria-hidden="true">→</span></a>
             </article>
           )
         })}
