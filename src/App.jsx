@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Building2, Eye, Home, House, LogOut, Plus, Settings2, User } from 'lucide-react'
+import { ArrowLeft, Building2, Eye, Home, House, Plus, Settings2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -1823,7 +1823,6 @@ function App() {
                 </nav>
                 <div className="my-area-sidebar-footer">
                   <button type="button" className="my-area-sidebar-action my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}><ArrowLeft size={28} strokeWidth={2.2} />Voltar ao portal</button>
-                  <button type="button" className="my-area-sidebar-action" onClick={handleLogout}><LogOut size={28} strokeWidth={2.2} />Sair</button>
                 </div>
               </aside>
               <main className="my-area-main">
