@@ -1799,7 +1799,7 @@ function App() {
           <section className="account-popover account-page" aria-label="Minha Área">
             {authUser ? (
             <>
-            <div className="my-area-layout">
+            <div className={`my-area-layout${isStandardAccount ? ' standard-account' : ''}`}>
               <aside className="my-area-sidebar" aria-label="Navegação da Minha Área">
                 <button type="button" className="my-area-brand" onClick={() => navigateToPath(getAppBasePath())}>
                   <img src={logo} alt="" />
@@ -1845,7 +1845,7 @@ function App() {
                     {isStandardAccount && visibleAccountSection === 'listings' && <p>Organize seus anúncios e acompanhe os resultados.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
-                    {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
+                    {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
                 {visibleAccountSection === 'overview' && (

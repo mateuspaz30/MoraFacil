@@ -4450,6 +4450,10 @@
   grid-template-columns: 224px minmax(0, 1fr);
 }
 
+.my-area-layout.standard-account {
+  grid-template-columns: 202px minmax(0, 1fr);
+}
+
 .my-area-sidebar {
   display: flex;
   flex-direction: column;
@@ -4457,6 +4461,11 @@
   padding: 24px 16px;
   background: linear-gradient(180deg, #062a49 0%, #0b385d 100%);
   color: #fff;
+}
+
+.my-area-layout.standard-account .my-area-sidebar {
+  gap: 20px;
+  padding: 24px 14px;
 }
 
 .my-area-brand {
@@ -4477,6 +4486,16 @@
   height: 42px;
   border-radius: 10px;
   object-fit: cover;
+}
+
+.my-area-layout.standard-account .my-area-brand img {
+  width: 38px;
+  height: 38px;
+  margin-left: 6px;
+}
+
+.my-area-layout.standard-account .my-area-brand {
+  gap: 8px;
 }
 
 .my-area-brand span {
@@ -4503,6 +4522,11 @@
   color: #06321f;
   font-size: 1.1rem;
   font-weight: 800;
+}
+
+.my-area-layout.standard-account .my-area-avatar {
+  flex-basis: 36px;
+  height: 36px;
 }
 
 .my-area-user div {
@@ -4548,6 +4572,11 @@
   font-size: 0.84rem;
   font-weight: 700;
   text-align: left;
+}
+
+.my-area-layout.standard-account .my-area-nav button {
+  min-height: 41px;
+  padding: 0 10px;
 }
 
 .my-area-nav button > .my-area-nav-icon {
@@ -4610,6 +4639,10 @@
   padding: 30px clamp(20px, 2.4vw, 34px) 48px;
 }
 
+.my-area-layout.standard-account .my-area-main {
+  padding: 30px 16px 48px 30px;
+}
+
 .my-area-topbar {
   display: flex;
   align-items: flex-start;
@@ -4634,6 +4667,10 @@
   font-size: clamp(2.2rem, 4vw, 2.65rem);
   font-weight: 800;
   letter-spacing: -0.035em;
+}
+
+.my-area-layout.standard-account .my-area-topbar h1 {
+  font-size: clamp(2.1rem, 3vw, 2.5rem);
 }
 
 .my-area-heading-copy > p {
@@ -4672,6 +4709,17 @@
   font-size: 0.95rem;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.my-area-layout.standard-account .my-area-create-listing {
+  min-height: 48px;
+  min-width: 190px;
+  padding: 0 18px;
+  font-size: 0.88rem;
+}
+
+.my-area-layout.standard-account .my-area-create-listing svg {
+  flex-basis: 24px;
 }
 
 .my-area-create-listing:hover {
@@ -5336,9 +5384,9 @@ dl.my-area-profile-grid > div {
 
 .my-area-listings-filters {
   display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 220px));
+  grid-template-columns: repeat(2, minmax(180px, 198px));
   justify-content: end;
-  gap: 12px;
+  gap: 10px;
   margin: 0 0 14px;
 }
 
@@ -5358,19 +5406,41 @@ dl.my-area-profile-grid > div {
 }
 
 .my-area-listings-filters select {
-  min-height: 42px;
+  min-height: 38px;
   border: 1px solid #cbd9e7;
   border-radius: 10px;
   background: #fff;
   color: #183553;
-  padding: 0 12px;
+  padding: 0 10px;
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .my-area-stats-grid.listings-stats {
+  gap: 14px;
   margin: 0 0 18px;
+}
+
+.my-area-stats-grid.listings-stats .my-area-stat-card {
+  gap: 18px;
+  min-height: 117px;
+  padding: 20px 22px;
+}
+
+.my-area-stats-grid.listings-stats .my-area-stat-icon {
+  flex-basis: 60px;
+  height: 60px;
+}
+
+.my-area-stats-grid.listings-stats .whatsapp-icon-card {
+  flex-basis: 60px;
+  width: 60px;
+  height: 60px;
+}
+
+.my-area-stats-grid.listings-stats .my-area-stat-card strong {
+  font-size: clamp(2.2rem, 3vw, 2.55rem);
 }
 
 .standard-listing-grid {
@@ -5381,7 +5451,7 @@ dl.my-area-profile-grid > div {
 .account-dashboard-card.standard-listing-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 142px minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0;
   min-height: 0;
   height: 100%;
@@ -5394,8 +5464,8 @@ dl.my-area-profile-grid > div {
 .standard-listing-card .account-card-image-wrap {
   grid-column: 1;
   grid-row: 1;
-  min-height: 142px;
-  aspect-ratio: auto;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
   border-radius: 10px;
 }
 
@@ -5584,14 +5654,14 @@ dl.my-area-profile-grid > div {
 .standard-listing-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   padding: 0 5px 5px;
 }
 
 .standard-listing-edit,
 .standard-listing-menu-trigger {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 35px;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -5619,7 +5689,7 @@ dl.my-area-profile-grid > div {
 }
 
 .standard-listing-menu-trigger {
-  width: 40px;
+  width: 36px;
 }
 
 .standard-listing-menu {
@@ -5715,7 +5785,16 @@ dl.my-area-profile-grid > div {
     grid-template-columns: 1fr;
   }
 
+  .my-area-layout.standard-account {
+    grid-template-columns: 1fr;
+  }
+
   .my-area-sidebar {
+    gap: 12px;
+    padding: 14px 16px 10px;
+  }
+
+  .my-area-layout.standard-account .my-area-sidebar {
     gap: 12px;
     padding: 14px 16px 10px;
   }
@@ -5725,6 +5804,11 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-brand img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .my-area-layout.standard-account .my-area-brand img {
     width: 34px;
     height: 34px;
   }
@@ -5759,6 +5843,11 @@ dl.my-area-profile-grid > div {
     font-size: 0.66rem;
     line-height: 1.2;
     text-align: center;
+  }
+
+  .my-area-layout.standard-account .my-area-nav button {
+    min-height: 72px;
+    padding: 6px 4px;
   }
 
   .my-area-nav button > .my-area-nav-icon {
@@ -5805,6 +5894,10 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-main {
+    padding: 22px 16px 40px;
+  }
+
+  .my-area-layout.standard-account .my-area-main {
     padding: 22px 16px 40px;
   }
 
@@ -5874,6 +5967,12 @@ dl.my-area-profile-grid > div {
     padding: 16px;
   }
 
+  .my-area-stats-grid.listings-stats .my-area-stat-card {
+    min-height: 96px;
+    gap: 14px;
+    padding: 16px;
+  }
+
   .my-area-stat-icon {
     flex-basis: 60px;
     height: 60px;
@@ -5885,6 +5984,10 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-stat-card strong {
+    font-size: 2.15rem;
+  }
+
+  .my-area-stats-grid.listings-stats .my-area-stat-card strong {
     font-size: 2.15rem;
   }
 
