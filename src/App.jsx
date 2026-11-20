@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Building2, Eye, Home, House, LogOut, MessageCircle, Plus, Settings2, User } from 'lucide-react'
+import { ArrowLeft, Building2, Eye, Home, House, LogOut, Plus, Settings2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -9,6 +9,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
+import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
 import { getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
@@ -1848,7 +1849,7 @@ function App() {
                         <div><small>Visualizações Totais</small><strong>{totalListingViews}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
-                        <span className="whatsapp-icon-card" aria-hidden="true"><MessageCircle size={28} strokeWidth={2.2} /></span>
+                        <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
                         <div><small>Cliques WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
                       </article>
                     </section>
@@ -1895,7 +1896,7 @@ function App() {
                                       <td className="my-area-table-price">{item.price}</td>
                                       <td><span className={`my-area-listing-status ${statusKey}`}><i aria-hidden="true" />{statusLabel}</span></td>
                                       <td className="my-area-table-metric"><Eye size={28} strokeWidth={2.2} aria-hidden="true" />{Number(item.visualizacoes) || 0}</td>
-                                      <td className="my-area-table-metric whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><MessageCircle size={22} strokeWidth={2.2} /></span>{Number(item.whatsapp_clicks) || 0}</td>
+                                      <td className="my-area-table-metric whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={22} /></span>{Number(item.whatsapp_clicks) || 0}</td>
                                       <td><button type="button" className="my-area-manage-listing" onClick={() => openAnnouncementForm(item)}><Settings2 size={28} strokeWidth={2.2} aria-hidden="true" />Gerenciar</button></td>
                                     </tr>
                                   )
@@ -2056,7 +2057,7 @@ function App() {
                           <span><i aria-hidden="true">📐</i><b>{formatArea(item.area)}</b><small>Área</small></span>
                         </div>
                         <p className="account-card-views"><span aria-hidden="true">◉</span> Visualizações <strong>{Number(item.visualizacoes) || 0}</strong></p>
-                        <p className="account-card-whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><MessageCircle size={20} strokeWidth={2.2} /></span> Cliques WhatsApp <strong>{Number(item.whatsapp_clicks) || 0}</strong></p>
+                        <p className="account-card-whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={20} /></span> Cliques WhatsApp <strong>{Number(item.whatsapp_clicks) || 0}</strong></p>
                         {statusKey === 'rejected' && <div className="account-rejection-reason"><strong>Motivo da reprovação</strong><p>{item.motivo_reprovacao || 'O administrador solicitou ajustes no anúncio.'}</p></div>}
                       </div>
                       <div className="account-card-actions">

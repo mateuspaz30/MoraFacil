@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './ListingShowcase.css'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
+import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 
 export const PORTAL_CITY = 'Ipuã-SP'
@@ -485,7 +486,7 @@ export function ListingDetailPage({ listing, onView, onContactClick }) {
           <section className="listing-detail-price-card">
             <span className="listing-detail-eyebrow">Valor do imóvel</span>
             <strong className={`listing-detail-price purpose-price purpose-${purpose}`}>{price}</strong>
-            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer" onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.58 7.45L4 20l1.08-3.23A8.5 8.5 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" fill="currentColor"/></svg>Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
+            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer" onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><WhatsAppIcon size={24} />Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
             {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`} onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
           </section>
 
@@ -551,7 +552,7 @@ export function ListingDetailPage({ listing, onView, onContactClick }) {
                 <span><strong>{shareFeedback === 'Link copiado com sucesso' ? 'Link copiado!' : 'Copiar link'}</strong><small>{shareFeedback === 'Link copiado com sucesso' ? 'Pronto para compartilhar.' : 'Copie o link deste imóvel.'}</small></span>
               </button>
               <a className="listing-share-action whatsapp" href={whatsappShareUrl} target="_blank" rel="noreferrer">
-                <span className="listing-share-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L4 20l1-3.7a8.5 8.5 0 1 1 15.5-4.6Z" /><path d="M9 8.5c.5 2.3 2.2 4 4.5 4.5l1-1.2 2 .8c-.1 1.5-1.2 2.3-2.6 2.2-3.8-.4-6.3-2.9-6.7-6.7-.1-1.4.7-2.5 2.2-2.6l.8 2L9 8.5Z" /></svg></span>
+                <span className="listing-share-action-icon" aria-hidden="true"><WhatsAppIcon size={24} /></span>
                 <span><strong>WhatsApp</strong><small>Compartilhe pelo WhatsApp.</small></span>
               </a>
               <a className="listing-share-action facebook" href={facebookShareUrl} target="_blank" rel="noreferrer">
