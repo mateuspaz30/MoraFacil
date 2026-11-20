@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Building2, Eye, Home, House, Plus, Settings2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Eye, Home, House, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -630,6 +630,8 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
   const [accountFilter, setAccountFilter] = useState('all')
+  const [listingPurposeFilter, setListingPurposeFilter] = useState('all')
+  const [openListingActionId, setOpenListingActionId] = useState(null)
   const [rejectionListingId, setRejectionListingId] = useState(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [moderationMessage, setModerationMessage] = useState('')
@@ -1655,6 +1657,8 @@ function App() {
   })()
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
+  const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
+  const visibleAccountSection = isStandardAccount && accountSection !== 'account' ? 'listings' : accountSection
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -1691,6 +1695,9 @@ function App() {
     : accountFilter === 'published' ? activeListings
       : accountFilter === 'rejected' ? rejectedListings
         : accountFilter === 'completed' ? completedListings : userListings
+  const standardAccountListings = visibleAccountListings.filter((item) => (
+    listingPurposeFilter === 'all' || getListingPurpose(item) === listingPurposeFilter
+  ))
   const ownFeaturedListings = authUser
     ? userListings
       .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isApprovedListing(item))
@@ -1802,17 +1809,20 @@ function App() {
                   <span className="my-area-avatar">{userFirstName.charAt(0)}</span>
                   <div><strong>{accountDisplayName}</strong><small>{getAccountTypeLabel(accountUserType)}</small></div>
                 </div>
-                <nav className="my-area-nav">
-                  {[
+                <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}`}>
+                  {(isStandardAccount ? [
+                    ['listings', Building2, 'Meus Imóveis'],
+                    ['account', User, 'Minha Conta'],
+                  ] : [
                     ['overview', House, 'Visão Geral'],
                     ['listings', Building2, 'Meus Imóveis'],
                     ['account', User, 'Minha Conta'],
-                  ].map(([section, Icon, label]) => (
+                  ]).map(([section, Icon, label]) => (
                     <button
                       key={section}
                       type="button"
-                      className={accountSection === section ? 'active' : ''}
-                      aria-current={accountSection === section ? 'page' : undefined}
+                      className={visibleAccountSection === section ? 'active' : ''}
+                      aria-current={visibleAccountSection === section ? 'page' : undefined}
                       onClick={() => { setAccountSection(section); setProfileMessage('') }}
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
@@ -1827,17 +1837,18 @@ function App() {
                 </div>
               </aside>
               <main className="my-area-main">
-                <header className={`my-area-topbar${accountSection === 'overview' ? ' overview' : ''}`}>
+                <header className={`my-area-topbar${visibleAccountSection === 'overview' ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                    <span>{accountSection === 'overview' ? 'Minha Área' : 'Área do usuário'}</span>
-                    <h1>{accountSection === 'overview' ? 'Visão Geral' : accountSection === 'listings' ? 'Meus Imóveis' : 'Minha Conta'}</h1>
-                    {accountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
+                    <span>{visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>
+                    <h1>{visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : 'Minha Conta'}</h1>
+                    {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
+                    {isStandardAccount && visibleAccountSection === 'listings' && <p>Organize seus anúncios e acompanhe os resultados.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
-                    {accountSection === 'overview' && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
+                    {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
-                {accountSection === 'overview' && (
+                {visibleAccountSection === 'overview' && (
                   <>
                     <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
                       <article className="my-area-stat-card">
@@ -1921,7 +1932,7 @@ function App() {
                     <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                   </>
                 )}
-                {accountSection === 'account' && (
+                {visibleAccountSection === 'account' && (
                   <section className="my-area-panel" aria-labelledby="my-area-account-title">
                     <div className="my-area-panel-heading">
                       <div><h2 id="my-area-account-title">Dados da conta</h2><p>Confira os dados cadastrados no seu perfil.</p></div>
@@ -1972,19 +1983,58 @@ function App() {
                     )}
                   </section>
                 )}
-                {accountSection === 'listings' && (
+                {visibleAccountSection === 'listings' && (
                   <>
-                    <div className="account-dashboard-heading">
-                      <h2>Meus Imóveis</h2>
-                      <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
-                    </div>
-            {ownFeaturedListings.map((item) => (
+                    {isStandardAccount ? (
+                      <>
+                        <div className="my-area-listings-filters" aria-label="Filtros de imóveis">
+                          <label>
+                            <span className="sr-only">Filtrar por status</span>
+                            <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
+                              <option value="all">Todos os status</option>
+                              <option value="published">Aprovados</option>
+                              <option value="pending">Em análise</option>
+                              <option value="rejected">Reprovados</option>
+                              <option value="completed">Concluídos</option>
+                            </select>
+                          </label>
+                          <label>
+                            <span className="sr-only">Filtrar por finalidade</span>
+                            <select value={listingPurposeFilter} onChange={(event) => setListingPurposeFilter(event.target.value)}>
+                              <option value="all">Venda e aluguel</option>
+                              <option value="venda">Venda</option>
+                              <option value="aluguel">Aluguel</option>
+                            </select>
+                          </label>
+                        </div>
+                        <section className="my-area-stats-grid listings-stats" aria-label="Resumo dos imóveis">
+                          <article className="my-area-stat-card">
+                            <span className="my-area-stat-icon"><House size={28} strokeWidth={2.2} aria-hidden="true" /></span>
+                            <div><small>Imóveis cadastrados</small><strong>{userListings.length}</strong></div>
+                          </article>
+                          <article className="my-area-stat-card">
+                            <span className="my-area-stat-icon views"><Eye size={28} strokeWidth={2.2} aria-hidden="true" /></span>
+                            <div><small>Visualizações totais</small><strong>{totalListingViews}</strong></div>
+                          </article>
+                          <article className="my-area-stat-card">
+                            <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
+                            <div><small>Cliques no WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
+                          </article>
+                        </section>
+                      </>
+                    ) : (
+                      <div className="account-dashboard-heading">
+                        <h2>Meus Imóveis</h2>
+                        <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
+                      </div>
+                    )}
+            {!isStandardAccount && ownFeaturedListings.map((item) => (
               <p className="moderation-message" role="status" key={item.id}>
                 Seu anúncio “{item.title}” está destacado na posição {item.ordem_destaque} da Home.
               </p>
             ))}
-            {moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
-            <div className="account-dashboard-toolbar">
+            {!isStandardAccount && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
+            {!isStandardAccount && <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
                 <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
                 <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
@@ -1994,8 +2044,65 @@ function App() {
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({pendingListings.length})</button>}
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'neighborhoods' ? ' active' : ''}`} onClick={() => { setAccountFilter('neighborhoods'); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Bairros</button>}
               </div>
-            </div>
-            {isAdmin && accountFilter === 'neighborhoods' ? (
+            </div>}
+            {isStandardAccount ? (
+              standardAccountListings.length === 0 ? (
+                <div className="account-empty">{userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
+              ) : (
+                <div className="account-dashboard-grid standard-listing-grid">
+                  {standardAccountListings.map((item) => {
+                    const statusKey = getListingStatusKey(item)
+                    const purpose = getListingPurpose(item)
+                    const propertyType = getListingPropertyType(item)
+                    const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
+                      ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
+                      : 'Data não informada'
+                    return (
+                      <article key={item.id} className="account-dashboard-card standard-listing-card">
+                        <div className="account-card-image-wrap">
+                          {item.image
+                            ? <img src={item.image} alt={item.title} className="account-card-image" loading="lazy" />
+                            : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
+                          <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(item).toLocaleUpperCase('pt-BR')}</span>
+                        </div>
+                        <div className="standard-listing-card-body">
+                          <h3>{item.title}</h3>
+                          <p className="standard-listing-location"><MapPin size={16} strokeWidth={2.2} aria-hidden="true" />{item.location || getListingLocation(item)}</p>
+                          <div className="standard-listing-price-status">
+                            <strong className={`account-card-price purpose-price purpose-${purpose}`}>{item.price}</strong>
+                            <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" />{statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : 'Inativo'}</span>
+                          </div>
+                          <div className="standard-listing-features">
+                            {Number(item.bedrooms) > 0 && <span><BedDouble size={17} strokeWidth={2} aria-hidden="true" />{item.bedrooms} {Number(item.bedrooms) === 1 ? 'quarto' : 'quartos'}</span>}
+                            {Number(item.bathrooms) > 0 && <span><Bath size={17} strokeWidth={2} aria-hidden="true" />{item.bathrooms} {Number(item.bathrooms) === 1 ? 'banheiro' : 'banheiros'}</span>}
+                            {Number(item.parking_spaces || item.garages) > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{item.parking_spaces || item.garages} {Number(item.parking_spaces || item.garages) === 1 ? 'vaga' : 'vagas'}</span>}
+                            <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
+                          </div>
+                          <div className="standard-listing-metrics">
+                            <div><Eye size={23} strokeWidth={2.2} aria-hidden="true" /><strong>{Number(item.visualizacoes) || 0}</strong><small>visualizações</small></div>
+                            <span className="standard-listing-metric-divider" aria-hidden="true" />
+                            <div className="whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={23} /></span><strong>{Number(item.whatsapp_clicks) || 0}</strong><small>cliques</small></div>
+                          </div>
+                          <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
+                        </div>
+                        <div className="standard-listing-actions">
+                          <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={20} strokeWidth={2.2} aria-hidden="true" />Editar Imóvel</button>
+                          <div className="standard-listing-menu-wrap">
+                            <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} strokeWidth={2.2} aria-hidden="true" /></button>
+                            {openListingActionId === item.id && (
+                              <div className="standard-listing-menu">
+                                {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
+                                <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )
+            ) : isAdmin && accountFilter === 'neighborhoods' ? (
               <section className="neighborhood-manager" aria-label="Gerenciar bairros">
                 <div className="neighborhood-manager-heading">
                   <div><h3>Gerenciar bairros</h3><p>Os bairros ativos ficam disponíveis nos filtros e no cadastro de imóveis.</p></div>

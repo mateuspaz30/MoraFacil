@@ -5327,8 +5327,344 @@ dl.my-area-profile-grid > div {
   font-size: 0.78rem;
 }
 
+.my-area-topbar.listings-page {
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.my-area-listings-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 220px));
+  justify-content: end;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.my-area-listings-filters label,
+.my-area-listings-filters select {
+  width: 100%;
+}
+
+.my-area-listings-filters .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.my-area-listings-filters select {
+  min-height: 42px;
+  border: 1px solid #cbd9e7;
+  border-radius: 10px;
+  background: #fff;
+  color: #183553;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.my-area-stats-grid.listings-stats {
+  margin: 0 0 18px;
+}
+
+.standard-listing-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.account-dashboard-card.standard-listing-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 142px minmax(0, 1fr) auto;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 7px;
+  border-color: #e1e9f1;
+  border-radius: 14px;
+  box-shadow: 0 7px 20px rgba(14, 47, 76, 0.1);
+}
+
+.standard-listing-card .account-card-image-wrap {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 142px;
+  aspect-ratio: auto;
+  border-radius: 10px;
+}
+
+.standard-listing-image-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: #e7f4ff;
+  color: #0a3d74;
+}
+
+.standard-listing-card .account-status-badge {
+  top: 10px;
+  left: 10px;
+}
+
+.standard-listing-card-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 5px 7px;
+}
+
+.standard-listing-card-body h3 {
+  overflow: hidden;
+  margin: 0;
+  color: #12345a;
+  font-size: 0.98rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standard-listing-location,
+.standard-listing-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  margin: 0;
+  color: #647b92;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standard-listing-location svg,
+.standard-listing-date svg {
+  flex: 0 0 17px;
+  color: #0a3d74;
+}
+
+.standard-listing-price-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #e4ebf2;
+}
+
+.standard-listing-price-status .account-card-price {
+  overflow: hidden;
+  margin: 0;
+  font-size: 1.18rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standard-listing-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.standard-listing-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.standard-listing-status.published {
+  background: #e5f8d7;
+  color: #328323;
+}
+
+.standard-listing-status.pending {
+  background: #fff0c7;
+  color: #a56a00;
+}
+
+.standard-listing-status.rejected,
+.standard-listing-status.completed {
+  background: #fde7e7;
+  color: #bd3b3b;
+}
+
+.standard-listing-features {
+  display: flex;
+  min-height: 25px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  color: #526981;
+  font-size: 0.66rem;
+}
+
+.standard-listing-features span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.standard-listing-features svg {
+  flex: 0 0 17px;
+  color: #31516d;
+}
+
+.standard-listing-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+  align-items: center;
+  min-height: 44px;
+  border-radius: 9px;
+  background: #f0f3f7;
+}
+
+.standard-listing-metrics > div {
+  display: grid;
+  grid-template-columns: 25px auto;
+  align-items: center;
+  justify-content: center;
+  column-gap: 6px;
+  color: #0a3d74;
+}
+
+.standard-listing-metrics > div > svg,
+.standard-listing-metrics .whatsapp-icon-card {
+  grid-row: 1 / span 2;
+}
+
+.standard-listing-metrics strong {
+  color: #183553;
+  font-size: 0.9rem;
+}
+
+.standard-listing-metrics small {
+  color: #647b92;
+  font-size: 0.62rem;
+}
+
+.standard-listing-metrics .whatsapp {
+  color: #25d366;
+}
+
+.standard-listing-metrics .whatsapp-icon-card {
+  display: flex;
+  flex-basis: 25px;
+  width: 25px;
+  height: 25px;
+  border-radius: 0;
+  background: transparent;
+  color: #25d366;
+}
+
+.standard-listing-metrics .whatsapp-icon-card svg {
+  width: 23px;
+  height: 23px;
+}
+
+.standard-listing-metric-divider {
+  width: 1px;
+  height: 27px;
+  background: #becbd8;
+}
+
+.standard-listing-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 5px 5px;
+}
+
+.standard-listing-edit,
+.standard-listing-menu-trigger {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #aebfd0;
+  border-radius: 9px;
+  background: #fff;
+  color: #183553;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.standard-listing-edit {
+  flex: 1;
+}
+
+.standard-listing-edit:hover,
+.standard-listing-menu-trigger:hover {
+  border-color: #0a3d74;
+  color: #0a3d74;
+}
+
+.standard-listing-menu-wrap {
+  position: relative;
+}
+
+.standard-listing-menu-trigger {
+  width: 40px;
+}
+
+.standard-listing-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 10;
+  display: grid;
+  min-width: 168px;
+  overflow: hidden;
+  border: 1px solid #dce5ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(14, 47, 76, 0.16);
+}
+
+.standard-listing-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: #fff;
+  color: #23415f;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.standard-listing-menu button:hover {
+  background: #f3f7fb;
+}
+
+.standard-listing-menu button.delete {
+  color: #c33b42;
+}
+
 @media (max-width: 1000px) {
   .my-area-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .standard-listing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -5401,6 +5737,10 @@ dl.my-area-profile-grid > div {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     align-items: stretch;
+  }
+
+  .my-area-nav.standard-account {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .my-area-nav button {
@@ -5478,12 +5818,23 @@ dl.my-area-profile-grid > div {
     gap: 14px;
   }
 
+  .my-area-topbar.listings-page {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
   .my-area-topbar-actions {
     width: 100%;
   }
 
   .my-area-create-listing {
     flex: 1;
+  }
+
+  .my-area-listings-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .my-area-recent-heading {
