@@ -4810,9 +4810,23 @@
   color: #0a3d74;
 }
 
-.my-area-stat-icon.whatsapp {
-  background: #e9f8ef;
+.whatsapp-icon-card {
+  display: flex;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: #e8f5ec;
   color: #25d366;
+}
+
+.whatsapp-icon-card.compact {
+  flex-basis: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
 }
 
 .my-area-stat-card small,
@@ -5017,6 +5031,17 @@
 
 .my-area-table-metric.whatsapp svg {
   color: #25d366;
+}
+
+.my-area-table-metric.whatsapp .whatsapp-icon-card {
+  display: inline-flex;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+.my-area-table-metric.whatsapp .whatsapp-icon-card svg {
+  margin: 0;
+  color: inherit;
 }
 
 .my-area-manage-listing {
@@ -5255,6 +5280,16 @@ dl.my-area-profile-grid > div {
 .account-card-whatsapp span {
   color: #078c59;
   font-size: 0.9rem;
+}
+
+.account-card-whatsapp .whatsapp-icon-card {
+  flex: 0 0 32px;
+  color: #25d366;
+}
+
+.account-card-whatsapp .whatsapp-icon-card svg {
+  width: 20px;
+  height: 20px;
 }
 
 .account-card-views strong,
