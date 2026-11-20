@@ -4435,6 +4435,7 @@
   background: #f3f7fb;
   box-shadow: none;
   color: #183553;
+  font-family: 'Inter', sans-serif;
   transform: none;
 }
 
@@ -4516,6 +4517,7 @@
 
 .my-area-user strong {
   font-size: 0.84rem;
+  font-weight: 800;
   white-space: nowrap;
 }
 
@@ -4523,6 +4525,7 @@
   margin-top: 3px;
   color: #a9c6df;
   font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .my-area-nav {
@@ -4536,7 +4539,7 @@
   gap: 11px;
   min-height: 44px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: #d3e2ef;
   padding: 0 12px;
@@ -4565,10 +4568,11 @@
 .my-area-nav button.active {
   background: linear-gradient(100deg, #176b3e, #1d603b);
   color: #fff;
+  box-shadow: 0 7px 18px rgba(13, 69, 40, 0.28);
 }
 
 .my-area-nav button.active {
-  box-shadow: inset 3px 0 #8bea45;
+  box-shadow: inset 3px 0 #8bea45, 0 7px 18px rgba(13, 69, 40, 0.28);
 }
 
 .my-area-sidebar-footer {
@@ -4588,6 +4592,7 @@
   padding: 6px 4px;
   cursor: pointer;
   font-size: 0.8rem;
+  font-weight: 700;
   text-align: left;
 }
 
@@ -4596,7 +4601,7 @@
 }
 
 .my-area-sidebar-action svg {
-  flex: 0 0 24px;
+  flex: 0 0 28px;
 }
 
 .my-area-main {
@@ -4625,7 +4630,8 @@
 .my-area-topbar h1 {
   margin: 3px 0 2px;
   color: #12345a;
-  font-size: clamp(1.75rem, 3vw, 2.2rem);
+  font-size: clamp(2.2rem, 4vw, 2.65rem);
+  font-weight: 800;
   letter-spacing: -0.035em;
 }
 
@@ -4654,15 +4660,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 52px;
   border: 0;
   border-radius: 11px;
   background: #8bea45;
   color: #0b2d1b;
-  padding: 0 18px;
-  box-shadow: 0 5px 14px rgba(89, 175, 35, 0.2);
+  padding: 0 24px;
+  box-shadow: 0 7px 18px rgba(89, 175, 35, 0.28);
   cursor: pointer;
-  font-size: 0.86rem;
+  font-size: 0.95rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -4672,7 +4678,7 @@
 }
 
 .my-area-create-listing svg {
-  flex: 0 0 24px;
+  flex: 0 0 28px;
 }
 
 .my-area-welcome,
@@ -4780,21 +4786,21 @@
 .my-area-stat-card {
   display: flex;
   align-items: center;
-  gap: 17px;
-  min-height: 112px;
+  gap: 20px;
+  min-height: 132px;
   border: 1px solid #e1e9f1;
   border-radius: 14px;
   background: #fff;
-  padding: 18px;
+  padding: 24px;
   box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
 }
 
 .my-area-stat-icon {
   display: grid;
-  flex: 0 0 58px;
-  height: 58px;
+  flex: 0 0 68px;
+  height: 68px;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 17px;
   background: #e7f4ff;
   color: #0a3d74;
 }
@@ -4816,16 +4822,15 @@
 
 .my-area-stat-card small {
   color: #71849a;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .my-area-stat-card strong {
-  margin-top: 6px;
+  margin-top: 4px;
   color: #12345a;
-  font-size: clamp(1.8rem, 3vw, 2.25rem);
+  font-size: clamp(2.35rem, 3.5vw, 2.8rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.1;
@@ -4851,7 +4856,8 @@
 .my-area-recent-heading h2 {
   margin: 0;
   color: #12345a;
-  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 800;
   letter-spacing: -0.025em;
 }
 
@@ -4887,8 +4893,8 @@
 .my-area-listings-table th {
   background: #eef3f8;
   color: #425b74;
-  padding: 10px 12px;
-  font-size: 0.71rem;
+  padding: 12px 14px;
+  font-size: 0.78rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -4903,8 +4909,8 @@
 
 .my-area-listings-table td {
   border-bottom: 1px solid #e7edf3;
-  padding: 10px 12px;
-  font-size: 0.78rem;
+  padding: 13px 14px;
+  font-size: 0.84rem;
   white-space: nowrap;
 }
 
@@ -4915,16 +4921,16 @@
 .my-area-table-property {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 13px;
   min-width: 230px;
 }
 
 .my-area-table-property img,
 .my-area-table-image-placeholder {
   display: grid;
-  flex: 0 0 76px;
-  width: 76px;
-  height: 54px;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 62px;
   place-items: center;
   overflow: hidden;
   border-radius: 9px;
@@ -4942,9 +4948,10 @@
 
 .my-area-table-property strong {
   overflow: hidden;
-  max-width: 190px;
+  max-width: 220px;
   color: #183553;
-  font-size: 0.8rem;
+  font-size: 0.92rem;
+  font-weight: 800;
   text-overflow: ellipsis;
 }
 
@@ -5003,7 +5010,7 @@
 }
 
 .my-area-table-metric svg {
-  margin-right: 6px;
+  margin-right: 7px;
   color: #0a3d74;
   vertical-align: middle;
 }
@@ -5016,20 +5023,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid #b9c9d8;
   border-radius: 8px;
   background: #fff;
   color: #23415f;
-  padding: 6px 10px;
+  padding: 8px 12px;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .my-area-manage-listing svg {
-  flex: 0 0 24px;
+  flex: 0 0 28px;
 }
 
 .my-area-manage-listing:hover {
@@ -5366,9 +5373,9 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-sidebar-action svg {
-    flex-basis: 20px;
-    width: 20px;
-    height: 20px;
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
   }
 
   .my-area-main {
@@ -5418,17 +5425,17 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-stat-icon {
-    flex-basis: 48px;
-    height: 48px;
-    border-radius: 13px;
+    flex-basis: 60px;
+    height: 60px;
+    border-radius: 15px;
   }
 
   .my-area-stat-card small {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
   }
 
   .my-area-stat-card strong {
-    font-size: 1.75rem;
+    font-size: 2.15rem;
   }
 
   .my-area-welcome-icon {
