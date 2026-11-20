@@ -576,6 +576,9 @@ function App() {
     }
   })
   const [publishedListings, setPublishedListings] = useState([])
+  const [adminReviewListings, setAdminReviewListings] = useState([])
+  const [adminReviewLoading, setAdminReviewLoading] = useState(false)
+  const [adminReviewError, setAdminReviewError] = useState('')
   const [featuredListings, setFeaturedListings] = useState([])
   const [featuredListingsStatus, setFeaturedListingsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
   const [neighborhoods, setNeighborhoods] = useState(() => isSupabaseConfigured ? [] : defaultNeighborhoods)
@@ -737,6 +740,10 @@ function App() {
         setFeaturedDrafts({})
         setUserProfile(null)
         setUserProfileError('')
+        setIsAdmin(false)
+        setAdminReviewListings([])
+        setAdminReviewError('')
+        setAdminReviewLoading(false)
         setFavoriteMessage('')
         setProfileEditing(false)
       }
@@ -842,15 +849,81 @@ function App() {
   useEffect(() => {
     if (!supabase || !authUser) return
 
+    let active = true
     supabase.rpc('is_admin').then(({ data, error }) => {
+      if (!active) return
       if (error) {
         console.error('Falha ao verificar permissões administrativas:', error)
         setIsAdmin(false)
+        setAdminReviewListings([])
+        setAdminReviewError('')
+        setAdminReviewLoading(false)
         return
       }
-      setIsAdmin(Boolean(data))
+      const isAdminUser = Boolean(data)
+      setIsAdmin(isAdminUser)
+      if (!isAdminUser) {
+        setAdminReviewListings([])
+        setAdminReviewError('')
+        setAdminReviewLoading(false)
+      }
     })
+    return () => {
+      active = false
+    }
   }, [authUser])
+
+  useEffect(() => {
+    if (!supabase || !authUser || !isAdmin) return undefined
+
+    let active = true
+    const loadAdminReviewListings = async () => {
+      setAdminReviewLoading(true)
+      setAdminReviewError('')
+      const rows = []
+      const pageSize = 1000
+      let from = 0
+
+      try {
+        while (active) {
+          const { data, error } = await supabase
+            .from('listings')
+            .select('*')
+            .eq('status', 'em_analise')
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, from + pageSize - 1)
+
+          if (error) throw error
+          if (!active) return
+
+          rows.push(...(data || []))
+          if ((data || []).length < pageSize) break
+          from += pageSize
+        }
+
+        if (!active) return
+        setAdminReviewListings(rows.map((item) => ({
+          ...item,
+          coordinates: [item.latitude, item.longitude],
+          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
+          area: formatArea(item.area),
+          parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
+          owner: item.user_id === authUser.id,
+        })))
+      } catch (error) {
+        console.error('Falha ao carregar anúncios pendentes para revisão:', error)
+        if (active) setAdminReviewError(`Não foi possível carregar os anúncios pendentes. ${error.message}`)
+      } finally {
+        if (active) setAdminReviewLoading(false)
+      }
+    }
+
+    loadAdminReviewListings()
+    return () => {
+      active = false
+    }
+  }, [authUser, isAdmin])
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -1533,6 +1606,9 @@ function App() {
   const handleLogout = async () => {
     await supabase?.auth.signOut()
     setIsAdmin(false)
+    setAdminReviewListings([])
+    setAdminReviewError('')
+    setAdminReviewLoading(false)
     setUserListings([])
     setModerationMessage('')
     setFeaturedDrafts({})
@@ -1546,6 +1622,7 @@ function App() {
       if (!isAdmin) deleteQuery.eq('user_id', authUser.id)
       await deleteQuery
       setPublishedListings((current) => current.filter((item) => item.id !== id))
+      setAdminReviewListings((current) => current.filter((item) => item.id !== id))
     }
 
     setUserListings((current) => current.filter((item) => item.id !== id))
@@ -1581,6 +1658,7 @@ function App() {
 
     setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
     setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+    setAdminReviewListings((current) => current.filter((item) => item.id !== listing.id))
     setFeaturedListings((current) => {
       const remaining = current.filter((item) => item.id !== listing.id)
       return isApprovedListing(updatedListing) && updatedListing.destaque_home === true
@@ -1701,7 +1779,7 @@ function App() {
   })()
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
-  const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
+  const isStandardAccount = !isAdmin && ['pessoa_fisica', 'corretor'].includes(accountUserType)
   const visibleAccountSection = isStandardAccount && !['account', 'favorites'].includes(accountSection) ? 'listings' : accountSection
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
@@ -1731,11 +1809,13 @@ function App() {
     completed: 'Concluído',
   })[getListingStatusKey(item)]
   const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
+  const adminPendingListings = isAdmin ? adminReviewListings : []
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
   const rejectedListings = userListings.filter((item) => getListingStatusKey(item) === 'rejected')
   const completedListings = userListings.filter((item) => getListingStatusKey(item) === 'completed')
-  const visibleAccountListings = accountFilter === 'pending' || accountFilter === 'review'
-    ? pendingListings
+  const visibleAccountListings = accountFilter === 'review' && isAdmin
+    ? adminPendingListings
+    : accountFilter === 'pending' ? pendingListings
     : accountFilter === 'published' ? activeListings
       : accountFilter === 'rejected' ? rejectedListings
         : accountFilter === 'completed' ? completedListings : userListings
@@ -2183,7 +2263,7 @@ function App() {
                 <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Publicados ({activeListings.length})</button>
                 <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
-                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({pendingListings.length})</button>}
+                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({adminPendingListings.length})</button>}
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'neighborhoods' ? ' active' : ''}`} onClick={() => { setAccountFilter('neighborhoods'); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Bairros</button>}
               </div>
             </div>}
@@ -2275,6 +2355,10 @@ function App() {
                   </div>
                 )}
               </section>
+            ) : isAdmin && accountFilter === 'review' && adminReviewLoading ? (
+              <div className="account-empty">Carregando anúncios pendentes...</div>
+            ) : isAdmin && accountFilter === 'review' && adminReviewError ? (
+              <div className="account-empty" role="alert">{adminReviewError}</div>
             ) : visibleAccountListings.length === 0 ? (
               <div className="account-empty">{accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
             ) : (
