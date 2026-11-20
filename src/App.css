@@ -5460,7 +5460,20 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-recent-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
     padding: 16px 14px 12px;
+  }
+
+  .my-area-recent-heading h2 {
+    max-width: 100%;
+    font-size: clamp(0.95rem, 4.2vw, 1.2rem);
+    white-space: nowrap;
+  }
+
+  .my-area-recent-heading button {
+    padding: 4px 0 0;
   }
 
   .my-area-table-scroll {
