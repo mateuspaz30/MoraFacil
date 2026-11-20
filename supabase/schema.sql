@@ -387,6 +387,7 @@ begin
   set visualizacoes = listing.visualizacoes + 1
   where listing.id = target_listing_id
     and listing.status = 'aprovado'
+    and listing.user_id is distinct from auth.uid()
   returning listing.visualizacoes into view_count;
 
   return view_count;

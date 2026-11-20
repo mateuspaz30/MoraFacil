@@ -1901,7 +1901,7 @@ function App() {
   }, [authUser, favoriteListingsLoading, handleToggleFavorite])
 
   const recordListingView = useCallback(async (listing) => {
-    if (!supabase || !listing.user_id) return
+    if (!supabase || !listing.user_id || authUser?.id === listing.user_id) return
 
     try {
       const { data, error } = await supabase.rpc('increment_listing_views', {
@@ -1924,7 +1924,7 @@ function App() {
     } catch (error) {
       console.error('Falha ao registrar visualização do imóvel:', error)
     }
-  }, [])
+  }, [authUser?.id])
   const recordWhatsAppClick = useCallback(async (listing) => {
     if (!supabase || !listing.user_id) return
 
