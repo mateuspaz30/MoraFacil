@@ -2540,10 +2540,10 @@ function App() {
               <p className="hero-listing-location"><FilterIcon name="pin" />{getListingLocation(activeHeroListing)}</p>
               <strong className="hero-listing-price">{activeHeroListing.price}</strong>
               <div className="hero-listing-features">
-                <span><i aria-hidden="true">🛏</i>{Number(activeHeroListing.bedrooms) || 0} quartos</span>
-                <span><i aria-hidden="true">🚿</i>{Number(activeHeroListing.bathrooms) || 0} banheiros</span>
-                <span><i aria-hidden="true">🚗</i>{Number(activeHeroListing.parking_spaces || activeHeroListing.garages) || 0} vagas</span>
-                <span><i aria-hidden="true">📐</i>{formatArea(activeHeroListing.area)}</span>
+                <span><BedDouble size={16} strokeWidth={2} aria-hidden="true" />{Number(activeHeroListing.bedrooms) || 0} quartos</span>
+                <span><Bath size={16} strokeWidth={2} aria-hidden="true" />{Number(activeHeroListing.bathrooms) || 0} banheiros</span>
+                <span><Car size={16} strokeWidth={2} aria-hidden="true" />{Number(activeHeroListing.parking_spaces || activeHeroListing.garages) || 0} vagas</span>
+                <span><Ruler size={16} strokeWidth={2} aria-hidden="true" />{formatArea(activeHeroListing.area)}</span>
               </div>
             </div>
             <a

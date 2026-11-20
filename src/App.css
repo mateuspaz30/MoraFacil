@@ -4145,13 +4145,13 @@
     line-height: 1;
   }
 
-  .hero-listing-features i {
+  .hero-listing-features svg {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.95rem;
-    font-style: normal;
-    line-height: 1;
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
   }
 
   .home-search-grid .hero-listing-cta {
@@ -4348,10 +4348,10 @@
     gap: 5px;
   }
 
-  .hero-listing-features i {
-    font-size: 0.95rem;
-    font-style: normal;
-    line-height: 1;
+  .hero-listing-features svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
   }
 
   .home-search-grid .hero-listing-cta {
