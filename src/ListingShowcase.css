@@ -985,7 +985,8 @@
 .listing-detail-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
 .listing-detail-info-grid > li { display: flex; align-items: center; gap: 9px; min-width: 0; border-radius: 10px; padding: 6px 8px; background: #f4f7fb; }
 .listing-detail-info-grid > li.info-wide { grid-column: 1 / -1; }
-.listing-detail-info-grid > li > span { display: grid; flex: 0 0 30px; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: #e3eefb; color: #0755a3; font-size: 1.05rem; }
+.listing-detail-info-grid > li > span { display: grid; flex: 0 0 30px; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: #e3eefb; color: #31516d; font-size: 1.05rem; }
+.listing-detail-info-grid > li > span svg { width: 17px; height: 17px; }
 .listing-detail-info-grid > li > div { display: grid; gap: 1px; min-width: 0; }
 .listing-detail-info-grid strong { overflow: hidden; color: #0f2345; font-size: 0.92rem; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .listing-detail-info-grid small { color: #697d96; font-size: 0.7rem; line-height: 1.2; }

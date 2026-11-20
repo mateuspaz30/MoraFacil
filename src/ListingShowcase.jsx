@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bath, BedDouble, CalendarDays, Car, Heart, MapPin, Ruler } from 'lucide-react'
+import { Bath, BedDouble, Building2, CalendarDays, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 
 export const PORTAL_CITY = 'Ipuã-SP'
+
+const propertyTypeIcons = {
+  casa: House,
+  apartamento: Building2,
+  terreno: LandPlot,
+  ponto_comercial: Store,
+}
 
 const slugify = (value) => String(value || '')
   .normalize('NFD')
@@ -300,6 +307,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const purposeLabel = getListingPurposeLabel(listing)
   const price = formatPrice(listing.price, purpose)
   const propertyType = getListingPropertyType(listing)
+  const PropertyTypeIcon = propertyTypeIcons[propertyType.key] || House
   const propertyTypeLabel = propertyType.label
   const title = `${listing.title} em ${getCityLabel(listing.city)} | Mora Fácil`
   const url = window.location.href
@@ -556,13 +564,13 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
               <path d="M8 17h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>Informações do imóvel</h2>
             <ul className="listing-detail-info-grid">
-              <li><span aria-hidden="true">{purpose === 'aluguel' ? '🔑' : '🛒'}</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
-              <li><span aria-hidden="true">{propertyType.icon}</span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
-              <li><span aria-hidden="true">📐</span><div><strong>{area ? `${area} m²` : '—'}</strong><small>Área construída</small></div></li>
-              <li><span aria-hidden="true">🛏</span><div><strong>{bedrooms} {bedrooms === 1 ? 'Quarto' : 'Quartos'}</strong><small>Dormitórios</small></div></li>
-              <li><span aria-hidden="true">🚿</span><div><strong>{bathrooms} {bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</strong><small>Banheiros</small></div></li>
-              <li><span aria-hidden="true">🚗</span><div><strong>{parking} {parking === 1 ? 'Vaga' : 'Vagas'}</strong><small>Garagem</small></div></li>
-              <li className="info-wide"><span aria-hidden="true">▦</span><div><strong>{publishedDate}</strong><small>Publicado em</small></div></li>
+              <li><span aria-hidden="true">{purpose === 'aluguel' ? <KeyRound size={17} strokeWidth={2} /> : <Tag size={17} strokeWidth={2} />}</span><div><strong>{purposeLabel}</strong><small>Finalidade</small></div></li>
+              <li><span aria-hidden="true"><PropertyTypeIcon size={17} strokeWidth={2} /></span><div><strong>{propertyTypeLabel}</strong><small>Tipo do imóvel</small></div></li>
+              <li><span aria-hidden="true"><Ruler size={17} strokeWidth={2} /></span><div><strong>{area ? `${area} m²` : '—'}</strong><small>Área construída</small></div></li>
+              <li><span aria-hidden="true"><BedDouble size={17} strokeWidth={2} /></span><div><strong>{bedrooms} {bedrooms === 1 ? 'Quarto' : 'Quartos'}</strong><small>Dormitórios</small></div></li>
+              <li><span aria-hidden="true"><Bath size={17} strokeWidth={2} /></span><div><strong>{bathrooms} {bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</strong><small>Banheiros</small></div></li>
+              <li><span aria-hidden="true"><Car size={17} strokeWidth={2} /></span><div><strong>{parking} {parking === 1 ? 'Vaga' : 'Vagas'}</strong><small>Garagem</small></div></li>
+              <li className="info-wide"><span aria-hidden="true"><CalendarDays size={17} strokeWidth={2} /></span><div><strong>{publishedDate}</strong><small>Publicado em</small></div></li>
             </ul>
           </section>
         </aside>
