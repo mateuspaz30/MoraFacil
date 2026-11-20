@@ -249,7 +249,7 @@ const hasValidCreci = (value) => /^(?:\d{6}(?:-[a-z])?|CRECI\/[a-z]{2}\s+\d{6})$
 function FilterIcon({ name }) {
   if (name === 'pin') return <svg className="location-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.686 2 6 4.686 6 8c0 4.5 6 12 6 12s6-7.5 6-12c0-3.314-2.686-6-6-6zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5z" /></svg>
   if (name === 'home') return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-  if (name === 'bed') return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 19v-9m0 5h18v4M3 15V8a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v6m0-3h6a2 2 0 0 1 2 2v1M7 10h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  if (name === 'bed') return <BedDouble strokeWidth={2} aria-hidden="true" />
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.3" stroke="currentColor" strokeWidth="2" /><path d="m16.2 16.2 4.3 4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
 }
 
