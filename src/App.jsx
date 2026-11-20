@@ -1817,7 +1817,8 @@ function App() {
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
                         <Icon size={28} strokeWidth={2.2} />
-                      </span>{label}
+                      </span>
+                      <span className="my-area-nav-label">{label}</span>
                     </button>
                   ))}
                 </nav>

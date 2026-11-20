@@ -5373,20 +5373,43 @@ dl.my-area-profile-grid > div {
   .my-area-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
+    align-items: stretch;
   }
 
   .my-area-nav button {
-    justify-content: center;
-    gap: 4px;
-    min-height: 40px;
-    padding: 0 6px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 24px 2.4em;
+    justify-items: center;
+    align-content: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    height: 72px;
+    min-height: 72px;
+    box-sizing: border-box;
+    padding: 6px 4px;
     font-size: 0.66rem;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .my-area-nav button > .my-area-nav-icon {
-    flex-basis: 24px;
+    flex: none;
     width: 24px;
     height: 24px;
+  }
+
+  .my-area-nav-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.4em;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .my-area-nav-icon svg {
