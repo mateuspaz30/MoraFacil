@@ -600,6 +600,8 @@ function App() {
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
   const pendingFavoriteListingRef = useRef(null)
+  const announcementModalRef = useRef(null)
+  const [announcementCurrentStep, setAnnouncementCurrentStep] = useState(0)
   const [favoriteReturnPath, setFavoriteReturnPath] = useState('')
   const [userProfile, setUserProfile] = useState(null)
   const [userProfileError, setUserProfileError] = useState('')
@@ -642,6 +644,34 @@ function App() {
   const [moderationMessage, setModerationMessage] = useState('')
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
+
+  useEffect(() => {
+    if (!announcementOpen) return
+
+    const modal = announcementModalRef.current
+    if (!modal) return
+
+    const panels = [...modal.querySelectorAll('.announcement-step-panel')]
+    const updateCurrentStep = () => {
+      const marker = modal.getBoundingClientRect().top + Math.min(140, modal.clientHeight * 0.28)
+      let currentStep = 0
+
+      panels.forEach((panel, index) => {
+        if (panel.getBoundingClientRect().top <= marker) currentStep = index
+      })
+
+      if (modal.scrollTop + modal.clientHeight >= modal.scrollHeight - 8) {
+        currentStep = panels.length - 1
+      }
+
+      setAnnouncementCurrentStep(currentStep)
+    }
+
+    modal.addEventListener('scroll', updateCurrentStep, { passive: true })
+    updateCurrentStep()
+
+    return () => modal.removeEventListener('scroll', updateCurrentStep)
+  }, [announcementOpen])
 
   useEffect(() => {
     const resetHomePropertyType = (event) => {
@@ -1010,6 +1040,7 @@ function App() {
     setAnnouncementSubmitting(false)
     setAnnouncementError('')
     setAnnouncementSuccess(false)
+    setAnnouncementCurrentStep(0)
     setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setAnnouncementMapFocus(null)
@@ -2686,7 +2717,7 @@ function App() {
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) closeAnnouncementForm()
         }}>
-          <section className="property-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
+          <section ref={announcementModalRef} className="property-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
             <div className="announcement-page-heading">
               <div>
                 <button type="button" className="announcement-back" onClick={closeAnnouncementForm}>← Voltar</button>
@@ -2700,8 +2731,12 @@ function App() {
             </div>
             <div className="announcement-progress" aria-label="Formulário organizado em cinco etapas">
               {['Tipo do imóvel', 'Dados do imóvel', 'Endereço', 'Localização', 'Fotos'].map((step, index) => (
-                <div className={`announcement-progress-step${index === 0 ? ' current' : ''}`} key={step}>
-                  <span>{index + 1}</span><small>{step}</small>
+                <div
+                  className={`announcement-progress-step${index === announcementCurrentStep ? ' current' : ''}${index < announcementCurrentStep ? ' completed' : ''}`}
+                  aria-current={index === announcementCurrentStep ? 'step' : undefined}
+                  key={step}
+                >
+                  <span>{index < announcementCurrentStep ? '✓' : index + 1}</span><small>{step}</small>
                 </div>
               ))}
             </div>

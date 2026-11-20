@@ -1303,6 +1303,8 @@
 }
 
 .announcement-progress-step.current span { background: #078c59; color: #fff; }
+.announcement-progress-step.completed span { background: #078c59; color: #fff; }
+.announcement-progress-step.completed:not(:last-child)::after { background: #078c59; }
 .announcement-progress-step small { font-size: 0.68rem; font-weight: 700; }
 .announcement-progress-step.current small { color: #078c59; }
 
