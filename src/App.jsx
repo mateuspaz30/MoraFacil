@@ -1896,7 +1896,7 @@ function App() {
                                       <td><span className={`my-area-listing-status ${statusKey}`}><i aria-hidden="true" />{statusLabel}</span></td>
                                       <td className="my-area-table-metric"><Eye size={28} strokeWidth={2.2} aria-hidden="true" />{Number(item.visualizacoes) || 0}</td>
                                       <td className="my-area-table-metric whatsapp"><MessageCircle size={28} strokeWidth={2.2} aria-hidden="true" />{Number(item.whatsapp_clicks) || 0}</td>
-                                      <td><button type="button" className="my-area-manage-listing" onClick={() => { setAccountFilter('all'); setAccountSection('listings') }}><Settings2 size={28} strokeWidth={2.2} aria-hidden="true" />Gerenciar</button></td>
+                                      <td><button type="button" className="my-area-manage-listing" onClick={() => openAnnouncementForm(item)}><Settings2 size={28} strokeWidth={2.2} aria-hidden="true" />Gerenciar</button></td>
                                     </tr>
                                   )
                                 })}
