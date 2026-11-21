@@ -83,9 +83,13 @@ function AdminListingCard({
         <p className="standard-listing-location"><MapPin size={16} aria-hidden="true" />{listing.neighborhood}, {listing.city || 'Ipuã-SP'}</p>
         <strong className={`account-card-price purpose-price purpose-${purpose}`}>{listing.price}</strong>
         <div className="standard-listing-features">
-          <span>{propertyType.label}</span>
-          <span>{owner?.name || listing.advertiser || 'Anunciante não informado'}</span>
-          <span>{owner?.typeLabel || 'Tipo de usuário não informado'}</span>
+          {[propertyType.label, owner?.name || listing.advertiser || 'Anunciante não informado', owner?.typeLabel || 'Tipo de usuário não informado']
+            .map((value, index) => (
+              <span key={`${index}-${value}`}>
+                {index > 0 && <span className="standard-listing-feature-separator" aria-hidden="true">-</span>}
+                {value}
+              </span>
+            ))}
         </div>
         <span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" /><CircleCheck size={15} aria-hidden="true" />{statusLabel(listing)}</span>
         <p className="standard-listing-date"><CalendarDays size={17} aria-hidden="true" />Enviado em {formatDate(listing.created_at)}</p>
@@ -244,6 +248,7 @@ export default function AdminPanel({
   onToggleNeighborhood,
 }) {
   const [listingFilter, setListingFilter] = useState('all')
+  const [ownerTypeFilter, setOwnerTypeFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [previewListing, setPreviewListing] = useState(null)
   const [previewUser, setPreviewUser] = useState(null)
@@ -265,6 +270,7 @@ export default function AdminPanel({
       || (listingFilter === 'rejected' && statusKey(listing) === 'rejected')
       || (listingFilter === 'paused' && statusKey(listing) === 'paused')
     const owner = ownersById.get(listing.user_id)
+    const ownerTypeMatches = ownerTypeFilter === 'all' || owner?.userType === ownerTypeFilter
     const query = search.trim().toLocaleLowerCase('pt-BR')
     const searchMatches = !query || [
       listing.title,
@@ -273,7 +279,7 @@ export default function AdminPanel({
       owner?.name,
       owner?.email,
     ].some((value) => String(value || '').toLocaleLowerCase('pt-BR').includes(query))
-    return filterMatches && searchMatches
+    return filterMatches && ownerTypeMatches && searchMatches
   })
 
   const renderListingCards = (rows, canModerate = false) => rows.length ? (
@@ -344,7 +350,8 @@ export default function AdminPanel({
           <header className="admin-section-heading"><div><h2>Todos os Anúncios</h2><p>{filteredListings.length} anúncio{filteredListings.length === 1 ? '' : 's'}</p></div></header>
           <div className="admin-listing-tools">
             <label className="admin-search"><Search size={18} /><span className="sr-only">Buscar título, anunciante ou bairro</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, anunciante ou bairro" /></label>
-            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos</option><option value="approved">Aprovados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option><option value="paused">Pausados</option></select></label>
+            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos os status</option><option value="approved">Aprovados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option><option value="paused">Pausados</option></select></label>
+            <label><span className="sr-only">Filtrar anúncios por tipo de anunciante</span><select value={ownerTypeFilter} onChange={(event) => setOwnerTypeFilter(event.target.value)}><option value="all">Todos os tipos</option><option value="pessoa_fisica">Pessoa Física</option><option value="imobiliaria">Imobiliária</option><option value="corretor">Corretor</option></select></label>
           </div>
           {renderListingCards(filteredListings, false)}
         </section>

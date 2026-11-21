@@ -6742,6 +6742,12 @@ dl.my-area-profile-grid > div {
   font-size: 0.72rem;
 }
 
+.standard-listing-feature-separator {
+  margin-right: 5px;
+  color: #91a2b3;
+  font-weight: 700;
+}
+
 .admin-listing-card .standard-listing-status {
   grid-area: status;
   display: inline-flex;
