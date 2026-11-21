@@ -2177,7 +2177,6 @@ function App() {
                     {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
                     <h1>{visibleAccountSection === 'admin' ? 'Administração' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
                     {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
-                    {isStandardAccount && visibleAccountSection === 'listings' && <p>Você possui {activeListings.length} anúncio{activeListings.length === 1 ? '' : 's'} ativo{activeListings.length === 1 ? '' : 's'} e recebeu {totalListingViews} visualização{totalListingViews === 1 ? '' : 'ões'}.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
                     {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
@@ -2484,6 +2483,10 @@ function App() {
                               </div>
                               <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
                               <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
+                              <div className="standard-listing-metrics" aria-label="Métricas deste imóvel">
+                                <span><Eye size={16} strokeWidth={2.1} aria-hidden="true" />Visualizações <strong>{Number(item.visualizacoes) || 0}</strong></span>
+                                <span><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={17} /></span>Cliques WhatsApp <strong>{Number(item.whatsapp_clicks) || 0}</strong></span>
+                              </div>
                             </div>
                             <div className="standard-listing-actions">
                               {isAdmin && (
