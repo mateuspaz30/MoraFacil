@@ -2135,6 +2135,13 @@ function App() {
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
   const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
+  const mostViewedListing = [...userListings]
+    .sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))[0] || null
+  const mostWhatsAppClickedListing = [...userListings]
+    .sort((first, second) => (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0))[0] || null
+  const listingsWithoutInteractionsCount = userListings.filter((item) => (
+    (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
+  )).length
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
   const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
@@ -2475,7 +2482,7 @@ function App() {
                   {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
                   </div>
                   <div className="my-area-topbar-actions">
-                  {isCompanyDashboard && accountProfile.publicSlug && <button type="button" className="company-public-link" onClick={() => navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
+                  {isCompanyDashboard && <button type="button" className="company-public-link" onClick={() => accountProfile.publicSlug ? navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug)) : openMyArea('public-profile')}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
                   {(visibleAccountSection === 'overview' || isCompanyDashboard || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
@@ -2502,6 +2509,43 @@ function App() {
                         </article>
                       </section>
                       {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
+                      <section className="company-dashboard-highlights" aria-label="Destaques dos imóveis">
+                        <article className="company-dashboard-highlight-card">
+                          <header><Eye size={20} aria-hidden="true" /><h2>Mais visualizado</h2></header>
+                          {mostViewedListing ? (
+                            <div className="company-dashboard-highlight-property">
+                              {mostViewedListing.image
+                                ? <img src={mostViewedListing.image} alt="" loading="lazy" />
+                                : <span className="company-dashboard-highlight-placeholder"><House size={24} aria-hidden="true" /></span>}
+                              <div>
+                                <strong>{mostViewedListing.title}</strong>
+                                <span>{mostViewedListing.location || getListingLocation(mostViewedListing)}</span>
+                                <b>{new Intl.NumberFormat('pt-BR').format(Number(mostViewedListing.visualizacoes) || 0)} visualizações</b>
+                              </div>
+                            </div>
+                          ) : <p className="company-dashboard-highlight-empty">Você ainda não cadastrou imóveis.</p>}
+                        </article>
+                        <article className="company-dashboard-highlight-card">
+                          <header><WhatsAppIcon size={20} /><h2>Mais cliques WhatsApp</h2></header>
+                          {mostWhatsAppClickedListing ? (
+                            <div className="company-dashboard-highlight-property">
+                              {mostWhatsAppClickedListing.image
+                                ? <img src={mostWhatsAppClickedListing.image} alt="" loading="lazy" />
+                                : <span className="company-dashboard-highlight-placeholder"><House size={24} aria-hidden="true" /></span>}
+                              <div>
+                                <strong>{mostWhatsAppClickedListing.title}</strong>
+                                <span>{mostWhatsAppClickedListing.location || getListingLocation(mostWhatsAppClickedListing)}</span>
+                                <b>{new Intl.NumberFormat('pt-BR').format(Number(mostWhatsAppClickedListing.whatsapp_clicks) || 0)} cliques</b>
+                              </div>
+                            </div>
+                          ) : <p className="company-dashboard-highlight-empty">Você ainda não cadastrou imóveis.</p>}
+                        </article>
+                        <article className="company-dashboard-highlight-card company-dashboard-no-interactions">
+                          <header><ChartNoAxesColumn size={20} aria-hidden="true" /><h2>Sem interações</h2></header>
+                          <strong className="company-dashboard-no-interactions-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
+                          <p>{listingsWithoutInteractionsCount === 1 ? 'imóvel sem visualizações e cliques no WhatsApp' : 'imóveis sem visualizações e cliques no WhatsApp'}</p>
+                        </article>
+                      </section>
                       <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                     </>
                   ) : (

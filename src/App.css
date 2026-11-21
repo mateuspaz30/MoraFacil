@@ -6371,6 +6371,118 @@ dl.my-area-profile-grid > div {
   font-size: clamp(1.7rem, 2.4vw, 2.25rem);
 }
 
+.company-dashboard-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.company-dashboard-highlight-card {
+  min-width: 0;
+  border: 1px solid #e1e9f1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
+}
+
+.company-dashboard-highlight-card > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #078c35;
+}
+
+.company-dashboard-highlight-card > header h2 {
+  overflow: hidden;
+  margin: 0;
+  color: #12345a;
+  font-size: 0.94rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-dashboard-highlight-property {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.company-dashboard-highlight-property > img,
+.company-dashboard-highlight-placeholder {
+  display: grid;
+  width: 76px;
+  height: 66px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #e8f1f8;
+  color: #0a3d74;
+  object-fit: cover;
+}
+
+.company-dashboard-highlight-property > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.company-dashboard-highlight-property strong,
+.company-dashboard-highlight-property span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-dashboard-highlight-property strong {
+  color: #183553;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.company-dashboard-highlight-property span,
+.company-dashboard-highlight-empty {
+  color: #71849a;
+  font-size: 0.73rem;
+}
+
+.company-dashboard-highlight-property b {
+  color: #078c35;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.company-dashboard-highlight-empty {
+  margin: 18px 0 4px;
+}
+
+.company-dashboard-no-interactions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.company-dashboard-no-interactions-count {
+  margin-top: 10px;
+  color: #12345a;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.company-dashboard-no-interactions > p {
+  max-width: 240px;
+  margin: 7px 0 0;
+  color: #71849a;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
 .company-public-link,
 .company-profile-open-button {
   display: inline-flex;
@@ -6691,6 +6803,10 @@ dl.my-area-profile-grid > div {
   .company-dashboard-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .company-dashboard-highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
@@ -6745,6 +6861,10 @@ dl.my-area-profile-grid > div {
 
   .company-dashboard-stats .my-area-stat-card strong {
     font-size: 1.55rem;
+  }
+
+  .company-dashboard-highlights {
+    grid-template-columns: 1fr;
   }
 
   .company-public-header {
