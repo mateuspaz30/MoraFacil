@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Eye, Heart, Home, House, LandPlot, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, ChevronLeft, ChevronRight, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -563,6 +563,54 @@ const FacebookIcon = () => (
     <path d="M14 8h3V4.2c-.52-.08-1.7-.2-3.2-.2-3.17 0-5.34 1.93-5.34 5.48V12H5v4h3.46v8h4.24v-8h3.53l.56-4H12.7V9.92c0-1.16.31-1.92 1.3-1.92Z" />
   </svg>
 )
+
+function StandardListingGallery({ listing, purpose }) {
+  const images = [...new Set([
+    ...(Array.isArray(listing.images) ? listing.images : []),
+    listing.image,
+  ].filter(Boolean))]
+  const [imageIndex, setImageIndex] = useState(0)
+  const activeImageIndex = Math.min(imageIndex, Math.max(images.length - 1, 0))
+
+  const changeImage = (direction) => {
+    if (images.length < 2) return
+    setImageIndex((current) => (current + direction + images.length) % images.length)
+  }
+
+  return (
+    <div className="standard-listing-gallery">
+      <div className="standard-listing-gallery-main">
+        {images[activeImageIndex]
+          ? <img src={images[activeImageIndex]} alt={`${listing.title}, foto ${activeImageIndex + 1}`} />
+          : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
+        <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(listing).toLocaleUpperCase('pt-BR')}</span>
+        {images.length > 1 && (
+          <>
+            <button type="button" className="standard-listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}><ChevronLeft size={22} aria-hidden="true" /></button>
+            <button type="button" className="standard-listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}><ChevronRight size={22} aria-hidden="true" /></button>
+            <span className="standard-listing-gallery-count">{activeImageIndex + 1} / {images.length}</span>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="standard-listing-gallery-thumbnails" aria-label="Fotos do imóvel">
+          {images.slice(0, 6).map((image, index) => (
+            <button
+              type="button"
+              key={image}
+              className={index === activeImageIndex ? 'active' : ''}
+              aria-label={`Exibir foto ${index + 1}`}
+              aria-pressed={index === activeImageIndex}
+              onClick={() => setImageIndex(index)}
+            >
+              <img src={image} alt="" loading="lazy" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
@@ -2043,10 +2091,10 @@ function App() {
               <main className="my-area-main">
                 <header className={`my-area-topbar${visibleAccountSection === 'overview' ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                    <span>{visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>
+                    {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
                     <h1>{visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
                     {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
-                    {isStandardAccount && visibleAccountSection === 'listings' && <p>Organize seus anúncios e acompanhe os resultados.</p>}
+                    {isStandardAccount && visibleAccountSection === 'listings' && <p>Você possui {activeListings.length} anúncio{activeListings.length === 1 ? '' : 's'} ativo{activeListings.length === 1 ? '' : 's'} e recebeu {totalListingViews} visualização{totalListingViews === 1 ? '' : 'ões'}.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
                     {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
@@ -2207,44 +2255,7 @@ function App() {
                 )}
                 {visibleAccountSection === 'listings' && (
                   <>
-                    {isStandardAccount ? (
-                      <>
-                        <div className="my-area-listings-filters" aria-label="Filtros de imóveis">
-                          <label>
-                            <span className="sr-only">Filtrar por status</span>
-                            <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
-                              <option value="all">Todos os status</option>
-                              <option value="published">Aprovados</option>
-                              <option value="pending">Em análise</option>
-                              <option value="rejected">Reprovados</option>
-                              <option value="completed">Concluídos</option>
-                            </select>
-                          </label>
-                          <label>
-                            <span className="sr-only">Filtrar por finalidade</span>
-                            <select value={listingPurposeFilter} onChange={(event) => setListingPurposeFilter(event.target.value)}>
-                              <option value="all">Venda e aluguel</option>
-                              <option value="venda">Venda</option>
-                              <option value="aluguel">Aluguel</option>
-                            </select>
-                          </label>
-                        </div>
-                        <section className="my-area-stats-grid listings-stats" aria-label="Resumo dos imóveis">
-                          <article className="my-area-stat-card">
-                            <span className="my-area-stat-icon"><House size={28} strokeWidth={2.2} aria-hidden="true" /></span>
-                            <div><small>Imóveis cadastrados</small><strong>{userListings.length}</strong></div>
-                          </article>
-                          <article className="my-area-stat-card">
-                            <span className="my-area-stat-icon views"><Eye size={28} strokeWidth={2.2} aria-hidden="true" /></span>
-                            <div><small>Visualizações totais</small><strong>{totalListingViews}</strong></div>
-                          </article>
-                          <article className="my-area-stat-card">
-                            <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
-                            <div><small>Cliques no WhatsApp</small><strong>{totalWhatsAppClicks}</strong></div>
-                          </article>
-                        </section>
-                      </>
-                    ) : (
+                    {!isStandardAccount && (
                       <div className="account-dashboard-heading">
                         <h2>Meus Imóveis</h2>
                         <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
@@ -2268,62 +2279,97 @@ function App() {
               </div>
             </div>}
             {isStandardAccount ? (
-              standardAccountListings.length === 0 ? (
-                <div className="account-empty">{userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
-              ) : (
-                <div className="account-dashboard-grid standard-listing-grid">
-                  {standardAccountListings.map((item) => {
-                    const statusKey = getListingStatusKey(item)
-                    const purpose = getListingPurpose(item)
-                    const propertyType = getListingPropertyType(item)
-                    const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
-                      ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
-                      : 'Data não informada'
-                    return (
-                      <article key={item.id} className="account-dashboard-card standard-listing-card">
-                        <div className="account-card-image-wrap">
-                          {item.image
-                            ? <img src={item.image} alt={item.title} className="account-card-image" loading="lazy" />
-                            : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
-                          <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(item).toLocaleUpperCase('pt-BR')}</span>
-                        </div>
-                        <div className="standard-listing-card-body">
-                          <h3>{item.title}</h3>
-                          <p className="standard-listing-location"><MapPin size={16} strokeWidth={2.2} aria-hidden="true" />{item.location || getListingLocation(item)}</p>
-                          <div className="standard-listing-price-status">
-                            <strong className={`account-card-price purpose-price purpose-${purpose}`}>{item.price}</strong>
-                            <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" />{statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : 'Inativo'}</span>
-                          </div>
-                          <div className="standard-listing-features">
-                            {Number(item.bedrooms) > 0 && <span><BedDouble size={17} strokeWidth={2} aria-hidden="true" />{item.bedrooms} {Number(item.bedrooms) === 1 ? 'quarto' : 'quartos'}</span>}
-                            {Number(item.bathrooms) > 0 && <span><Bath size={17} strokeWidth={2} aria-hidden="true" />{item.bathrooms} {Number(item.bathrooms) === 1 ? 'banheiro' : 'banheiros'}</span>}
-                            {Number(item.parking_spaces || item.garages) > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{item.parking_spaces || item.garages} {Number(item.parking_spaces || item.garages) === 1 ? 'vaga' : 'vagas'}</span>}
-                            <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
-                          </div>
-                          <div className="standard-listing-metrics">
-                            <div><Eye size={23} strokeWidth={2.2} aria-hidden="true" /><strong>{Number(item.visualizacoes) || 0}</strong><small>visualizações</small></div>
-                            <span className="standard-listing-metric-divider" aria-hidden="true" />
-                            <div className="whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={23} /></span><strong>{Number(item.whatsapp_clicks) || 0}</strong><small>cliques</small></div>
-                          </div>
-                          <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
-                        </div>
-                        <div className="standard-listing-actions">
-                          <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={20} strokeWidth={2.2} aria-hidden="true" />Editar Imóvel</button>
-                          <div className="standard-listing-menu-wrap">
-                            <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} strokeWidth={2.2} aria-hidden="true" /></button>
-                            {openListingActionId === item.id && (
-                              <div className="standard-listing-menu">
-                                {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
-                                <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
+              <div className="standard-account-dashboard">
+                <div className="standard-account-content">
+                  <div className="my-area-listings-filters" aria-label="Filtros de imóveis">
+                    <label>
+                      <span className="sr-only">Filtrar por status</span>
+                      <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
+                        <option value="all">Todos os status</option>
+                        <option value="published">Aprovados</option>
+                        <option value="pending">Em análise</option>
+                        <option value="rejected">Reprovados</option>
+                        <option value="completed">Concluídos</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span className="sr-only">Filtrar por finalidade</span>
+                      <select value={listingPurposeFilter} onChange={(event) => setListingPurposeFilter(event.target.value)}>
+                        <option value="all">Venda e aluguel</option>
+                        <option value="venda">Venda</option>
+                        <option value="aluguel">Aluguel</option>
+                      </select>
+                    </label>
+                  </div>
+                  {standardAccountListings.length === 0 ? (
+                    <div className="account-empty">{userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
+                  ) : (
+                    <div className="standard-listing-grid">
+                      {standardAccountListings.map((item) => {
+                        const statusKey = getListingStatusKey(item)
+                        const purpose = getListingPurpose(item)
+                        const propertyType = getListingPropertyType(item)
+                        const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
+                          ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
+                          : 'Data não informada'
+                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : 'Concluído'
+                        return (
+                          <article key={item.id} className="account-dashboard-card standard-listing-card">
+                            <StandardListingGallery listing={item} purpose={purpose} />
+                            <div className="standard-listing-card-body">
+                              <h3>{item.title}</h3>
+                              <p className="standard-listing-location"><MapPin size={16} strokeWidth={2.2} aria-hidden="true" />{item.location || getListingLocation(item)}</p>
+                              <strong className={`account-card-price purpose-price purpose-${purpose}`}>{item.price}</strong>
+                              <div className="standard-listing-features">
+                                {Number(item.bedrooms) > 0 && <span><BedDouble size={17} strokeWidth={2} aria-hidden="true" />{item.bedrooms} {Number(item.bedrooms) === 1 ? 'quarto' : 'quartos'}</span>}
+                                {Number(item.bathrooms) > 0 && <span><Bath size={17} strokeWidth={2} aria-hidden="true" />{item.bathrooms} {Number(item.bathrooms) === 1 ? 'banheiro' : 'banheiros'}</span>}
+                                {Number(item.parking_spaces || item.garages) > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{item.parking_spaces || item.garages} {Number(item.parking_spaces || item.garages) === 1 ? 'vaga' : 'vagas'}</span>}
+                                <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </article>
-                    )
-                  })}
+                              <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
+                              <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
+                            </div>
+                            <div className="standard-listing-actions">
+                              {statusKey === 'published' && <button type="button" className="standard-listing-view" onClick={() => navigateToPath(`${getAppBasePath()}imovel/${encodeURIComponent(getListingSlug(item))}/`)}><ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />Ver anúncio</button>}
+                              <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={17} strokeWidth={2.2} aria-hidden="true" />Editar imóvel</button>
+                              <div className="standard-listing-menu-wrap">
+                                <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} aria-hidden="true" /></button>
+                                {openListingActionId === item.id && (
+                                  <div className="standard-listing-menu">
+                                    {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
+                                    <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              )
+                <aside className="standard-account-insights" aria-label="Resumo da sua conta">
+                  <section className="standard-account-insight-card">
+                    <h2>Resumo Geral</h2>
+                    <div><House size={22} aria-hidden="true" /><span>Imóveis cadastrados</span><strong>{userListings.length}</strong></div>
+                    <div><Eye size={22} aria-hidden="true" /><span>Visualizações totais</span><strong>{totalListingViews}</strong></div>
+                    <div><WhatsAppIcon size={22} /><span>Contatos recebidos</span><strong>{totalWhatsAppClicks}</strong></div>
+                    <div className="favorites-summary"><Heart size={22} aria-hidden="true" /><span>Favoritos</span><strong>{favoriteListingIds.length}</strong></div>
+                  </section>
+                  <section className="standard-account-insight-card standard-account-status-card">
+                    <h2>Situação dos anúncios</h2>
+                    <div className="published"><i aria-hidden="true" /><span>Aprovados</span><strong>{activeListings.length}</strong></div>
+                    <div className="pending"><i aria-hidden="true" /><span>Em análise</span><strong>{pendingListings.length}</strong></div>
+                    <div className="rejected"><i aria-hidden="true" /><span>Reprovados</span><strong>{rejectedListings.length}</strong></div>
+                  </section>
+                  <section className="standard-account-insight-card standard-account-tips-card">
+                    <h2><Lightbulb size={23} strokeWidth={2.1} aria-hidden="true" />Dicas para mais resultados</h2>
+                    <p><Check size={18} aria-hidden="true" />Adicione mais fotos</p>
+                    <p><Check size={18} aria-hidden="true" />Complete a descrição</p>
+                    <p><Check size={18} aria-hidden="true" />Atualize informações do imóvel</p>
+                  </section>
+                </aside>
+              </div>
             ) : isAdmin && accountFilter === 'neighborhoods' ? (
               <section className="neighborhood-manager" aria-label="Gerenciar bairros">
                 <div className="neighborhood-manager-heading">
