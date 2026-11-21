@@ -256,7 +256,6 @@ function FilterIcon({ name }) {
 }
 
 const pauseListing = async (listing) => {
-  if (!window.confirm(`Pausar o anúncio “${listing.title}”? Ele deixará de aparecer publicamente.`)) return false
   if (await changeListingStatus(listing, 'pausado')) {
     setModerationMessage(`“${listing.title}” foi pausado.`)
     return true
@@ -670,6 +669,7 @@ function App() {
   const [rejectionReason, setRejectionReason] = useState('')
   const [moderationMessage, setModerationMessage] = useState('')
   const [moderationError, setModerationError] = useState('')
+  const [statusSavingId, setStatusSavingId] = useState(null)
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
 
@@ -1686,6 +1686,7 @@ function App() {
 
     const updates = { status, motivo_reprovacao: motivoReprovacao }
     let updatedListing
+    setStatusSavingId(listing.id)
 
     try {
       const { data, error } = await supabase
@@ -1720,6 +1721,7 @@ function App() {
       const message = `Não foi possível atualizar o anúncio: ${error.message}`
       setModerationError(message)
       setModerationMessage(message)
+      setStatusSavingId(null)
       return false
     }
 
@@ -1732,6 +1734,7 @@ function App() {
         ? [...remaining, updatedListing]
         : remaining
     })
+    setStatusSavingId(null)
     return true
   }
 
@@ -2343,6 +2346,7 @@ function App() {
                     onToggleFeatured={toggleAdminFeatured}
                     onMoveFeatured={moveAdminFeatured}
                     featuredSavingId={featuredSavingId}
+                    statusSavingId={statusSavingId}
                     neighborhoodDraft={neighborhoodDraft}
                     editingNeighborhoodName={editingNeighborhoodName}
                     neighborhoodSaving={neighborhoodSaving}

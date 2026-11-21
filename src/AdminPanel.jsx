@@ -116,13 +116,21 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, statusSaving, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+  const [statusAction, setStatusAction] = useState(null)
   const purpose = getListingPurpose(listing)
   const listingStatus = statusKey(listing)
   const canModerate = listingStatus === 'pending'
 
+  const confirmStatusAction = async () => {
+    const handler = statusAction === 'pause' ? onPause : onReactivate
+    if (await handler(listing)) {
+      setStatusAction(null)
+      onClose()
+    }
+  }
   const confirmReject = async () => {
     if (await onReject(listing, reason)) onClose()
   }
@@ -153,8 +161,19 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
           <button type="button" onClick={() => onEdit(listing)}><Pencil size={16} />Editar anúncio</button>
           <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}><Star size={16} />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}</button>
           {listingStatus === 'paused'
-            ? <button type="button" className="approve-listing-button" disabled={saving} onClick={async () => { if (await onReactivate(listing)) onClose() }}><Play size={16} />Reativar anúncio</button>
-            : listingStatus === 'approved' && <button type="button" disabled={saving} onClick={async () => { if (await onPause(listing)) onClose() }}><Pause size={16} />Pausar anúncio</button>}
+            ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => setStatusAction('reactivate')}><Play size={16} />Reativar anúncio</button>
+            : listingStatus === 'approved' && <button type="button" disabled={saving || statusSaving} onClick={() => setStatusAction('pause')}><Pause size={16} />Pausar anúncio</button>}
+          {statusAction && (
+            <div className="admin-status-confirmation" role="group" aria-label="Confirmar alteração de status">
+              <p>{statusAction === 'pause'
+                ? `Pausar o anúncio “${listing.title}”? Ele deixará de aparecer publicamente.`
+                : `Reativar o anúncio “${listing.title}”? Ele voltará a aparecer publicamente.`}</p>
+              <button type="button" className={statusAction === 'reactivate' ? 'approve-listing-button' : ''} disabled={statusSaving} onClick={confirmStatusAction}>
+                {statusSaving ? 'Salvando…' : statusAction === 'pause' ? 'Confirmar pausa' : 'Confirmar reativação'}
+              </button>
+              <button type="button" disabled={statusSaving} onClick={() => setStatusAction(null)}>Cancelar</button>
+            </div>
+          )}
           {['approved', 'paused'].includes(listingStatus) && <button type="button" disabled={saving} onClick={async () => { if (await onComplete(listing)) onClose() }}><Check size={16} />Marcar concluído</button>}
           <button type="button" className="reject-listing-button" disabled={saving} onClick={async () => { if (await onDelete(listing)) onClose() }}><Trash2 size={16} />Excluir anúncio</button>
           {canModerate && !rejecting && <button type="button" className="approve-listing-button" disabled={saving} onClick={confirmApprove}><Check size={16} />Aprovar</button>}
@@ -195,6 +214,7 @@ export default function AdminPanel({
   onToggleFeatured,
   onMoveFeatured,
   featuredSavingId,
+  statusSavingId,
   moderationError,
   neighborhoodDraft,
   editingNeighborhoodName,
@@ -385,7 +405,7 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} saving={featuredSavingId === previewListing.id} />}
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">
