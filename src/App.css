@@ -4150,8 +4150,7 @@
   }
 
   .home-search-grid .hero-listing-cta {
-    right: auto;
-    left: 20px;
+    right: 20px;
     bottom: 16px;
     z-index: 2;
     display: inline-flex;

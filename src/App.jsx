@@ -3061,7 +3061,6 @@ function App() {
               isBusy={favoriteActionId !== null || favoriteListingsLoading}
               onToggle={handleToggleFavorite}
             />
-            <ListingPhotoCount listing={activeHeroListing} />
             {heroCarouselListings.length > 1 && (
               <>
                 <button
