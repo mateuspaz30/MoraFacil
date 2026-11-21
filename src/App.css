@@ -2090,7 +2090,7 @@
 
   .hero-content {
     display: grid;
-    grid-template-columns: minmax(240px, 37fr) minmax(220px, 63fr);
+    grid-template-columns: minmax(300px, 37fr) minmax(220px, 63fr);
     align-items: end;
     gap: 24px;
     min-height: 154px;
@@ -2104,6 +2104,7 @@
     color: #fff;
     font-size: clamp(2.4rem, 4vw, 4.4rem);
     line-height: 0.94;
+    white-space: nowrap;
   }
 
   .hero-copy h2 span {
