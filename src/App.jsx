@@ -2514,15 +2514,12 @@ function App() {
             {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
             {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
-                <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
-                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'manage' ? ' active' : ''}`} onClick={() => setAccountFilter('manage')}>Gerenciar anúncios ({publishedListings.length})</button>}
+                <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos os status ({userListings.length})</button>
+                <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Aprovados ({activeListings.length})</button>
                 <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
-                <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Publicados ({activeListings.length})</button>
                 <button type="button" className={accountFilter === 'paused' ? 'active' : ''} onClick={() => setAccountFilter('paused')}>Pausados ({pausedListings.length})</button>
                 <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
-                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({adminPendingListings.length})</button>}
-                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'neighborhoods' ? ' active' : ''}`} onClick={() => { setAccountFilter('neighborhoods'); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Bairros</button>}
               </div>
             </div>}
             {isStandardAccount && !(isAdmin && ['review', 'neighborhoods'].includes(accountFilter)) ? (
@@ -2536,24 +2533,14 @@ function App() {
                   {isAdmin && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
                   <div className="my-area-listings-filters" aria-label="Filtros de imóveis">
                     <label>
-                      <span className="sr-only">{isAdmin ? 'Filtrar por status ou recurso administrativo' : 'Filtrar por status'}</span>
-                      <select value={accountFilter} onChange={(event) => {
-                        const nextFilter = event.target.value
-                        setAccountFilter(nextFilter)
-                        if (nextFilter === 'neighborhoods') {
-                          setNeighborhoodManagerError('')
-                          setNeighborhoodManagerMessage('')
-                        }
-                      }}>
+                      <span className="sr-only">Filtrar por status</span>
+                      <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
                         <option value="all">Todos os status</option>
-                        {isAdmin && <option value="manage">Gerenciar anúncios ({publishedListings.length})</option>}
                         <option value="published">Aprovados</option>
-                        <option value="paused">Pausados</option>
                         <option value="pending">Em análise</option>
+                        <option value="paused">Pausados</option>
                         <option value="rejected">Reprovados</option>
                         <option value="completed">Concluídos</option>
-                        {isAdmin && <option value="review">Anúncios pendentes ({adminPendingListings.length})</option>}
-                        {isAdmin && <option value="neighborhoods">Gerenciar bairros</option>}
                       </select>
                     </label>
                     <label>
