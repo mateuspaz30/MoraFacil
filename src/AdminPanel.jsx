@@ -120,15 +120,27 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [statusAction, setStatusAction] = useState(null)
+  const [statusActionBusy, setStatusActionBusy] = useState(false)
+  const [statusActionError, setStatusActionError] = useState('')
   const purpose = getListingPurpose(listing)
   const listingStatus = statusKey(listing)
   const canModerate = listingStatus === 'pending'
 
   const confirmStatusAction = async () => {
     const handler = statusAction === 'pause' ? onPause : onReactivate
-    if (await handler(listing)) {
-      setStatusAction(null)
-      onClose()
+    setStatusActionBusy(true)
+    setStatusActionError('')
+    try {
+      if (typeof handler !== 'function') throw new Error('A ação de status não está disponível.')
+      if (await handler(listing)) {
+        setStatusAction(null)
+        onClose()
+      }
+    } catch (error) {
+      console.error('Falha ao confirmar a alteração de status:', error)
+      setStatusActionError(`Não foi possível confirmar a alteração: ${error.message}`)
+    } finally {
+      setStatusActionBusy(false)
     }
   }
   const confirmReject = async () => {
@@ -142,7 +154,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
     <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="admin-preview-modal" role="dialog" aria-modal="true" aria-labelledby="admin-preview-title">
         <header><h2 id="admin-preview-title">Visualização administrativa</h2><button type="button" aria-label="Fechar" onClick={onClose}><X size={22} /></button></header>
-        {moderationError && <p className="my-area-feedback error" role="alert">{moderationError}</p>}
+        {(statusActionError || moderationError) && <p className="my-area-feedback error" role="alert">{statusActionError || moderationError}</p>}
         <div className="admin-preview-content">
           <StandardListingGallery listing={listing} purpose={purpose} showThumbnails={false} />
           <div className="admin-preview-details">
@@ -168,10 +180,10 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
               <p>{statusAction === 'pause'
                 ? `Pausar o anúncio “${listing.title}”? Ele deixará de aparecer publicamente.`
                 : `Reativar o anúncio “${listing.title}”? Ele voltará a aparecer publicamente.`}</p>
-              <button type="button" className={statusAction === 'reactivate' ? 'approve-listing-button' : ''} disabled={statusSaving} onClick={confirmStatusAction}>
-                {statusSaving ? 'Salvando…' : statusAction === 'pause' ? 'Confirmar pausa' : 'Confirmar reativação'}
+              <button type="button" className={statusAction === 'reactivate' ? 'approve-listing-button' : ''} disabled={statusSaving || statusActionBusy} onClick={confirmStatusAction}>
+                {statusSaving || statusActionBusy ? 'Salvando…' : statusAction === 'pause' ? 'Confirmar pausa' : 'Confirmar reativação'}
               </button>
-              <button type="button" disabled={statusSaving} onClick={() => setStatusAction(null)}>Cancelar</button>
+              <button type="button" disabled={statusSaving || statusActionBusy} onClick={() => setStatusAction(null)}>Cancelar</button>
             </div>
           )}
           {['approved', 'paused'].includes(listingStatus) && <button type="button" disabled={saving} onClick={async () => { if (await onComplete(listing)) onClose() }}><Check size={16} />Marcar concluído</button>}
