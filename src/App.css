@@ -6613,28 +6613,33 @@ dl.my-area-profile-grid > div {
 
 .account-dashboard-card.standard-listing-card.admin-listing-card {
   display: grid;
-  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 12px 22px;
-  padding: 12px;
+  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 8px;
+  height: auto;
+  min-height: 0;
   border: 1px solid #dfe7ef;
-  border-radius: 14px;
+  border-radius: 11px;
   background: #fff;
-  box-shadow: 0 5px 18px rgba(19, 57, 91, 0.07);
+  box-shadow: 0 3px 12px rgba(19, 57, 91, 0.06);
 }
 
 .admin-listing-card .standard-listing-gallery {
   display: grid;
   min-width: 0;
   grid-row: 1 / span 2;
-  gap: 7px;
+  align-content: start;
+  align-self: start;
+  gap: 4px;
 }
 
 .admin-listing-card .standard-listing-gallery-main {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 1.75;
-  border-radius: 10px;
+  aspect-ratio: 1.5;
+  border-radius: 7px;
   background: #e7f4ff;
 }
 
@@ -6673,49 +6678,81 @@ dl.my-area-profile-grid > div {
 }
 
 .admin-listing-card .standard-listing-card-body {
-  display: flex;
+  display: grid;
   min-width: 0;
-  flex-direction: column;
-  gap: 10px;
-  padding: 8px 4px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title price"
+    "location location"
+    "features features"
+    "status date";
+  align-items: center;
+  gap: 4px 10px;
+  padding: 2px 4px;
   color: #173a60;
 }
 
 .admin-listing-card .standard-listing-card-body h3 {
+  grid-area: title;
   margin: 0;
   color: #0a3d74;
-  font-size: 1.12rem;
+  font-size: 0.96rem;
 }
 
-.admin-listing-card .standard-listing-location,
-.admin-listing-card .standard-listing-date {
+.admin-listing-card .standard-listing-location {
+  grid-area: location;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 0;
   color: #58728d;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
+}
+
+.admin-listing-card .standard-listing-location svg,
+.admin-listing-card .standard-listing-date svg {
+  flex: 0 0 auto;
+}
+
+.admin-listing-card .standard-listing-date {
+  grid-area: date;
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 5px;
+  margin: 0;
+  color: #58728d;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.admin-listing-card .standard-listing-card-body > .account-card-price {
+  grid-area: price;
+  font-size: 0.95rem;
 }
 
 .admin-listing-card .standard-listing-features {
+  grid-area: features;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 4px 10px;
   min-height: unset;
   color: #58728d;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .admin-listing-card .standard-listing-status {
+  grid-area: status;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  padding: 6px 9px;
+  padding: 4px 7px;
   border-radius: 999px;
   background: #f0f3f6;
   color: #516579;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -6744,8 +6781,8 @@ dl.my-area-profile-grid > div {
   grid-column: 2;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 7px;
-  padding: 0 4px 5px;
+  gap: 5px;
+  padding: 0 4px 2px;
 }
 
 .admin-listing-actions > button,
@@ -6754,14 +6791,14 @@ dl.my-area-profile-grid > div {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 7px 10px;
+  min-height: 30px;
+  padding: 5px 8px;
   border: 1px solid #d8e2ed;
   border-radius: 8px;
   background: #fff;
   color: #173a60;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -7135,25 +7172,47 @@ dl.my-area-profile-grid > div {
   }
 
   .account-dashboard-card.standard-listing-card.admin-listing-card {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    gap: 0;
-    padding: 9px;
+    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 6px 9px;
+    padding: 7px;
   }
 
   .admin-listing-card .standard-listing-gallery {
-    grid-row: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .admin-listing-card .standard-listing-gallery-thumbnails {
+    display: none;
   }
 
   .admin-listing-card .standard-listing-card-body {
-    grid-row: 2;
-    padding: 12px 4px;
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "price"
+      "location"
+      "features"
+      "status"
+      "date";
+    gap: 3px;
+    padding: 0 2px;
+  }
+
+  .admin-listing-card .standard-listing-card-body > .account-card-price {
+    font-size: 0.88rem;
+  }
+
+  .admin-listing-card .standard-listing-date {
+    justify-self: start;
   }
 
   .admin-listing-card .standard-listing-actions {
-    grid-column: 1;
-    grid-row: 3;
-    padding: 4px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0;
   }
 
   .admin-preview-content {
