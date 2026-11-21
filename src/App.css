@@ -6573,6 +6573,16 @@ dl.my-area-profile-grid > div {
   gap: 10px;
 }
 
+.admin-listing-tools .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 .admin-search {
   display: flex;
   flex: 1;
@@ -6584,6 +6594,7 @@ dl.my-area-profile-grid > div {
 .admin-search input {
   width: 100%;
   min-width: 0;
+  min-height: 36px;
   height: 36px;
   border: 0;
   outline: 0;
@@ -6602,7 +6613,7 @@ dl.my-area-profile-grid > div {
 
 .account-dashboard-card.standard-listing-card.admin-listing-card {
   display: grid;
-  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 12px 22px;
   padding: 12px;
@@ -6622,7 +6633,7 @@ dl.my-area-profile-grid > div {
 .admin-listing-card .standard-listing-gallery-main {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 1.35;
+  aspect-ratio: 1.75;
   border-radius: 10px;
   background: #e7f4ff;
 }
