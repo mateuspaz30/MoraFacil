@@ -3002,7 +3002,7 @@ function App() {
               <span className="mobile-menu-action-label">Anunciar imóvel</span>
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
             </button>
-            <div className="mobile-menu-divider" />
+            {authUser && <div className="mobile-menu-divider" />}
             {authUser && <button type="button" className="mobile-menu-logout" onClick={() => { setMobileMenuOpen(false); handleLogout() }}>
               <span className="mobile-menu-action-icon"><MenuLogoutIcon /></span>
               <span className="mobile-menu-action-label">Sair da conta</span>
