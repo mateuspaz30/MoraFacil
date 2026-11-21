@@ -5851,11 +5851,11 @@ dl.my-area-profile-grid > div {
   stroke-width: 2.5;
 }
 
-.standard-listing-grid {
+.standard-account-dashboard .standard-listing-grid {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.account-dashboard-card.standard-listing-card {
+.standard-account-dashboard .account-dashboard-card.standard-listing-card {
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
   align-items: start;
@@ -5864,7 +5864,7 @@ dl.my-area-profile-grid > div {
   padding: 10px;
 }
 
-.standard-listing-gallery {
+.standard-account-dashboard .standard-listing-gallery {
   display: grid;
   min-width: 0;
   grid-row: 1 / span 2;
@@ -5872,7 +5872,7 @@ dl.my-area-profile-grid > div {
   gap: 7px;
 }
 
-.standard-listing-gallery-main {
+.standard-account-dashboard .standard-listing-gallery-main {
   position: relative;
   overflow: hidden;
   aspect-ratio: 1.24;
@@ -5880,20 +5880,20 @@ dl.my-area-profile-grid > div {
   background: #e7f4ff;
 }
 
-.standard-listing-gallery-main > img,
-.standard-listing-gallery-main > .standard-listing-image-placeholder {
+.standard-account-dashboard .standard-listing-gallery-main > img,
+.standard-account-dashboard .standard-listing-gallery-main > .standard-listing-image-placeholder {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.standard-listing-gallery-main .account-status-badge {
+.standard-account-dashboard .standard-listing-gallery-main .account-status-badge {
   top: 10px;
   left: 10px;
 }
 
-.standard-listing-gallery-arrow {
+.standard-account-dashboard .standard-listing-gallery-arrow {
   position: absolute;
   top: 50%;
   display: grid;
@@ -5908,15 +5908,15 @@ dl.my-area-profile-grid > div {
   cursor: pointer;
 }
 
-.standard-listing-gallery-arrow.previous {
+.standard-account-dashboard .standard-listing-gallery-arrow.previous {
   left: 9px;
 }
 
-.standard-listing-gallery-arrow.next {
+.standard-account-dashboard .standard-listing-gallery-arrow.next {
   right: 9px;
 }
 
-.standard-listing-gallery-count {
+.standard-account-dashboard .standard-listing-gallery-count {
   position: absolute;
   right: 8px;
   bottom: 8px;
@@ -5928,13 +5928,13 @@ dl.my-area-profile-grid > div {
   font-weight: 700;
 }
 
-.standard-listing-gallery-thumbnails {
+.standard-account-dashboard .standard-listing-gallery-thumbnails {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
 }
 
-.standard-listing-gallery-thumbnails button {
+.standard-account-dashboard .standard-listing-gallery-thumbnails button {
   overflow: hidden;
   aspect-ratio: 1.15;
   border: 1px solid transparent;
@@ -5944,23 +5944,23 @@ dl.my-area-profile-grid > div {
   cursor: pointer;
 }
 
-.standard-listing-gallery-thumbnails button.active {
+.standard-account-dashboard .standard-listing-gallery-thumbnails button.active {
   border: 2px solid #0a3d74;
 }
 
-.standard-listing-gallery-thumbnails img {
+.standard-account-dashboard .standard-listing-gallery-thumbnails img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.standard-listing-card-body {
+.standard-account-dashboard .standard-listing-card-body {
   gap: 12px;
   padding: 13px 3px 4px;
 }
 
-.standard-listing-card-body h3 {
+.standard-account-dashboard .standard-listing-card-body h3 {
   display: -webkit-box;
   overflow: hidden;
   font-size: 1.18rem;
@@ -5970,12 +5970,12 @@ dl.my-area-profile-grid > div {
   -webkit-line-clamp: 2;
 }
 
-.standard-listing-location,
-.standard-listing-date {
+.standard-account-dashboard .standard-listing-location,
+.standard-account-dashboard .standard-listing-date {
   font-size: 0.82rem;
 }
 
-.standard-listing-card-body > .account-card-price {
+.standard-account-dashboard .standard-listing-card-body > .account-card-price {
   overflow: visible;
   margin: 3px 0;
   font-size: 1.55rem;
@@ -5983,46 +5983,46 @@ dl.my-area-profile-grid > div {
   white-space: normal;
 }
 
-.standard-listing-features {
+.standard-account-dashboard .standard-listing-features {
   min-height: 40px;
   gap: 6px 0;
   font-size: 0.74rem;
 }
 
-.standard-listing-features span + span {
+.standard-account-dashboard .standard-listing-features span + span {
   border-left: 1px solid #dfe7ef;
   padding-left: 9px;
   margin-left: 9px;
 }
 
-.standard-listing-status {
+.standard-account-dashboard .standard-listing-status {
   align-self: flex-start;
   padding: 7px 12px;
   font-size: 0.72rem;
 }
 
-.standard-listing-status i {
+.standard-account-dashboard .standard-listing-status i {
   display: none;
 }
 
-.standard-listing-status svg {
+.standard-account-dashboard .standard-listing-status svg {
   margin-left: -2px;
 }
 
-.standard-listing-date {
+.standard-account-dashboard .standard-listing-date {
   margin-top: auto;
 }
 
-.standard-listing-actions {
+.standard-account-dashboard .standard-listing-actions {
   grid-column: 2;
   grid-row: 2;
   gap: 8px;
   padding: 0 3px 4px;
 }
 
-.standard-listing-view,
-.standard-listing-edit,
-.standard-listing-menu-trigger {
+.standard-account-dashboard .standard-listing-view,
+.standard-account-dashboard .standard-listing-edit,
+.standard-account-dashboard .standard-listing-menu-trigger {
   display: inline-flex;
   min-width: 0;
   min-height: 38px;
@@ -6040,27 +6040,27 @@ dl.my-area-profile-grid > div {
   white-space: nowrap;
 }
 
-.standard-listing-view {
+.standard-account-dashboard .standard-listing-view {
   border-color: #0a3d74;
   background: #0a3d74;
   color: #fff;
 }
 
-.standard-listing-view:hover {
+.standard-account-dashboard .standard-listing-view:hover {
   background: #082f5a;
 }
 
-.standard-listing-edit {
+.standard-account-dashboard .standard-listing-edit {
   flex: 1;
 }
 
-.standard-listing-edit:hover,
-.standard-listing-menu-trigger:hover {
+.standard-account-dashboard .standard-listing-edit:hover,
+.standard-account-dashboard .standard-listing-menu-trigger:hover {
   border-color: #0a3d74;
   color: #0a3d74;
 }
 
-.standard-listing-menu-trigger {
+.standard-account-dashboard .standard-listing-menu-trigger {
   width: 38px;
 }
 
@@ -6074,25 +6074,25 @@ dl.my-area-profile-grid > div {
     gap: 16px;
   }
 
-  .standard-listing-grid {
+  .standard-account-dashboard .standard-listing-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .account-dashboard-card.standard-listing-card {
+  .standard-account-dashboard .account-dashboard-card.standard-listing-card {
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 8px 18px;
   }
 
-  .standard-listing-gallery {
+  .standard-account-dashboard .standard-listing-gallery {
     grid-row: 1 / span 2;
   }
 
-  .standard-listing-card-body {
+  .standard-account-dashboard .standard-listing-card-body {
     grid-row: 1;
   }
 
-  .standard-listing-actions {
+  .standard-account-dashboard .standard-listing-actions {
     grid-column: 2;
     grid-row: 2;
   }
@@ -6107,21 +6107,21 @@ dl.my-area-profile-grid > div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .account-dashboard-card.standard-listing-card {
+  .standard-account-dashboard .account-dashboard-card.standard-listing-card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto;
     gap: 0;
   }
 
-  .standard-listing-gallery {
+  .standard-account-dashboard .standard-listing-gallery {
     grid-row: 1;
   }
 
-  .standard-listing-card-body {
+  .standard-account-dashboard .standard-listing-card-body {
     grid-row: 2;
   }
 
-  .standard-listing-actions {
+  .standard-account-dashboard .standard-listing-actions {
     grid-column: 1;
     grid-row: 3;
   }
