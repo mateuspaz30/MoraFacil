@@ -2475,6 +2475,103 @@ function App() {
               <div className="account-empty" role="alert">{adminReviewError}</div>
             ) : visibleAccountListings.length === 0 ? (
               <div className="account-empty">{accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
+            ) : isStandardAccount && isAdmin && accountFilter === 'review' ? (
+              <div className="standard-account-dashboard admin-standard-review">
+                <div className="standard-account-content">
+                  <div className="standard-listing-grid">
+                    {visibleAccountListings.map((item) => {
+                      const purpose = getListingPurpose(item)
+                      const propertyType = getListingPropertyType(item)
+                      const featuredDraft = featuredDrafts[item.id] || {
+                        destaqueHome: item.destaque_home === true,
+                        ordemDestaque: item.ordem_destaque == null ? '' : String(item.ordem_destaque),
+                      }
+                      const updateFeaturedDraft = (updates) => {
+                        setFeaturedDrafts((current) => ({
+                          ...current,
+                          [item.id]: { ...featuredDraft, ...updates },
+                        }))
+                      }
+                      const submittedAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
+                        ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
+                        : 'Data não informada'
+
+                      return (
+                        <article key={item.id} className="account-dashboard-card standard-listing-card">
+                          <StandardListingGallery listing={item} purpose={purpose} />
+                          <div className="standard-listing-card-body">
+                            <h3>{item.title}</h3>
+                            <p className="standard-listing-location"><MapPin size={16} strokeWidth={2.2} aria-hidden="true" />{item.location || getListingLocation(item)}</p>
+                            <strong className={`account-card-price purpose-price purpose-${purpose}`}>{item.price}</strong>
+                            <div className="standard-listing-features">
+                              {Number(item.bedrooms) > 0 && <span><BedDouble size={17} strokeWidth={2} aria-hidden="true" />{item.bedrooms} {Number(item.bedrooms) === 1 ? 'quarto' : 'quartos'}</span>}
+                              {Number(item.bathrooms) > 0 && <span><Bath size={17} strokeWidth={2} aria-hidden="true" />{item.bathrooms} {Number(item.bathrooms) === 1 ? 'banheiro' : 'banheiros'}</span>}
+                              {Number(item.parking_spaces || item.garages) > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{item.parking_spaces || item.garages} {Number(item.parking_spaces || item.garages) === 1 ? 'vaga' : 'vagas'}</span>}
+                              <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
+                            </div>
+                            <span className="standard-listing-status pending"><i aria-hidden="true" />Em análise</span>
+                            <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Enviado em {submittedAt}</p>
+                          </div>
+                          <div className="standard-listing-actions">
+                            <form className="admin-featured-controls" onSubmit={(event) => saveFeaturedListing(event, item, featuredDraft)}>
+                              <label className="admin-featured-toggle" htmlFor={`featured-home-${item.id}`}>
+                                <input
+                                  id={`featured-home-${item.id}`}
+                                  type="checkbox"
+                                  checked={featuredDraft.destaqueHome}
+                                  onChange={(event) => {
+                                    const isFeatured = event.target.checked
+                                    const nextOrder = publishedListings.reduce((highest, candidate) => (
+                                      candidate.destaque_home === true
+                                        ? Math.max(highest, Number(candidate.ordem_destaque) || 0)
+                                        : highest
+                                    ), 0) + 1
+                                    updateFeaturedDraft({
+                                      destaqueHome: isFeatured,
+                                      ordemDestaque: isFeatured
+                                        ? featuredDraft.ordemDestaque || String(nextOrder)
+                                        : '',
+                                    })
+                                  }}
+                                />
+                                <span>⭐ Destacar na página inicial</span>
+                              </label>
+                              {featuredDraft.destaqueHome && (
+                                <label className="admin-featured-order" htmlFor={`featured-order-${item.id}`}>
+                                  Ordem do destaque
+                                  <input
+                                    id={`featured-order-${item.id}`}
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={featuredDraft.ordemDestaque}
+                                    onChange={(event) => updateFeaturedDraft({ ordemDestaque: event.target.value })}
+                                    required
+                                  />
+                                </label>
+                              )}
+                              <button type="submit" disabled={featuredSavingId === item.id}>
+                                {featuredSavingId === item.id ? 'Salvando…' : 'Salvar destaque'}
+                              </button>
+                            </form>
+                            <div className="admin-review-actions">
+                              <button type="button" className="approve-listing-button" onClick={() => approveListing(item)}>✓ Aprovar</button>
+                              {rejectionListingId === item.id ? (
+                                <div className="admin-rejection-form">
+                                  <label htmlFor={`rejection-${item.id}`}>Motivo da reprovação *</label>
+                                  <textarea id={`rejection-${item.id}`} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Ex.: Fotos insuficientes ou endereço incompleto" required />
+                                  <button type="button" className="reject-listing-button" onClick={() => rejectListing(item)}>Confirmar reprovação</button>
+                                  <button type="button" onClick={() => { setRejectionListingId(null); setRejectionReason('') }}>Cancelar</button>
+                                </div>
+                              ) : <button type="button" className="reject-listing-button" onClick={() => { setRejectionListingId(item.id); setRejectionReason(''); setModerationMessage('') }}>✕ Reprovar</button>}
+                            </div>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="account-dashboard-grid">
                 {visibleAccountListings.map((item) => {

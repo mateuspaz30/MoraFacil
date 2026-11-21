@@ -5855,6 +5855,10 @@ dl.my-area-profile-grid > div {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.standard-account-dashboard.admin-standard-review {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .standard-account-dashboard .account-dashboard-card.standard-listing-card {
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
@@ -6045,6 +6049,41 @@ dl.my-area-profile-grid > div {
 .standard-account-dashboard .standard-listing-actions .admin-featured-controls button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.standard-account-dashboard .admin-review-actions {
+  flex: 1 0 100%;
+}
+
+.standard-account-dashboard .admin-review-actions > button,
+.standard-account-dashboard .admin-review-actions .admin-rejection-form button {
+  min-height: 36px;
+  border: 1px solid #d5dee8;
+  border-radius: 7px;
+  background: #fff;
+  color: #183553;
+  padding: 0 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.standard-account-dashboard .admin-review-actions > button.approve-listing-button {
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.standard-account-dashboard .admin-review-actions > button.reject-listing-button,
+.standard-account-dashboard .admin-review-actions .admin-rejection-form button.reject-listing-button {
+  border-color: #dc3545;
+  background: #dc3545;
+  color: #fff;
+}
+
+.standard-account-dashboard .admin-review-actions .admin-rejection-form {
+  flex: 1 0 100%;
 }
 
 .standard-account-dashboard .standard-listing-view,
