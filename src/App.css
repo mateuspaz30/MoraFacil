@@ -6021,6 +6021,22 @@ dl.my-area-profile-grid > div {
   margin-top: auto;
 }
 
+.standard-account-dashboard .standard-listing-card-body > .account-card-views,
+.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp {
+  justify-content: flex-end;
+  width: 100%;
+  margin: 0;
+}
+
+.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp .whatsapp-icon-card {
+  flex: 0 0 auto;
+}
+
+.standard-account-dashboard .standard-listing-card-body > .account-card-views strong,
+.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp strong {
+  margin-left: 0;
+}
+
 .standard-account-dashboard .standard-listing-actions {
   grid-column: 2;
   grid-row: 2;
