@@ -49,6 +49,8 @@ Em bancos existentes, execute [`supabase/migrations/20261010_create_managed_neig
 
 Administradores acessam o módulo em “Minha Área” > “Administração”. As permissões continuam sendo determinadas pela função existente `is_admin()` e pelas policies atuais. Para habilitar a pausa de anúncios em bancos existentes, execute [`supabase/migrations/20261121_add_paused_listing_status.sql`](supabase/migrations/20261121_add_paused_listing_status.sql) no SQL Editor do Supabase. A migração apenas inclui `pausado` na restrição de status; não altera RLS nem policies.
 
+Administradores também podem abrir “Minha Área” > “Prévia Imobiliária” para visualizar Dashboard, Estatísticas e Perfil Público sem criar uma conta de imobiliária. A prévia usa dados demonstrativos, não habilita ações de gravação e não altera permissões ou registros reais; seu acesso depende da função `is_admin()`.
+
 A tela “Usuários” lista contas e concede/remove permissões administrativas por meio da Edge Function protegida `admin-management`. Para bancos existentes, publique a função no projeto Supabase:
 
 ```bash

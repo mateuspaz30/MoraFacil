@@ -164,6 +164,49 @@ const propertyTypeIcons = {
 }
 
 const approvedSampleListings = sampleListings.map((listing) => ({ ...listing, status: 'aprovado' }))
+const companyPreviewListings = [
+  {
+    id: 'preview-1',
+    title: 'Casa no Centro',
+    location: 'Centro, Ipuã-SP',
+    price: 'R$ 420.000',
+    image: sampleListings[0].image,
+    bedrooms: 3,
+    area: '140 m²',
+    visualizacoes: 842,
+    whatsapp_clicks: 38,
+    favoritos: 16,
+  },
+  {
+    id: 'preview-2',
+    title: 'Apartamento Jardim Europa',
+    location: 'Jardim Europa, Ipuã-SP',
+    price: 'R$ 315.000',
+    image: sampleListings[2].image,
+    bedrooms: 2,
+    area: '88 m²',
+    visualizacoes: 615,
+    whatsapp_clicks: 24,
+    favoritos: 11,
+  },
+  {
+    id: 'preview-3',
+    title: 'Terreno Vila Nova',
+    location: 'Vila Nova, Ipuã-SP',
+    price: 'R$ 160.000',
+    image: sampleListings[3].image,
+    bedrooms: 0,
+    area: '300 m²',
+    visualizacoes: 428,
+    whatsapp_clicks: 17,
+    favoritos: 8,
+  },
+]
+const companyPreviewRoutes = {
+  'company-preview-dashboard': 'visualizacao-imobiliaria/dashboard',
+  'company-preview-statistics': 'visualizacao-imobiliaria/estatisticas',
+  'company-preview-profile': 'visualizacao-imobiliaria/perfil-publico',
+}
 const defaultNeighborhoods = [...new Set(sampleListings.map((listing) => listing.neighborhood))]
   .sort((first, second) => first.localeCompare(second, 'pt-BR'))
   .map((name) => ({ name, active: true }))
@@ -187,12 +230,17 @@ const getRelativeAppPath = (pathname) => {
     : pathname.replace(/^\/+|\/+$/g, '')
 }
 const getAccountSectionFromPath = (pathname) => {
-  const [route, section] = decodeURIComponent(getRelativeAppPath(pathname))
+  const [route, section, subsection] = decodeURIComponent(getRelativeAppPath(pathname))
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('pt-BR')
     .split('/')
   if (route !== 'minha-area') return null
+  if (section === 'visualizacao-imobiliaria') {
+    if (subsection === 'dashboard') return 'company-preview-dashboard'
+    if (subsection === 'estatisticas') return 'company-preview-statistics'
+    if (subsection === 'perfil-publico') return 'company-preview-profile'
+  }
   if (section === 'meus-imoveis' || section === 'imoveis') return 'listings'
   if (section === 'favoritos') return 'favorites'
   if (section === 'minha-conta' || section === 'conta') return 'account'
@@ -212,9 +260,13 @@ const getAccountSectionPath = (section) => {
     dashboard: 'dashboard',
     statistics: 'estatisticas',
     'public-profile': 'perfil-publico',
+    'company-preview-dashboard': companyPreviewRoutes['company-preview-dashboard'],
+    'company-preview-statistics': companyPreviewRoutes['company-preview-statistics'],
+    'company-preview-profile': companyPreviewRoutes['company-preview-profile'],
   }
   const sectionPath = sectionPaths[section]
-  return `${getAppBasePath()}minha-area${sectionPath ? `/${encodeURIComponent(sectionPath)}` : ''}`
+  const encodedPath = sectionPath?.split('/').map(encodeURIComponent).join('/')
+  return `${getAppBasePath()}minha-area${encodedPath ? `/${encodedPath}` : ''}`
 }
 const getCompanyPublicSlugFromPath = (pathname) => {
   const [route, slug] = getRelativeAppPath(pathname).split('/')
@@ -2103,7 +2155,10 @@ function App() {
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
   const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
   const isCompanyAccount = accountUserType === 'imobiliaria'
-  const visibleAccountSection = isStandardAccount
+  const isAdminCompanyPreview = isAdmin && accountSection.startsWith('company-preview-')
+  const visibleAccountSection = isAdminCompanyPreview
+    ? accountSection
+    : isStandardAccount
     && !['account', 'favorites'].includes(accountSection)
     && !(isAdmin && accountSection === 'admin')
     ? 'listings'
@@ -2111,6 +2166,19 @@ function App() {
       ? 'dashboard'
       : accountSection
   const isCompanyDashboard = isCompanyAccount && visibleAccountSection === 'dashboard'
+  const isAdminCompanyPreviewDashboard = isAdminCompanyPreview && visibleAccountSection === 'company-preview-dashboard'
+  const isAdminCompanyPreviewStatistics = isAdminCompanyPreview && visibleAccountSection === 'company-preview-statistics'
+  const isAdminCompanyPreviewProfile = isAdminCompanyPreview && visibleAccountSection === 'company-preview-profile'
+  const companyPreviewActiveListings = companyPreviewListings.length
+  const companyPreviewTotalViews = companyPreviewListings.reduce((total, item) => total + item.visualizacoes, 0)
+  const companyPreviewTotalWhatsAppClicks = companyPreviewListings.reduce((total, item) => total + item.whatsapp_clicks, 0)
+  const companyPreviewTotalFavorites = companyPreviewListings.reduce((total, item) => total + item.favoritos, 0)
+  const companyPreviewMostViewed = companyPreviewListings.reduce((best, item) => (
+    !best || item.visualizacoes > best.visualizacoes ? item : best
+  ), null)
+  const companyPreviewMostContacted = companyPreviewListings.reduce((best, item) => (
+    !best || item.whatsapp_clicks > best.whatsapp_clicks ? item : best
+  ), null)
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -2511,13 +2579,14 @@ function App() {
                     ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
                     ]),
+                    ...(isAdmin ? [['company-preview-dashboard', Store, 'Prévia Imobiliária']] : []),
                     ...(isAdmin ? [['admin', Shield, 'Administração']] : []),
                   ].map(([section, Icon, label]) => (
                     <button
                       key={section}
                       type="button"
-                      className={visibleAccountSection === section ? 'active' : ''}
-                      aria-current={visibleAccountSection === section ? 'page' : undefined}
+                      className={(visibleAccountSection === section || (section === 'company-preview-dashboard' && isAdminCompanyPreview)) ? 'active' : ''}
+                      aria-current={(visibleAccountSection === section || (section === 'company-preview-dashboard' && isAdminCompanyPreview)) ? 'page' : undefined}
                       onClick={() => { openMyArea(section); setProfileMessage(''); setFavoriteMessage('') }}
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
@@ -2532,18 +2601,127 @@ function App() {
                 </div>
               </aside>
               <main className="my-area-main">
-              <header className={`my-area-topbar${(visibleAccountSection === 'overview' || isCompanyDashboard) ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
+              <header className={`my-area-topbar${(visibleAccountSection === 'overview' || isCompanyDashboard || isAdminCompanyPreviewDashboard) ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyAccount ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
-                  <h1>{visibleAccountSection === 'admin' ? 'Administração' : isCompanyDashboard ? 'Dashboard' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : visibleAccountSection === 'statistics' ? 'Estatísticas' : visibleAccountSection === 'public-profile' ? 'Perfil Público' : 'Minha Conta'}</h1>
-                  {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
-                  {isCompanyAccount && visibleAccountSection === 'statistics' && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
+                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{isAdminCompanyPreview ? 'Modo de visualização administrativa' : visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyAccount ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
+                  <h1>{visibleAccountSection === 'admin' ? 'Administração' : isCompanyDashboard || isAdminCompanyPreviewDashboard ? 'Dashboard' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : visibleAccountSection === 'statistics' || isAdminCompanyPreviewStatistics ? 'Estatísticas' : visibleAccountSection === 'public-profile' || isAdminCompanyPreviewProfile ? 'Perfil Público' : 'Minha Conta'}</h1>
+                  {(visibleAccountSection === 'overview' || isCompanyDashboard || isAdminCompanyPreviewDashboard) && <p>{isCompanyDashboard || isAdminCompanyPreviewDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
+                  {(isCompanyAccount && visibleAccountSection === 'statistics' || isAdminCompanyPreviewStatistics) && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
                   {isCompanyDashboard && <button type="button" className="company-public-link" onClick={() => accountProfile.publicSlug ? navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug)) : openMyArea('public-profile')}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
-                  {(visibleAccountSection === 'overview' || isCompanyDashboard || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
+                  {isAdminCompanyPreviewDashboard && <button type="button" className="company-public-link" onClick={() => openMyArea('company-preview-profile')}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
+                  {!isAdminCompanyPreview && (visibleAccountSection === 'overview' || isCompanyDashboard || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
+                {isAdminCompanyPreview && (
+                  <section className="admin-company-preview-banner" aria-label="Modo de visualização administrativa">
+                    <div className="admin-company-preview-banner-copy">
+                      <strong><Shield size={18} aria-hidden="true" /> Modo de visualização administrativa</strong>
+                      <span>Demonstração somente visual. Os dados são ilustrativos; nenhuma permissão ou informação real será alterada.</span>
+                    </div>
+                    <nav className="admin-company-preview-tabs" aria-label="Áreas da imobiliária em visualização">
+                      {[
+                        ['company-preview-dashboard', 'Dashboard'],
+                        ['company-preview-statistics', 'Estatísticas'],
+                        ['company-preview-profile', 'Perfil Público'],
+                      ].map(([section, label]) => (
+                        <button
+                          key={section}
+                          type="button"
+                          className={visibleAccountSection === section ? 'active' : ''}
+                          aria-current={visibleAccountSection === section ? 'page' : undefined}
+                          onClick={() => openMyArea(section)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </nav>
+                  </section>
+                )}
+                {isAdminCompanyPreviewDashboard && (
+                  <div className="company-statistics-page admin-company-preview-content">
+                    <section className="my-area-stats-grid company-dashboard-stats" aria-label="Indicadores demonstrativos">
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} /></span><div><small>Imóveis ativos</small><strong>{companyPreviewActiveListings}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} /></span><div><small>Visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalViews)}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span><div><small>Cliques no WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalWhatsAppClicks)}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} /></span><div><small>Favoritos recebidos</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalFavorites)}</strong></div></article>
+                    </section>
+                    <section className="company-dashboard-highlights" aria-label="Destaques demonstrativos">
+                      <article className="company-dashboard-highlight-card">
+                        <header><Eye size={20} aria-hidden="true" /><h2>Mais visualizado</h2></header>
+                        <div className="company-dashboard-highlight-property"><img src={companyPreviewMostViewed.image} alt="" /><div><strong>{companyPreviewMostViewed.title}</strong><span>{companyPreviewMostViewed.location}</span><b>{companyPreviewMostViewed.visualizacoes.toLocaleString('pt-BR')} visualizações</b></div></div>
+                      </article>
+                      <article className="company-dashboard-highlight-card">
+                        <header><WhatsAppIcon size={20} /><h2>Mais cliques WhatsApp</h2></header>
+                        <div className="company-dashboard-highlight-property"><img src={companyPreviewMostContacted.image} alt="" /><div><strong>{companyPreviewMostContacted.title}</strong><span>{companyPreviewMostContacted.location}</span><b>{companyPreviewMostContacted.whatsapp_clicks} cliques</b></div></div>
+                      </article>
+                      <article className="company-dashboard-highlight-card company-dashboard-no-interactions">
+                        <header><ChartNoAxesColumn size={20} aria-hidden="true" /><h2>Sem interações</h2></header>
+                        <strong className="company-dashboard-no-interactions-count">0</strong><p>imóveis sem visualizações e cliques no WhatsApp</p>
+                      </article>
+                    </section>
+                    <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Dados demonstrativos para homologação.</p>
+                  </div>
+                )}
+                {isAdminCompanyPreviewStatistics && (
+                  <div className="company-statistics-page admin-company-preview-content">
+                    <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores demonstrativos">
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} /></span><div><small>Total de visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalViews)}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span><div><small>Total de cliques WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalWhatsAppClicks)}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} /></span><div><small>Total de favoritos</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalFavorites)}</strong></div></article>
+                      <article className="my-area-stat-card"><span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} /></span><div><small>Imóveis ativos</small><strong>{companyPreviewActiveListings}</strong></div></article>
+                    </section>
+                    <section className="company-statistics-table-card" aria-labelledby="admin-preview-statistics-title">
+                      <header><div><h2 id="admin-preview-statistics-title">Desempenho dos imóveis</h2><p>Dados ilustrativos para homologação.</p></div></header>
+                      <div className="company-statistics-table-scroll">
+                        <table className="company-statistics-table">
+                          <thead><tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr></thead>
+                          <tbody>{companyPreviewListings.map((item) => (
+                            <tr key={item.id}>
+                              <td><div className="company-statistics-property"><img src={item.image} alt="" /><div><strong>{item.title}</strong><small>{item.location}</small></div></div></td>
+                              <td>{item.visualizacoes.toLocaleString('pt-BR')}</td><td>{item.whatsapp_clicks}</td><td>{item.favoritos}</td>
+                            </tr>
+                          ))}</tbody>
+                        </table>
+                      </div>
+                    </section>
+                    <section className="company-statistics-highlights" aria-label="Destaques demonstrativos">
+                      <article className="company-statistics-highlight"><h2><span aria-hidden="true">🏆</span> Mais visualizado</h2><p>Casa no Centro é o imóvel mais visualizado da carteira demonstrativa.</p></article>
+                      <article className="company-statistics-highlight"><h2><span aria-hidden="true">💬</span> Mais interesse</h2><p>Casa no Centro recebeu mais contatos via WhatsApp.</p></article>
+                      <article className="company-statistics-highlight no-performance"><h2><span aria-hidden="true">⚠️</span> Sem desempenho</h2><p>Nenhum imóvel demonstrativo está sem interações.</p></article>
+                    </section>
+                    <section className="company-statistics-summary"><h2>Resumo automático</h2><ul><li>Casa no Centro é o imóvel mais visualizado da carteira demonstrativa.</li><li>Casa no Centro recebeu mais contatos via WhatsApp.</li><li>Os valores desta tela são ilustrativos.</li></ul></section>
+                  </div>
+                )}
+                {isAdminCompanyPreviewProfile && (
+                  <section className="admin-company-preview-public-profile" aria-label="Prévia demonstrativa do perfil público">
+                    <div className="company-public-identity">
+                      <span className="company-public-logo-placeholder" aria-hidden="true">AI</span>
+                      <div className="company-public-copy">
+                        <span className="company-public-eyebrow">Perfil público · Demonstração</span>
+                        <h2>Almeida Imóveis</h2>
+                        <p className="company-public-city"><MapPin size={17} aria-hidden="true" />Ipuã-SP</p>
+                        <p className="company-public-description">Imóveis selecionados e atendimento próximo para ajudar você a encontrar seu próximo lar.</p>
+                        <div className="company-public-actions">
+                          <button type="button" className="company-public-whatsapp" disabled><WhatsAppIcon size={20} /> WhatsApp (prévia)</button>
+                          <button type="button" className="company-public-share" disabled><Share2 size={18} /> Compartilhar</button>
+                        </div>
+                      </div>
+                    </div>
+                    <section className="company-preview-properties" aria-label="Imóveis demonstrativos">
+                      <h2>Imóveis de Almeida Imóveis</h2>
+                      <div className="company-preview-property-grid">
+                        {companyPreviewListings.map((item) => (
+                          <article className="company-preview-property-card" key={item.id}>
+                            <img src={item.image} alt="" />
+                            <div><h3>{item.title}</h3><span><MapPin size={15} aria-hidden="true" />{item.location}</span><strong>{item.price}</strong><p>{item.bedrooms ? `${item.bedrooms} quartos` : 'Terreno'} · {item.area}</p><button type="button" disabled>Saiba Mais</button></div>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  </section>
+                )}
               {(visibleAccountSection === 'overview' || isCompanyDashboard) && (
                   <>
                   {isCompanyAccount ? (
