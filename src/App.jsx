@@ -2981,7 +2981,7 @@ function App() {
               </button>
             ) : (
               <>
-                <button type="button" className="mobile-menu-primary" onClick={() => { setMobileMenuOpen(false); setAuthMode('login'); setAuthMessage(''); setAuthOpen(true) }}>
+                <button type="button" className="mobile-menu-secondary" onClick={() => { setMobileMenuOpen(false); setAuthMode('login'); setAuthMessage(''); setAuthOpen(true) }}>
                   <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
                   <span className="mobile-menu-action-label">Entrar na conta</span>
                   <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
