@@ -14,12 +14,14 @@ Sem Supabase configurado, o modo local usa o armazenamento do navegador para tes
 ## Ativar contas e anúncios permanentes
 
 1. Crie um projeto em [Supabase](https://supabase.com).
-2. No SQL Editor, execute [`supabase/schema.sql`](supabase/schema.sql).
+2. No SQL Editor, execute [`supabase/schema.sql`](supabase/schema.sql). O schema inclui as tabelas, funções, índices, políticas RLS e o bucket de imagens necessários para um banco novo.
 3. Copie `.env.example` para `.env` e preencha a URL e a chave `anon` do projeto.
 4. No GitHub Pages, adicione as mesmas variáveis em `Settings > Secrets and variables > Actions > Variables`.
 5. No Vercel, adicione-as em `Settings > Environment Variables`.
 
 Os visitantes continuam navegando sem conta. O login só é solicitado ao publicar ou gerenciar anúncios.
+
+A permissão inicial de administrador deve ser provisionada separadamente para a conta escolhida em cada ambiente. Não conceda essa permissão automaticamente a usuários públicos.
 
 ## Perfis de usuário
 

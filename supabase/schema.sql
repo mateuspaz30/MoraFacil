@@ -344,7 +344,7 @@ create table public.listings (
   type text not null check (type in ('venda', 'aluguel', 'terreno', 'ponto_comercial')),
   property_category text not null default 'casa' check (property_category in ('casa', 'apartamento', 'terreno', 'ponto_comercial')),
   purpose text not null default 'venda' check (purpose in ('venda', 'aluguel')),
-  status text not null default 'em_analise' check (status in ('em_analise', 'aprovado', 'reprovado', 'concluido')),
+  status text not null default 'em_analise' check (status in ('em_analise', 'aprovado', 'reprovado', 'concluido', 'pausado')),
   destaque_home boolean not null default false,
   ordem_destaque integer,
   constraint listings_featured_order_check check (
@@ -355,6 +355,7 @@ create table public.listings (
   price text not null,
   bedrooms integer not null default 0,
   bathrooms integer not null default 0,
+  parking_spaces integer not null default 0,
   area integer not null,
   city text not null default 'Ipuã-SP',
   cep text,
@@ -373,6 +374,13 @@ create table public.listings (
   whatsapp_clicks integer not null default 0 check (whatsapp_clicks >= 0),
   created_at timestamptz not null default now()
 );
+
+create index if not exists listings_status_created_at_idx
+  on public.listings (status, created_at desc);
+
+create index if not exists listings_home_featured_order_idx
+  on public.listings (ordem_destaque, id)
+  where status = 'aprovado' and destaque_home = true;
 
 create or replace function public.increment_listing_views(target_listing_id bigint)
 returns integer
@@ -584,3 +592,39 @@ drop trigger if exists listings_require_active_neighborhood on public.listings;
 create trigger listings_require_active_neighborhood
 before insert or update on public.listings
 for each row execute function public.require_active_listing_neighborhood();
+
+insert into storage.buckets (id, name, public)
+values ('property-images', 'property-images', true)
+on conflict (id) do update set public = true;
+
+create policy "Public can view property images"
+on storage.objects for select
+using (bucket_id = 'property-images');
+
+create policy "Authenticated users can upload their property images"
+on storage.objects for insert
+to authenticated
+with check (
+  bucket_id = 'property-images'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
+
+create policy "Users can update their property images"
+on storage.objects for update
+to authenticated
+using (
+  bucket_id = 'property-images'
+  and auth.uid()::text = (storage.foldername(name))[1]
+)
+with check (
+  bucket_id = 'property-images'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
+
+create policy "Users can delete their property images"
+on storage.objects for delete
+to authenticated
+using (
+  bucket_id = 'property-images'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);

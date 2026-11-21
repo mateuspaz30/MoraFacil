@@ -87,25 +87,23 @@ O Mora Fácil é um portal imobiliário voltado principalmente a Ipuã-SP. Ele p
 - Modo de demonstração local, com anúncios de exemplo e persistência de anúncios do usuário no `localStorage`.
 - Build e publicação automatizados no GitHub Pages.
 
-## Funcionalidades em desenvolvimento
+## Banco de dados e implantação
 
-O banco de cada ambiente existente precisa receber as migrações incrementais correspondentes. Para ativar favoritos em um banco existente, execute `supabase/migrations/20261120_create_favorites.sql` e `supabase/migrations/20261121_count_listing_favorites.sql` no SQL Editor do Supabase. Bancos novos também recebem a tabela, as políticas e a função pelo `supabase/schema.sql`.
+`supabase/schema.sql` representa o schema completo para um banco novo, incluindo recursos adicionados originalmente por migrações incrementais e a configuração do Storage de imagens. Bancos existentes ainda precisam receber as migrações que não foram aplicadas. A permissão inicial de administrador é provisionada separadamente por ambiente; não é atribuída automaticamente pelo schema-base.
 
 ## Pendências técnicas encontradas
 
-1. **Schema-base incompleto para vagas:** a aplicação lê e grava `parking_spaces`, e existe a migração `20260928_add_parking_spaces.sql`, mas `supabase/schema.sql` não declara essa coluna. Um banco recém-criado apenas com o schema-base pode falhar ao salvar ou exibir esse campo corretamente. Incluir a coluna no schema-base ou garantir/documentar a execução da migração.
-2. **Evolução manual do banco:** as alterações estão em arquivos SQL executados manualmente; não há configuração do Supabase CLI nem fluxo automatizado de aplicação/validação de migrações no repositório. Bancos locais, de teste e produção podem divergir.
-3. **Configuração de produção externa ao código:** o build precisa receber as variáveis do Supabase no ambiente de deploy. Sem elas, o modo local/demo é ativado, não sendo adequado para persistência de produção.
-4. **Provisionamento administrativo:** uma migração de administração associa um usuário inicial por e-mail fixo. Esse procedimento deve ser revisto e controlado para cada ambiente antes da implantação.
-5. **Testes automatizados ausentes:** `package.json` define `lint` e `build`, mas não há script ou suíte de testes automatizados configurados.
-6. **Concentração de responsabilidades:** `src/App.jsx` reúne muitos estados, efeitos, consultas e componentes/fluxos. Essa concentração aumenta o custo de manutenção e dificulta testar regras isoladamente.
-7. **Dependência de serviços externos no navegador:** a busca de CEP e geocodificação dependem de ViaCEP e Nominatim. Indisponibilidade, limites de uso ou mudanças desses serviços podem afetar o preenchimento do endereço e a localização.
+1. **Evolução manual do banco:** as alterações estão em arquivos SQL executados manualmente; não há configuração do Supabase CLI nem fluxo automatizado de aplicação/validação de migrações no repositório. Bancos locais, de teste e produção podem divergir.
+2. **Configuração de produção externa ao código:** o build precisa receber as variáveis do Supabase no ambiente de deploy. Sem elas, o modo local/demo é ativado, não sendo adequado para persistência de produção.
+3. **Provisionamento administrativo:** a permissão de administrador inicial deve ser configurada e controlada separadamente em cada ambiente.
+4. **Testes automatizados ausentes:** `package.json` define `lint` e `build`, mas não há script ou suíte de testes automatizados configurados.
+5. **Concentração de responsabilidades:** `src/App.jsx` reúne muitos estados, efeitos, consultas e componentes/fluxos. Essa concentração aumenta o custo de manutenção e dificulta testar regras isoladamente.
+6. **Dependência de serviços externos no navegador:** a busca de CEP e geocodificação dependem de ViaCEP e Nominatim. Indisponibilidade, limites de uso ou mudanças desses serviços podem afetar o preenchimento do endereço e a localização.
 
 ## Próximas melhorias recomendadas
 
-1. Sincronizar `supabase/schema.sql` com todas as colunas requeridas pela aplicação, especialmente `parking_spaces`, e validar a criação de um banco limpo.
-2. Adotar Supabase CLI e migrações versionadas/automatizadas para que a mesma sequência seja aplicada e validada em desenvolvimento, teste e produção.
-3. Documentar um checklist de implantação: variáveis de ambiente, confirmação de e-mail, provisionamento de administradores, execução das migrações e configuração de Storage/RLS.
-4. Criar testes focados para regras de filtragem, normalização de anúncios e fluxos críticos; incluir o lint (e os testes, quando disponíveis) na CI.
-5. Extrair componentes e hooks de autenticação, anúncios, moderação, bairros e mapas de `App.jsx`, preservando o comportamento atual e facilitando testes.
-6. Avaliar uma estratégia resiliente e compatível com as políticas dos serviços externos de CEP/geocodificação, com tratamento de indisponibilidade e limites de requisição.
+1. Adotar Supabase CLI e migrações versionadas/automatizadas para que a mesma sequência seja aplicada e validada em desenvolvimento, teste e produção.
+2. Documentar um checklist de implantação: variáveis de ambiente, confirmação de e-mail, provisionamento de administradores e execução das migrações para bancos existentes.
+3. Criar testes focados para regras de filtragem, normalização de anúncios e fluxos críticos; incluir o lint (e os testes, quando disponíveis) na CI.
+4. Extrair componentes e hooks de autenticação, anúncios, moderação, bairros e mapas de `App.jsx`, preservando o comportamento atual e facilitando testes.
+5. Avaliar uma estratégia resiliente e compatível com as políticas dos serviços externos de CEP/geocodificação, com tratamento de indisponibilidade e limites de requisição.
