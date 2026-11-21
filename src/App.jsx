@@ -1861,8 +1861,10 @@ function App() {
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
   const rejectedListings = userListings.filter((item) => getListingStatusKey(item) === 'rejected')
   const completedListings = userListings.filter((item) => getListingStatusKey(item) === 'completed')
-  const visibleAccountListings = accountFilter === 'review' && isAdmin
-    ? adminPendingListings
+  const visibleAccountListings = accountFilter === 'manage' && isAdmin
+    ? publishedListings
+    : accountFilter === 'review' && isAdmin
+      ? adminPendingListings
     : accountFilter === 'pending' ? pendingListings
     : accountFilter === 'published' ? activeListings
       : accountFilter === 'rejected' ? rejectedListings
@@ -2270,6 +2272,7 @@ function App() {
             {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
                 <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
+                {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'manage' ? ' active' : ''}`} onClick={() => setAccountFilter('manage')}>Gerenciar anúncios ({publishedListings.length})</button>}
                 <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
                 <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Publicados ({activeListings.length})</button>
                 <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
@@ -2279,7 +2282,7 @@ function App() {
               </div>
             </div>}
             {isStandardAccount && !(isAdmin && ['review', 'neighborhoods'].includes(accountFilter)) ? (
-              <div className="standard-account-dashboard">
+              <div className={`standard-account-dashboard${accountFilter === 'manage' ? ' admin-manage-all' : ''}`}>
                 <div className="standard-account-content">
                   {isAdmin && ownFeaturedListings.map((item) => (
                     <p className="moderation-message" role="status" key={item.id}>
@@ -2299,6 +2302,7 @@ function App() {
                         }
                       }}>
                         <option value="all">Todos os status</option>
+                        {isAdmin && <option value="manage">Gerenciar anúncios ({publishedListings.length})</option>}
                         <option value="published">Aprovados</option>
                         <option value="pending">Em análise</option>
                         <option value="rejected">Reprovados</option>
@@ -2317,7 +2321,7 @@ function App() {
                     </label>
                   </div>
                   {standardAccountListings.length === 0 ? (
-                    <div className="account-empty">{userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
+                    <div className="account-empty">{accountFilter === 'manage' ? 'Não há anúncios cadastrados para gerenciar.' : userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
                   ) : (
                     <div className="standard-listing-grid">
                       {standardAccountListings.map((item) => {
@@ -2416,7 +2420,7 @@ function App() {
                     </div>
                   )}
                 </div>
-                <aside className="standard-account-insights" aria-label="Resumo da sua conta">
+                {accountFilter !== 'manage' && <aside className="standard-account-insights" aria-label="Resumo da sua conta">
                   <section className="standard-account-insight-card">
                     <h2>Resumo Geral</h2>
                     <div><House size={22} aria-hidden="true" /><span>Imóveis cadastrados</span><strong>{userListings.length}</strong></div>
@@ -2436,7 +2440,7 @@ function App() {
                     <p><Check size={18} aria-hidden="true" />Complete a descrição</p>
                     <p><Check size={18} aria-hidden="true" />Atualize informações do imóvel</p>
                   </section>
-                </aside>
+                </aside>}
               </div>
             ) : isAdmin && accountFilter === 'neighborhoods' ? (
               <section className="neighborhood-manager" aria-label="Gerenciar bairros">
@@ -2474,7 +2478,7 @@ function App() {
             ) : isAdmin && accountFilter === 'review' && adminReviewError ? (
               <div className="account-empty" role="alert">{adminReviewError}</div>
             ) : visibleAccountListings.length === 0 ? (
-              <div className="account-empty">{accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
+              <div className="account-empty">{accountFilter === 'manage' ? 'Não há anúncios cadastrados para gerenciar.' : accountFilter === 'review' ? 'Não há anúncios aguardando análise.' : accountFilter === 'pending' ? 'Você não tem anúncios em análise.' : accountFilter === 'published' ? 'Você ainda não tem anúncios publicados.' : accountFilter === 'rejected' ? 'Você não tem anúncios reprovados.' : accountFilter === 'completed' ? 'Você não tem imóveis concluídos.' : 'Você ainda não cadastrou imóveis.'}</div>
             ) : isStandardAccount && isAdmin && accountFilter === 'review' ? (
               <div className="standard-account-dashboard admin-standard-review">
                 <div className="standard-account-content">

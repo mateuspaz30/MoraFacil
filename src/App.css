@@ -5859,6 +5859,10 @@ dl.my-area-profile-grid > div {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.standard-account-dashboard.admin-manage-all {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .standard-account-dashboard .account-dashboard-card.standard-listing-card {
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
