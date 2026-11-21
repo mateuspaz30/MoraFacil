@@ -178,6 +178,30 @@ const getRelativeAppPath = (pathname) => {
     ? pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '')
     : pathname.replace(/^\/+|\/+$/g, '')
 }
+const getAccountSectionFromPath = (pathname) => {
+  const [route, section] = decodeURIComponent(getRelativeAppPath(pathname))
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .split('/')
+  if (route !== 'minha-area') return null
+  if (section === 'meus-imoveis' || section === 'imoveis') return 'listings'
+  if (section === 'favoritos') return 'favorites'
+  if (section === 'minha-conta' || section === 'conta') return 'account'
+  if (section === 'administracao' || section === 'admin') return 'admin'
+  return 'overview'
+}
+const getAccountSectionPath = (section) => {
+  const sectionPaths = {
+    overview: '',
+    listings: 'meus-imoveis',
+    favorites: 'favoritos',
+    account: 'minha-conta',
+    admin: 'administração',
+  }
+  const sectionPath = sectionPaths[section]
+  return `${getAppBasePath()}minha-area${sectionPath ? `/${encodeURIComponent(sectionPath)}` : ''}`
+}
 const getAccountTypeLabel = (userType) => ({
   pessoa_fisica: 'Pessoa Física',
   corretor: 'Corretor',
@@ -623,7 +647,7 @@ function App() {
   const [profileEditForm, setProfileEditForm] = useState({})
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
-  const [accountSection, setAccountSection] = useState('overview')
+  const [accountSection, setAccountSection] = useState(() => getAccountSectionFromPath(window.location.pathname) || 'overview')
   const [recentListingsExpanded, setRecentListingsExpanded] = useState(false)
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
   const [authMode, setAuthMode] = useState('login')
@@ -672,7 +696,11 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const updateCurrentPath = () => setCurrentPath(window.location.pathname)
+    const updateCurrentPath = () => {
+      setCurrentPath(window.location.pathname)
+      const section = getAccountSectionFromPath(window.location.pathname)
+      if (section) setAccountSection(section)
+    }
     window.addEventListener('popstate', updateCurrentPath)
     return () => window.removeEventListener('popstate', updateCurrentPath)
   }, [])
@@ -680,17 +708,16 @@ function App() {
   const navigateToPath = (path) => {
     window.history.pushState({}, '', path)
     setCurrentPath(window.location.pathname)
+    const section = getAccountSectionFromPath(window.location.pathname)
+    if (section) setAccountSection(section)
   }
-  const openMyArea = (section = 'overview') => {
-    setAccountSection(section)
-    navigateToPath(`${getAppBasePath()}minha-area`)
-  }
+  const openMyArea = (section = 'overview') => navigateToPath(getAccountSectionPath(section))
   const closeAuthModal = () => {
     setAuthOpen(false)
     pendingFavoriteListingRef.current = null
     setFavoriteReturnPath('')
   }
-  const isMyAreaRoute = getRelativeAppPath(currentPath) === 'minha-area'
+  const isMyAreaRoute = getRelativeAppPath(currentPath).split('/')[0] === 'minha-area'
 
   useEffect(() => {
     if (!mapFullscreenOpen && !announcementMapFullscreenOpen) return undefined
@@ -2239,7 +2266,7 @@ function App() {
                       type="button"
                       className={visibleAccountSection === section ? 'active' : ''}
                       aria-current={visibleAccountSection === section ? 'page' : undefined}
-                      onClick={() => { setAccountSection(section); setProfileMessage(''); setFavoriteMessage('') }}
+                      onClick={() => { openMyArea(section); setProfileMessage(''); setFavoriteMessage('') }}
                     >
                       <span className="my-area-nav-icon" aria-hidden="true">
                         <Icon size={28} strokeWidth={2.2} />
