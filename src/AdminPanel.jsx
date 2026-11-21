@@ -130,7 +130,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
       <section className="admin-preview-modal" role="dialog" aria-modal="true" aria-labelledby="admin-preview-title">
         <header><h2 id="admin-preview-title">Visualização administrativa</h2><button type="button" aria-label="Fechar" onClick={onClose}><X size={22} /></button></header>
         <div className="admin-preview-content">
-          <StandardListingGallery listing={listing} purpose={purpose} />
+          <StandardListingGallery listing={listing} purpose={purpose} showThumbnails={false} />
           <div className="admin-preview-details">
             <span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" />{statusLabel(listing)}</span>
             <h3>{listing.title}</h3>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, House } from 'lucide-react'
 import { getListingPurposeLabel } from './listingPresentation.js'
 
-export default function StandardListingGallery({ listing, purpose }) {
+export default function StandardListingGallery({ listing, purpose, showThumbnails = true }) {
   const images = [...new Set([
     ...(Array.isArray(listing.images) ? listing.images : []),
     listing.image,
@@ -22,7 +22,7 @@ export default function StandardListingGallery({ listing, purpose }) {
           ? <img src={images[activeImageIndex]} alt={`${listing.title}, foto ${activeImageIndex + 1}`} />
           : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
         <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(listing).toLocaleUpperCase('pt-BR')}</span>
-        {images.length > 1 && (
+        {showThumbnails && images.length > 1 && (
           <>
             <button type="button" className="standard-listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}><ChevronLeft size={22} aria-hidden="true" /></button>
             <button type="button" className="standard-listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}><ChevronRight size={22} aria-hidden="true" /></button>
