@@ -1888,7 +1888,7 @@ function App() {
       || authUser?.email?.trim().toLowerCase() !== 'mateus_ipua@hotmail.com'
     ) return
 
-    console.info('[Minha Área diagnóstico]', {
+    const diagnostic = {
       isAdmin,
       authUserId: authUser.id,
       accountUserType,
@@ -1909,7 +1909,8 @@ function App() {
       adminReviewHasError: Boolean(adminReviewError),
       adminPendingListingsCount: adminPendingListings.length,
       renderedListingsBranch: accountLayoutDiagnostic,
-    })
+    }
+    console.info(`[Minha Área diagnóstico] ${JSON.stringify(diagnostic)}`)
   }, [
     accountFilter,
     accountLayoutDiagnostic,
