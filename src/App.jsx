@@ -1698,13 +1698,22 @@ function App() {
       if (data.status !== status) {
         throw new Error(`O banco manteve o status “${data.status || 'vazio'}” em vez de “${status}”.`)
       }
+      const { data: verifiedData, error: verificationError } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('id', listing.id)
+        .single()
+      if (verificationError) throw verificationError
+      if (verifiedData.status !== status) {
+        throw new Error(`A atualização foi aceita, mas o banco retornou “${verifiedData.status || 'vazio'}” ao confirmar.`)
+      }
       updatedListing = {
-        ...data,
-        coordinates: [data.latitude, data.longitude],
-        location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
-        area: formatArea(data.area),
-        parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
-        owner: data.user_id === authUser.id,
+        ...verifiedData,
+        coordinates: [verifiedData.latitude, verifiedData.longitude],
+        location: `${verifiedData.neighborhood}, ${verifiedData.city || 'Ipuã-SP'}`,
+        area: formatArea(verifiedData.area),
+        parking_spaces: Number(verifiedData.parking_spaces ?? verifiedData.garages) || 0,
+        owner: verifiedData.user_id === authUser.id,
       }
     } catch (error) {
       console.error('Falha ao atualizar status do anúncio:', error)
