@@ -255,6 +255,23 @@ function FilterIcon({ name }) {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.3" stroke="currentColor" strokeWidth="2" /><path d="m16.2 16.2 4.3 4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
 }
 
+const pauseListing = async (listing) => {
+  if (!window.confirm(`Pausar o anúncio “${listing.title}”? Ele deixará de aparecer publicamente.`)) return false
+  if (await changeListingStatus(listing, 'pausado')) {
+    setModerationMessage(`“${listing.title}” foi pausado.`)
+    return true
+  }
+  return false
+}
+
+const reactivateListing = async (listing) => {
+  if (await changeListingStatus(listing, 'aprovado')) {
+    setModerationMessage(`“${listing.title}” foi reativado e está publicado.`)
+    return true
+  }
+  return false
+}
+
 function FilterSelect({ id, label, value, options, onChange, emphasized = false, icon, fieldClassName = '' }) {
   const purposeFilterClass = id === 'search-type' && ['Venda', 'Aluguel'].includes(value)
     ? ` purpose-filter-${value === 'Aluguel' ? 'aluguel' : 'venda'}`
@@ -1635,18 +1652,26 @@ function App() {
   }
 
   const removeUserListing = async (id) => {
-    if (!window.confirm('Excluir este anúncio?')) return
+    if (!window.confirm('Excluir este anúncio? Esta ação não pode ser desfeita.')) return false
 
-    if (isSupabaseConfigured && authUser) {
-      const deleteQuery = supabase.from('listings').delete().eq('id', id)
-      if (!isAdmin) deleteQuery.eq('user_id', authUser.id)
-      await deleteQuery
+    try {
+      if (isSupabaseConfigured && authUser) {
+        const deleteQuery = supabase.from('listings').delete().eq('id', id)
+        if (!isAdmin) deleteQuery.eq('user_id', authUser.id)
+        const { error } = await deleteQuery
+        if (error) throw error
+      }
       setPublishedListings((current) => current.filter((item) => item.id !== id))
       setAdminReviewListings((current) => current.filter((item) => item.id !== id))
+      setFeaturedListings((current) => current.filter((item) => item.id !== id))
+      setUserListings((current) => current.filter((item) => item.id !== id))
+      if (selectedListing?.id === id) closeDetails()
+      return true
+    } catch (error) {
+      console.error('Falha ao excluir anúncio:', error)
+      setModerationMessage(`Não foi possível excluir o anúncio: ${error.message}`)
+      return false
     }
-
-    setUserListings((current) => current.filter((item) => item.id !== id))
-    if (selectedListing?.id === id) closeDetails()
   }
 
   const changeListingStatus = async (listing, status, motivoReprovacao = null) => {
@@ -1872,7 +1897,9 @@ function App() {
   const completeListing = async (listing) => {
     if (await changeListingStatus(listing, 'concluido')) {
       setModerationMessage(`“${listing.title}” foi marcado como concluído.`)
+      return true
     }
+    return false
   }
   
   useEffect(() => {
@@ -1925,6 +1952,7 @@ function App() {
     const status = String(item.status || '').trim().toLocaleLowerCase('pt-BR')
     if (status === 'em_analise' || status === 'em análise') return 'pending'
     if (status === 'reprovado') return 'rejected'
+    if (status === 'pausado') return 'paused'
     if (status === 'concluido' || status.includes('conclu') || status.includes('vend') || status.includes('expir')) return 'completed'
     return 'published'
   }
@@ -1932,11 +1960,13 @@ function App() {
     pending: 'Em análise',
     published: 'Publicado',
     rejected: 'Reprovado',
+    paused: 'Pausado',
     completed: 'Concluído',
   })[getListingStatusKey(item)]
   const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
   const adminPendingListings = isAdmin ? adminReviewListings : []
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
+  const pausedListings = userListings.filter((item) => getListingStatusKey(item) === 'paused')
   const rejectedListings = userListings.filter((item) => getListingStatusKey(item) === 'rejected')
   const completedListings = userListings.filter((item) => getListingStatusKey(item) === 'completed')
   const visibleAccountListings = accountFilter === 'manage' && isAdmin
@@ -1945,6 +1975,7 @@ function App() {
       ? adminPendingListings
     : accountFilter === 'pending' ? pendingListings
     : accountFilter === 'published' ? activeListings
+      : accountFilter === 'paused' ? pausedListings
       : accountFilter === 'rejected' ? rejectedListings
         : accountFilter === 'completed' ? completedListings : userListings
   const standardAccountListings = visibleAccountListings.filter((item) => (
@@ -2237,7 +2268,7 @@ function App() {
                               <tbody>
                                 {visibleRecentListings.map((item) => {
                                   const statusKey = getListingStatusKey(item)
-                                  const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Pendente' : 'Inativo'
+                                  const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Pendente' : statusKey === 'paused' ? 'Pausado' : 'Inativo'
                                   return (
                                     <tr key={item.id}>
                                       <td>
@@ -2282,6 +2313,10 @@ function App() {
                     usersActionId={adminUserActionId}
                     onApprove={approveListing}
                     onReject={rejectListing}
+                    onPause={pauseListing}
+                    onReactivate={reactivateListing}
+                    onComplete={completeListing}
+                    onDelete={(listing) => removeUserListing(listing.id)}
                     onEdit={openAnnouncementForm}
                     onToggleFeatured={toggleAdminFeatured}
                     onMoveFeatured={moveAdminFeatured}
@@ -2401,6 +2436,7 @@ function App() {
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'manage' ? ' active' : ''}`} onClick={() => setAccountFilter('manage')}>Gerenciar anúncios ({publishedListings.length})</button>}
                 <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
                 <button type="button" className={accountFilter === 'published' ? 'active' : ''} onClick={() => setAccountFilter('published')}>Publicados ({activeListings.length})</button>
+                <button type="button" className={accountFilter === 'paused' ? 'active' : ''} onClick={() => setAccountFilter('paused')}>Pausados ({pausedListings.length})</button>
                 <button type="button" className={accountFilter === 'rejected' ? 'active' : ''} onClick={() => setAccountFilter('rejected')}>Reprovados ({rejectedListings.length})</button>
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'review' ? ' active' : ''}`} onClick={() => setAccountFilter('review')}>Anúncios pendentes ({adminPendingListings.length})</button>}
@@ -2430,6 +2466,7 @@ function App() {
                         <option value="all">Todos os status</option>
                         {isAdmin && <option value="manage">Gerenciar anúncios ({publishedListings.length})</option>}
                         <option value="published">Aprovados</option>
+                        <option value="paused">Pausados</option>
                         <option value="pending">Em análise</option>
                         <option value="rejected">Reprovados</option>
                         <option value="completed">Concluídos</option>
@@ -2467,7 +2504,7 @@ function App() {
                         const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
                           ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
                           : 'Data não informada'
-                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : 'Concluído'
+                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : statusKey === 'paused' ? 'Pausado' : 'Concluído'
                         return (
                           <article key={item.id} className="account-dashboard-card standard-listing-card">
                             <StandardListingGallery listing={item} purpose={purpose} />

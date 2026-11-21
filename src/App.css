@@ -5092,6 +5092,11 @@
   color: #a56a00;
 }
 
+.my-area-listing-status.paused {
+  background: #e8eef8;
+  color: #4a6384;
+}
+
 .my-area-listing-status.rejected,
 .my-area-listing-status.completed {
   background: #fde7e7;
@@ -5569,6 +5574,11 @@ dl.my-area-profile-grid > div {
 .standard-listing-status.pending {
   background: #fff0c7;
   color: #a56a00;
+}
+
+.standard-listing-status.paused {
+  background: #e8eef8;
+  color: #4a6384;
 }
 
 .standard-listing-status.rejected,
@@ -6706,6 +6716,11 @@ dl.my-area-profile-grid > div {
 .admin-listing-card .standard-listing-status.pending {
   background: #fff5d8;
   color: #8a6500;
+}
+
+.admin-listing-card .standard-listing-status.paused {
+  background: #e8eef8;
+  color: #4a6384;
 }
 
 .admin-listing-card .standard-listing-status.rejected {

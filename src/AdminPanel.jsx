@@ -8,7 +8,9 @@ import {
   CircleCheck,
   Eye,
   MapPin,
+  Pause,
   Pencil,
+  Play,
   Plus,
   Search,
   Shield,
@@ -37,6 +39,7 @@ const statusKey = (listing) => {
   const status = String(listing.status || '').trim().toLocaleLowerCase('pt-BR')
   if (status === 'em_analise' || status === 'em análise') return 'pending'
   if (status === 'reprovado') return 'rejected'
+  if (status === 'pausado') return 'paused'
   if (status === 'concluido' || status.includes('conclu') || status.includes('vend') || status.includes('expir')) return 'completed'
   return 'approved'
 }
@@ -45,6 +48,7 @@ const statusLabel = (listing) => ({
   approved: 'Aprovado',
   pending: 'Pendente',
   rejected: 'Reprovado',
+  paused: 'Pausado',
   completed: 'Concluído',
 })[statusKey(listing)]
 
@@ -112,11 +116,12 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const purpose = getListingPurpose(listing)
-  const canModerate = statusKey(listing) === 'pending'
+  const listingStatus = statusKey(listing)
+  const canModerate = listingStatus === 'pending'
 
   const confirmReject = async () => {
     if (await onReject(listing, reason)) onClose()
@@ -146,6 +151,11 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
         <footer>
           <button type="button" onClick={() => onEdit(listing)}><Pencil size={16} />Editar anúncio</button>
           <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}><Star size={16} />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}</button>
+          {listingStatus === 'paused'
+            ? <button type="button" className="approve-listing-button" disabled={saving} onClick={async () => { if (await onReactivate(listing)) onClose() }}><Play size={16} />Reativar anúncio</button>
+            : listingStatus === 'approved' && <button type="button" disabled={saving} onClick={async () => { if (await onPause(listing)) onClose() }}><Pause size={16} />Pausar anúncio</button>}
+          {['approved', 'paused'].includes(listingStatus) && <button type="button" disabled={saving} onClick={async () => { if (await onComplete(listing)) onClose() }}><Check size={16} />Marcar concluído</button>}
+          <button type="button" className="reject-listing-button" disabled={saving} onClick={async () => { if (await onDelete(listing)) onClose() }}><Trash2 size={16} />Excluir anúncio</button>
           {canModerate && !rejecting && <button type="button" className="approve-listing-button" disabled={saving} onClick={confirmApprove}><Check size={16} />Aprovar</button>}
           {canModerate && !rejecting && <button type="button" className="reject-listing-button" onClick={() => setRejecting(true)}><X size={16} />Reprovar</button>}
           {rejecting && (
@@ -176,6 +186,10 @@ export default function AdminPanel({
   usersActionId,
   onApprove,
   onReject,
+  onPause,
+  onReactivate,
+  onComplete,
+  onDelete,
   onEdit,
   onToggleFeatured,
   onMoveFeatured,
@@ -215,6 +229,7 @@ export default function AdminPanel({
       || (listingFilter === 'approved' && statusKey(listing) === 'approved')
       || (listingFilter === 'pending' && statusKey(listing) === 'pending')
       || (listingFilter === 'rejected' && statusKey(listing) === 'rejected')
+      || (listingFilter === 'paused' && statusKey(listing) === 'paused')
     const owner = ownersById.get(listing.user_id)
     const query = search.trim().toLocaleLowerCase('pt-BR')
     const searchMatches = !query || [
@@ -295,7 +310,7 @@ export default function AdminPanel({
           <header className="admin-section-heading"><div><h2>Todos os Anúncios</h2><p>{filteredListings.length} anúncio{filteredListings.length === 1 ? '' : 's'}</p></div></header>
           <div className="admin-listing-tools">
             <label className="admin-search"><Search size={18} /><span className="sr-only">Buscar título, anunciante ou bairro</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, anunciante ou bairro" /></label>
-            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos</option><option value="approved">Aprovados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option></select></label>
+            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos</option><option value="approved">Aprovados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option><option value="paused">Pausados</option></select></label>
           </div>
           {renderListingCards(filteredListings, false)}
         </section>
@@ -368,7 +383,7 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} saving={featuredSavingId === previewListing.id} />}
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">

@@ -41,7 +41,7 @@ Em bancos existentes, execute [`supabase/migrations/20261010_create_managed_neig
 
 ## Administração
 
-Administradores acessam o módulo em “Minha Área” > “Administração”. As permissões continuam sendo determinadas pela função existente `is_admin()` e pelas policies atuais. Nenhuma migration adicional é necessária para o painel.
+Administradores acessam o módulo em “Minha Área” > “Administração”. As permissões continuam sendo determinadas pela função existente `is_admin()` e pelas policies atuais. Para habilitar a pausa de anúncios em bancos existentes, execute [`supabase/migrations/20261121_add_paused_listing_status.sql`](supabase/migrations/20261121_add_paused_listing_status.sql) no SQL Editor do Supabase. A migração apenas inclui `pausado` na restrição de status; não altera RLS nem policies.
 
 A tela “Usuários” lista contas e concede/remove permissões administrativas por meio da Edge Function protegida `admin-management`. Para bancos existentes, publique a função no projeto Supabase:
 
