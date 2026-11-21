@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, ChevronLeft, ChevronRight, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Shield, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -9,6 +9,8 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
+import AdminPanel from './AdminPanel.jsx'
+import StandardListingGallery from './StandardListingGallery.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
@@ -564,54 +566,6 @@ const FacebookIcon = () => (
   </svg>
 )
 
-function StandardListingGallery({ listing, purpose }) {
-  const images = [...new Set([
-    ...(Array.isArray(listing.images) ? listing.images : []),
-    listing.image,
-  ].filter(Boolean))]
-  const [imageIndex, setImageIndex] = useState(0)
-  const activeImageIndex = Math.min(imageIndex, Math.max(images.length - 1, 0))
-
-  const changeImage = (direction) => {
-    if (images.length < 2) return
-    setImageIndex((current) => (current + direction + images.length) % images.length)
-  }
-
-  return (
-    <div className="standard-listing-gallery">
-      <div className="standard-listing-gallery-main">
-        {images[activeImageIndex]
-          ? <img src={images[activeImageIndex]} alt={`${listing.title}, foto ${activeImageIndex + 1}`} />
-          : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
-        <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(listing).toLocaleUpperCase('pt-BR')}</span>
-        {images.length > 1 && (
-          <>
-            <button type="button" className="standard-listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}><ChevronLeft size={22} aria-hidden="true" /></button>
-            <button type="button" className="standard-listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}><ChevronRight size={22} aria-hidden="true" /></button>
-            <span className="standard-listing-gallery-count">{activeImageIndex + 1} / {images.length}</span>
-          </>
-        )}
-      </div>
-      {images.length > 1 && (
-        <div className="standard-listing-gallery-thumbnails" aria-label="Fotos do imóvel">
-          {images.slice(0, 6).map((image, index) => (
-            <button
-              type="button"
-              key={image}
-              className={index === activeImageIndex ? 'active' : ''}
-              aria-label={`Exibir foto ${index + 1}`}
-              aria-pressed={index === activeImageIndex}
-              onClick={() => setImageIndex(index)}
-            >
-              <img src={image} alt="" loading="lazy" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [mapFullscreenOpen, setMapFullscreenOpen] = useState(false)
@@ -627,6 +581,13 @@ function App() {
   const [adminReviewListings, setAdminReviewListings] = useState([])
   const [adminReviewLoading, setAdminReviewLoading] = useState(false)
   const [adminReviewError, setAdminReviewError] = useState('')
+  const [adminListingsError, setAdminListingsError] = useState('')
+  const [adminSection, setAdminSection] = useState('overview')
+  const [adminUsers, setAdminUsers] = useState([])
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false)
+  const [adminUsersError, setAdminUsersError] = useState('')
+  const [adminUsersMessage, setAdminUsersMessage] = useState('')
+  const [adminUserActionId, setAdminUserActionId] = useState(null)
   const [featuredListings, setFeaturedListings] = useState([])
   const [featuredListingsStatus, setFeaturedListingsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
   const [neighborhoods, setNeighborhoods] = useState(() => isSupabaseConfigured ? [] : defaultNeighborhoods)
@@ -792,6 +753,10 @@ function App() {
         setAdminReviewListings([])
         setAdminReviewError('')
         setAdminReviewLoading(false)
+        setAdminListingsError('')
+        setAdminUsers([])
+        setAdminUsersError('')
+        setAdminUsersMessage('')
         setFavoriteMessage('')
         setProfileEditing(false)
       }
@@ -974,6 +939,35 @@ function App() {
   }, [authUser, isAdmin])
 
   useEffect(() => {
+    if (!supabase || !authUser || !isAdmin || accountSection !== 'admin') return undefined
+
+    let active = true
+    const loadAdminUsers = async () => {
+      setAdminUsersLoading(true)
+      setAdminUsersError('')
+      try {
+        const { data, error } = await supabase.functions.invoke('admin-management', {
+          body: { action: 'list-users' },
+        })
+        if (error) throw error
+        if (!active) return
+        setAdminUsers((data?.users || []).map((user) => ({
+          ...user,
+          typeLabel: getAccountTypeLabel(user.userType) || 'Não informado',
+        })))
+      } catch (error) {
+        console.error('Falha ao carregar usuários para administração:', error)
+        if (active) setAdminUsersError(`Não foi possível carregar os usuários. Confirme se a Edge Function admin-management foi implantada. ${error.message}`)
+      } finally {
+        if (active) setAdminUsersLoading(false)
+      }
+    }
+
+    loadAdminUsers()
+    return () => { active = false }
+  }, [authUser, isAdmin, accountSection])
+
+  useEffect(() => {
     if (!isSupabaseConfigured) return
 
     const loadUserListings = async () => {
@@ -982,21 +976,26 @@ function App() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (!error) {
-        const normalizedListings = (data || []).map((item) => ({
-          ...item,
-          id: item.id,
-          coordinates: [item.latitude, item.longitude],
-          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
-          area: formatArea(item.area),
-          parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
-          owner: item.user_id === authUser?.id,
-        }))
-        setPublishedListings(normalizedListings)
-        setUserListings(authUser
-          ? normalizedListings.filter((item) => item.user_id === authUser.id)
-          : [])
+      if (error) {
+        console.error('Falha ao carregar os anúncios para a área administrativa:', error)
+        if (isAdmin) setAdminListingsError(`Não foi possível carregar todos os anúncios. ${error.message}`)
+        return
       }
+
+      setAdminListingsError('')
+      const normalizedListings = (data || []).map((item) => ({
+        ...item,
+        id: item.id,
+        coordinates: [item.latitude, item.longitude],
+        location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
+        area: formatArea(item.area),
+        parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
+        owner: item.user_id === authUser?.id,
+      }))
+      setPublishedListings(normalizedListings)
+      setUserListings(authUser
+        ? normalizedListings.filter((item) => item.user_id === authUser.id)
+        : [])
     }
 
     loadUserListings()
@@ -1488,33 +1487,6 @@ function App() {
     }
   }
 
-  const deleteNeighborhood = async (neighborhood) => {
-    if (!window.confirm(`Excluir o bairro “${neighborhood.name}”? Bairros vinculados a imóveis não podem ser excluídos; nesse caso, desative-o.`)) return
-
-    setNeighborhoodActionName(neighborhood.name)
-    setNeighborhoodManagerError('')
-    setNeighborhoodManagerMessage('')
-    try {
-      const { error } = await supabase.from('neighborhoods').delete().eq('name', neighborhood.name)
-      if (error) throw error
-      updateNeighborhoodList(neighborhoods.filter((item) => item.name !== neighborhood.name))
-      if (!editingListingId && announcement.neighborhood === neighborhood.name) {
-        setAnnouncement((current) => ({
-          ...current,
-          neighborhood: activeNeighborhoodNames.find((name) => name !== neighborhood.name) || '',
-        }))
-      }
-      setNeighborhoodManagerMessage(`Bairro “${neighborhood.name}” excluído.`)
-    } catch (error) {
-      console.error('Falha ao excluir bairro:', error)
-      setNeighborhoodManagerError(error.code === '23503'
-        ? `O bairro “${neighborhood.name}” está vinculado a um ou mais imóveis. Desative-o para removê-lo das opções.`
-        : `Não foi possível excluir o bairro. ${error.message}`)
-    } finally {
-      setNeighborhoodActionName(null)
-    }
-  }
-
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
     if (authMode === 'signup') {
@@ -1717,7 +1689,7 @@ function App() {
   }
 
   const saveFeaturedListing = async (event, listing, draft) => {
-    event.preventDefault()
+    event?.preventDefault()
     if (!isAdmin) return
     if (!supabase || !authUser) {
       setModerationMessage('Não foi possível salvar o destaque. Verifique a conexão com sua conta.')
@@ -1776,22 +1748,124 @@ function App() {
     }
   }
 
-  const approveListing = async (listing) => {
-    if (await changeListingStatus(listing, 'aprovado')) {
-      setModerationMessage(`“${listing.title}” foi aprovado e já está publicado.`)
+  const toggleAdminFeatured = (listing) => {
+    const nextFeatured = !listing.destaque_home
+    const nextOrder = nextFeatured
+      ? publishedListings.reduce((highest, candidate) => (
+        candidate.destaque_home
+          ? Math.max(highest, Number(candidate.ordem_destaque) || 0)
+          : highest
+      ), 0) + 1
+      : ''
+    return saveFeaturedListing(null, listing, {
+      destaqueHome: nextFeatured,
+      ordemDestaque: nextOrder,
+    })
+  }
+
+  const moveAdminFeatured = async (listing, adjacentListing) => {
+    if (!isAdmin || !supabase || !adjacentListing || listing.id === adjacentListing.id) return
+    const originalOrder = Number(listing.ordem_destaque)
+    const adjacentOrder = Number(adjacentListing.ordem_destaque)
+    if (!Number.isInteger(originalOrder) || !Number.isInteger(adjacentOrder)) {
+      setModerationMessage('Não foi possível reorganizar os destaques: confira a ordem cadastrada.')
+      return
+    }
+
+    setFeaturedSavingId(listing.id)
+    setModerationMessage('')
+    try {
+      const { error: firstError } = await supabase
+        .from('listings')
+        .update({ ordem_destaque: adjacentOrder })
+        .eq('id', listing.id)
+      if (firstError) throw firstError
+
+      const { error: secondError } = await supabase
+        .from('listings')
+        .update({ ordem_destaque: originalOrder })
+        .eq('id', adjacentListing.id)
+      if (secondError) {
+        const { error: rollbackError } = await supabase
+          .from('listings')
+          .update({ ordem_destaque: originalOrder })
+          .eq('id', listing.id)
+        throw new Error(rollbackError
+          ? `${secondError.message} A restauração da ordem anterior também falhou: ${rollbackError.message}`
+          : secondError.message)
+      }
+
+      setPublishedListings((current) => current.map((item) => (
+        item.id === listing.id ? { ...item, ordem_destaque: adjacentOrder }
+          : item.id === adjacentListing.id ? { ...item, ordem_destaque: originalOrder }
+            : item
+      )))
+      setUserListings((current) => current.map((item) => (
+        item.id === listing.id ? { ...item, ordem_destaque: adjacentOrder }
+          : item.id === adjacentListing.id ? { ...item, ordem_destaque: originalOrder }
+            : item
+      )))
+      setFeaturedListings((current) => current.map((item) => (
+        item.id === listing.id ? { ...item, ordem_destaque: adjacentOrder }
+          : item.id === adjacentListing.id ? { ...item, ordem_destaque: originalOrder }
+            : item
+      )))
+    } catch (error) {
+      console.error('Falha ao reorganizar os destaques da Home:', error)
+      setModerationMessage(`Não foi possível reorganizar os destaques. ${error.message}`)
+    } finally {
+      setFeaturedSavingId(null)
     }
   }
 
-  const rejectListing = async (listing) => {
-    const reason = rejectionReason.trim()
+  const approveListing = async (listing) => {
+    if (await changeListingStatus(listing, 'aprovado')) {
+      setModerationMessage(`“${listing.title}” foi aprovado e já está publicado.`)
+      return true
+    }
+    return false
+  }
+
+  const rejectListing = async (listing, submittedReason = rejectionReason) => {
+    const reason = submittedReason.trim()
     if (!reason) {
       setModerationMessage('Informe o motivo da reprovação para continuar.')
-      return
+      return false
     }
     if (await changeListingStatus(listing, 'reprovado', reason)) {
       setRejectionListingId(null)
       setRejectionReason('')
       setModerationMessage(`“${listing.title}” foi reprovado.`)
+      return true
+    }
+    return false
+  }
+
+  const toggleAdminPermission = async (user) => {
+    if (!supabase || !isAdmin || user.id === authUser?.id) return
+    setAdminUserActionId(user.id)
+    setAdminUsersError('')
+    setAdminUsersMessage('')
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-management', {
+        body: {
+          action: user.isAdmin ? 'remove-admin' : 'promote-admin',
+          targetUserId: user.id,
+        },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      setAdminUsers((current) => current.map((currentUser) => (
+        currentUser.id === user.id ? { ...currentUser, isAdmin: !user.isAdmin } : currentUser
+      )))
+      setAdminUsersMessage(user.isAdmin
+        ? `A permissão administrativa de ${user.name || user.email} foi removida.`
+        : `${user.name || user.email} agora é administrador.`)
+    } catch (error) {
+      console.error('Falha ao alterar permissão administrativa:', error)
+      setAdminUsersError(`Não foi possível alterar a permissão administrativa. ${error.message}`)
+    } finally {
+      setAdminUserActionId(null)
     }
   }
 
@@ -1828,7 +1902,11 @@ function App() {
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
   const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
-  const visibleAccountSection = isStandardAccount && !['account', 'favorites'].includes(accountSection) ? 'listings' : accountSection
+  const visibleAccountSection = isStandardAccount
+    && !['account', 'favorites'].includes(accountSection)
+    && !(isAdmin && accountSection === 'admin')
+    ? 'listings'
+    : accountSection
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -2061,8 +2139,9 @@ function App() {
                   <span className="my-area-avatar">{userFirstName.charAt(0)}</span>
                   <div><strong>{accountDisplayName}</strong><small>{getAccountTypeLabel(accountUserType)}</small></div>
                 </div>
-                <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}`}>
-                  {(isStandardAccount ? [
+                <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}${isAdmin ? ' with-admin' : ''}`}>
+                  {[
+                    ...(isStandardAccount ? [
                     ['listings', Building2, 'Meus Imóveis'],
                     ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
@@ -2071,7 +2150,9 @@ function App() {
                     ['listings', Building2, 'Meus Imóveis'],
                     ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
-                  ]).map(([section, Icon, label]) => (
+                    ]),
+                    ...(isAdmin ? [['admin', Shield, 'Administração']] : []),
+                  ].map(([section, Icon, label]) => (
                     <button
                       key={section}
                       type="button"
@@ -2093,8 +2174,8 @@ function App() {
               <main className="my-area-main">
                 <header className={`my-area-topbar${visibleAccountSection === 'overview' ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                    {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
-                    <h1>{visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
+                    {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
+                    <h1>{visibleAccountSection === 'admin' ? 'Administração' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
                     {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
                     {isStandardAccount && visibleAccountSection === 'listings' && <p>Você possui {activeListings.length} anúncio{activeListings.length === 1 ? '' : 's'} ativo{activeListings.length === 1 ? '' : 's'} e recebeu {totalListingViews} visualização{totalListingViews === 1 ? '' : 'ões'}.</p>}
                   </div>
@@ -2185,6 +2266,52 @@ function App() {
                     </section>
                     <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                   </>
+                )}
+                {visibleAccountSection === 'admin' && isAdmin && (
+                  <AdminPanel
+                    section={adminSection}
+                    onSectionChange={setAdminSection}
+                    listings={publishedListings}
+                    listingsError={adminListingsError}
+                    neighborhoods={neighborhoods}
+                    users={adminUsers}
+                    currentUserId={authUser.id}
+                    usersLoading={adminUsersLoading}
+                    usersError={adminUsersError}
+                    usersMessage={adminUsersMessage}
+                    onToggleAdmin={toggleAdminPermission}
+                    usersActionId={adminUserActionId}
+                    onApprove={approveListing}
+                    onReject={rejectListing}
+                    onEdit={openAnnouncementForm}
+                    onToggleFeatured={toggleAdminFeatured}
+                    onMoveFeatured={moveAdminFeatured}
+                    featuredSavingId={featuredSavingId}
+                    neighborhoodDraft={neighborhoodDraft}
+                    editingNeighborhoodName={editingNeighborhoodName}
+                    neighborhoodSaving={neighborhoodSaving}
+                    neighborhoodActionName={neighborhoodActionName}
+                    neighborhoodError={neighborhoodManagerError}
+                    neighborhoodMessage={neighborhoodManagerMessage}
+                    neighborhoodsError={neighborhoodsError}
+                    neighborhoodsStatus={neighborhoodsStatus}
+                    moderationMessage={moderationMessage}
+                    onNeighborhoodDraftChange={setNeighborhoodDraft}
+                    onNewNeighborhood={() => {
+                      setEditingNeighborhoodName(null)
+                      setNeighborhoodDraft('')
+                      setNeighborhoodManagerError('')
+                      setNeighborhoodManagerMessage('')
+                    }}
+                    onEditNeighborhood={(neighborhood) => {
+                      setEditingNeighborhoodName(neighborhood.name)
+                      setNeighborhoodDraft(neighborhood.name)
+                      setNeighborhoodManagerError('')
+                      setNeighborhoodManagerMessage('')
+                    }}
+                    onSaveNeighborhood={saveNeighborhood}
+                    onToggleNeighborhood={toggleNeighborhood}
+                  />
                 )}
                 {visibleAccountSection === 'account' && (
                   <section className="my-area-panel" aria-labelledby="my-area-account-title">
@@ -2466,7 +2593,6 @@ function App() {
                         <div className="neighborhood-manager-actions">
                           <button type="button" onClick={() => { setEditingNeighborhoodName(neighborhood.name); setNeighborhoodDraft(neighborhood.name); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Editar</button>
                           <button type="button" disabled={neighborhoodActionName === neighborhood.name} onClick={() => toggleNeighborhood(neighborhood)}>{neighborhoodActionName === neighborhood.name ? 'Aguarde…' : neighborhood.active ? 'Desativar' : 'Ativar'}</button>
-                          <button type="button" className="delete" disabled={neighborhoodActionName === neighborhood.name} onClick={() => deleteNeighborhood(neighborhood)}>Excluir</button>
                         </div>
                       </article>
                     ))}

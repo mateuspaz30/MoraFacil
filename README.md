@@ -33,11 +33,23 @@ Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_whats
 
 ## Anúncios em destaque na Home
 
-Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores podem selecionar anúncios publicados em “Meus Imóveis”, ativar “Destacar na página inicial” e definir sua ordem. Apenas anúncios aprovados e destacados aparecem no carrossel.
+Em bancos existentes, execute [`supabase/migrations/20261003_add_home_featured_listings.sql`](supabase/migrations/20261003_add_home_featured_listings.sql) no SQL Editor do Supabase. Administradores organizam os anúncios aprovados em “Minha Área” > “Administração” > “Destaques da Home”. Apenas anúncios aprovados e destacados aparecem no carrossel.
 
 ## Bairros controlados
 
-Em bancos existentes, execute [`supabase/migrations/20261010_create_managed_neighborhoods.sql`](supabase/migrations/20261010_create_managed_neighborhoods.sql) no SQL Editor do Supabase. A migração cria e preenche a tabela de bairros, associa os bairros existentes aos anúncios e impede novos anúncios com bairros ausentes ou inativos. Se houver anúncios sem bairro, preencha esse dado antes de executar a migração. Administradores gerenciam os bairros em “Meus Imóveis” > “Bairros”. Bairros vinculados a anúncios não podem ser excluídos; desative-os para impedir novos usos.
+Em bancos existentes, execute [`supabase/migrations/20261010_create_managed_neighborhoods.sql`](supabase/migrations/20261010_create_managed_neighborhoods.sql) no SQL Editor do Supabase. A migração cria e preenche a tabela de bairros, associa os bairros existentes aos anúncios e impede novos anúncios com bairros ausentes ou inativos. Se houver anúncios sem bairro, preencha esse dado antes de executar a migração. Administradores gerenciam bairros em “Minha Área” > “Administração” > “Gerenciar Bairros”; bairros são desativados, não excluídos.
+
+## Administração
+
+Administradores acessam o módulo em “Minha Área” > “Administração”. As permissões continuam sendo determinadas pela função existente `is_admin()` e pelas policies atuais. Nenhuma migration adicional é necessária para o painel.
+
+A tela “Usuários” lista contas e concede/remove permissões administrativas por meio da Edge Function protegida `admin-management`. Para bancos existentes, publique a função no projeto Supabase:
+
+```bash
+supabase functions deploy admin-management
+```
+
+A função valida cada chamada com a sessão autenticada e `is_admin()` antes de usar a chave de serviço no servidor. Nunca coloque `SUPABASE_SERVICE_ROLE_KEY` no frontend ou no repositório; configure-a apenas como segredo do projeto Supabase caso ela não esteja disponível como variável padrão da Edge Function.
 
 ## Verificação
 

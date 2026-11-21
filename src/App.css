@@ -6282,7 +6282,736 @@ dl.my-area-profile-grid > div {
   }
 
   .my-area-nav.standard-account {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.my-area-nav.with-admin {
+  margin-bottom: 12px;
+}
+
+.admin-panel {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+
+.admin-panel-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dfe7ef;
+}
+
+.admin-panel-nav button,
+.admin-listing-tools select,
+.admin-search,
+.admin-table-actions button,
+.admin-data-table tbody button,
+.admin-featured-row-actions button,
+.admin-featured-candidates button,
+.admin-section-heading > button {
+  min-height: 38px;
+  border: 1px solid #d8e2ed;
+  border-radius: 9px;
+  background: #fff;
+  color: #173a60;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-panel-nav button {
+  padding: 8px 13px;
+  cursor: pointer;
+}
+
+.admin-panel-nav button.active {
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.admin-panel-nav button:hover,
+.admin-table-actions button:hover,
+.admin-data-table tbody button:hover,
+.admin-featured-row-actions button:hover,
+.admin-featured-candidates button:hover {
+  border-color: #078c59;
+}
+
+.admin-stats-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-stats-grid .my-area-stat-card {
+  min-width: 0;
+}
+
+.admin-rejected-icon {
+  color: #dc3545;
+}
+
+.admin-neighborhood-icon {
+  color: #0a3d74;
+}
+
+.admin-recent-listings,
+.admin-section-content {
+  min-width: 0;
+}
+
+.admin-section-content {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-section-heading h2,
+.admin-available-featured-title {
+  margin: 0;
+  color: #0a3d74;
+}
+
+.admin-section-heading p {
+  margin: 5px 0 0;
+  color: #58728d;
+  font-size: 0.88rem;
+}
+
+.admin-section-heading > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.admin-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dfe7ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-data-table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+  color: #234667;
+}
+
+.admin-data-table th,
+.admin-data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8eef4;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-data-table th {
+  background: #f5f8fb;
+  color: #0a3d74;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.admin-data-table td {
+  font-size: 0.82rem;
+}
+
+.admin-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-data-table tbody button,
+.admin-table-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 5px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-neighborhood-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7785;
+}
+
+.admin-neighborhood-state::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a5b0bc;
+  content: "";
+}
+
+.admin-neighborhood-state.active::before {
+  background: #1c9a5c;
+}
+
+.admin-neighborhood-form {
+  padding: 14px;
+  border: 1px solid #dfe7ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-neighborhood-form > label {
+  color: #173a60;
+}
+
+.admin-neighborhood-form input {
+  min-height: 40px;
+  border-color: #d8e2ed;
+  color: #173a60;
+}
+
+.admin-neighborhood-form button {
+  min-height: 40px;
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.admin-neighborhood-form button.neighborhood-cancel {
+  border-color: #d8e2ed;
+  background: #fff;
+  color: #173a60;
+}
+
+.admin-listing-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+}
+
+.admin-search input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  outline: 0;
+  color: #173a60;
+  font: inherit;
+}
+
+.admin-listing-tools select {
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.admin-listing-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.account-dashboard-card.standard-listing-card.admin-listing-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px 22px;
+  padding: 12px;
+  border: 1px solid #dfe7ef;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(19, 57, 91, 0.07);
+}
+
+.admin-listing-card .standard-listing-gallery {
+  display: grid;
+  min-width: 0;
+  grid-row: 1 / span 2;
+  gap: 7px;
+}
+
+.admin-listing-card .standard-listing-gallery-main {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1.35;
+  border-radius: 10px;
+  background: #e7f4ff;
+}
+
+.admin-listing-card .standard-listing-gallery-main > img,
+.admin-listing-card .standard-listing-gallery-main > .standard-listing-image-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-listing-card .standard-listing-gallery-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.admin-listing-card .standard-listing-gallery-thumbnails button {
+  overflow: hidden;
+  aspect-ratio: 1.15;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: #e7f4ff;
+  cursor: pointer;
+}
+
+.admin-listing-card .standard-listing-gallery-thumbnails button.active {
+  border: 2px solid #0a3d74;
+}
+
+.admin-listing-card .standard-listing-gallery-thumbnails img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-listing-card .standard-listing-card-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 4px;
+  color: #173a60;
+}
+
+.admin-listing-card .standard-listing-card-body h3 {
+  margin: 0;
+  color: #0a3d74;
+  font-size: 1.12rem;
+}
+
+.admin-listing-card .standard-listing-location,
+.admin-listing-card .standard-listing-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #58728d;
+  font-size: 0.82rem;
+}
+
+.admin-listing-card .standard-listing-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-height: unset;
+  color: #58728d;
+  font-size: 0.8rem;
+}
+
+.admin-listing-card .standard-listing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #f0f3f6;
+  color: #516579;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-listing-card .standard-listing-status.approved {
+  background: #e8f7ef;
+  color: #167447;
+}
+
+.admin-listing-card .standard-listing-status.pending {
+  background: #fff5d8;
+  color: #8a6500;
+}
+
+.admin-listing-card .standard-listing-status.rejected {
+  background: #ffebed;
+  color: #b52e39;
+}
+
+.admin-listing-card .standard-listing-actions {
+  display: flex;
+  grid-column: 2;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 0 4px 5px;
+}
+
+.admin-listing-actions > button,
+.admin-preview-modal footer > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #d8e2ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #173a60;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-listing-actions > button:hover,
+.admin-preview-modal footer > button:hover {
+  border-color: #0a3d74;
+}
+
+.admin-listing-actions > button.is-featured,
+.admin-preview-modal footer > button.is-featured {
+  border-color: #e5b62a;
+  color: #8b6500;
+}
+
+.admin-listing-actions > button.approve-listing-button,
+.admin-preview-modal footer > button.approve-listing-button {
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.admin-listing-actions > button.reject-listing-button,
+.admin-preview-modal footer > button.reject-listing-button {
+  border-color: #dc3545;
+  background: #dc3545;
+  color: #fff;
+}
+
+.admin-listing-actions button:disabled,
+.admin-featured-row-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.admin-listing-rejection {
+  margin: 0;
+  color: #b52e39;
+  font-size: 0.8rem;
+}
+
+.admin-preview-backdrop {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 29, 49, 0.62);
+}
+
+.admin-preview-modal,
+.admin-user-preview {
+  width: min(840px, 100%);
+  max-height: min(90vh, 900px);
+  overflow-y: auto;
+  border: 1px solid #dfe7ef;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(4, 25, 45, 0.28);
+}
+
+.admin-preview-modal > header,
+.admin-user-preview > header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 19px;
+  border-bottom: 1px solid #e6edf4;
+  background: #fff;
+}
+
+.admin-preview-modal > header h2,
+.admin-user-preview > header h2 {
+  margin: 0;
+  color: #0a3d74;
+  font-size: 1.1rem;
+}
+
+.admin-preview-modal > header button,
+.admin-user-preview > header button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f5f8;
+  color: #173a60;
+  cursor: pointer;
+}
+
+.admin-preview-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 22px;
+  padding: 20px;
+}
+
+.admin-preview-content .standard-listing-gallery-main {
+  overflow: hidden;
+  aspect-ratio: 1.1;
+  border-radius: 12px;
+  background: #e7f4ff;
+}
+
+.admin-preview-content .standard-listing-gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-preview-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  color: #173a60;
+}
+
+.admin-preview-details h3 {
+  margin: 0;
+  color: #0a3d74;
+  font-size: 1.35rem;
+}
+
+.admin-preview-details > p {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: #58728d;
+  font-size: 0.88rem;
+}
+
+.admin-preview-details .admin-preview-description {
+  display: block;
+  line-height: 1.6;
+}
+
+.admin-preview-modal > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #e6edf4;
+}
+
+.admin-preview-modal .admin-rejection-form {
+  width: 100%;
+}
+
+.admin-user-preview {
+  width: min(540px, 100%);
+}
+
+.admin-user-preview dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 8px 20px 20px;
+}
+
+.admin-user-preview dl > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr);
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e8eef4;
+}
+
+.admin-user-preview dt {
+  color: #58728d;
+  font-weight: 700;
+}
+
+.admin-user-preview dd {
+  margin: 0;
+  color: #173a60;
+  overflow-wrap: anywhere;
+}
+
+.admin-featured-list,
+.admin-featured-candidates {
+  display: grid;
+  gap: 9px;
+}
+
+.admin-featured-row,
+.admin-featured-candidates > article {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #dfe7ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-featured-row > img,
+.admin-featured-row > .my-area-table-image-placeholder {
+  width: 74px;
+  height: 58px;
+  flex: 0 0 74px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.admin-featured-row > div:first-of-type,
+.admin-featured-candidates > article > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+  color: #173a60;
+}
+
+.admin-featured-row > div:first-of-type span,
+.admin-featured-candidates > article > div span {
+  color: #58728d;
+  font-size: 0.78rem;
+}
+
+.admin-featured-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.admin-featured-row-actions button,
+.admin-featured-candidates button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+
+.admin-available-featured-title {
+  margin: 10px 0 -7px;
+  font-size: 1rem;
+}
+
+.admin-featured-candidates > article {
+  justify-content: space-between;
+}
+
+.admin-featured-candidates button {
+  border-color: #e5b62a;
+  color: #8b6500;
+}
+
+@media (max-width: 900px) {
+  .admin-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .my-area-nav.with-admin {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-panel-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 9px;
+  }
+
+  .admin-panel-nav button {
+    flex: 0 0 auto;
+  }
+
+  .admin-listing-tools,
+  .admin-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-listing-tools select {
+    min-height: 40px;
+  }
+
+  .account-dashboard-card.standard-listing-card.admin-listing-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    padding: 9px;
+  }
+
+  .admin-listing-card .standard-listing-gallery {
+    grid-row: 1;
+  }
+
+  .admin-listing-card .standard-listing-card-body {
+    grid-row: 2;
+    padding: 12px 4px;
+  }
+
+  .admin-listing-card .standard-listing-actions {
+    grid-column: 1;
+    grid-row: 3;
+    padding: 4px;
+  }
+
+  .admin-preview-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .admin-preview-modal > footer {
+    padding: 12px 14px;
+  }
+
+  .admin-featured-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-featured-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-user-preview dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
   }
 
   .my-area-nav button {
