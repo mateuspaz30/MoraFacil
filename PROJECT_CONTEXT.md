@@ -81,6 +81,7 @@ O Mora Fácil é um portal imobiliário voltado principalmente a Ipuã-SP. Ele p
 - Carrossel de anúncios destacados na Home.
 - Cadastro e edição de anúncios com dados do imóvel, consulta de CEP, localização por endereço ou ajuste do marcador no mapa e galeria de até cinco fotos.
 - Cadastro/login de usuários e painel “Meus Imóveis” com estados em análise, publicados, reprovados e concluídos.
+- Área dedicada para imobiliárias com Dashboard de indicadores básicos, navegação própria e perfil público por slug; a RPC pública retorna apenas nome, cidade, descrição, logo, telefone e ID necessário para listar anúncios publicados.
 - Favoritos de anúncios para usuários autenticados, com corações na vitrine, nos cartões do mapa e nos detalhes, além da página “Favoritos” na Minha Área. Visitantes são convidados a entrar; a tabela usa RLS para isolar os favoritos por usuário.
 - Fluxo administrativo para aprovar/reprovar anúncios, registrar motivo de reprovação, marcar anúncio como concluído e ordenar destaques.
 - Gerenciamento administrativo de bairros, incluindo inclusão, edição, ativação/desativação e exclusão quando não há anúncios vinculados.

@@ -6286,6 +6286,521 @@ dl.my-area-profile-grid > div {
   min-width: 180px;
 }
 
+.my-area-layout.company-account {
+  grid-template-columns: 194px minmax(0, 1fr);
+}
+
+.my-area-layout.company-account .my-area-sidebar {
+  gap: 20px;
+  padding: 18px 12px;
+}
+
+.my-area-layout.company-account .my-area-brand {
+  gap: 8px;
+  padding: 0 6px;
+}
+
+.my-area-layout.company-account .my-area-brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.my-area-layout.company-account .my-area-user {
+  gap: 10px;
+  padding: 16px 3px;
+}
+
+.my-area-layout.company-account .my-area-nav {
+  gap: 7px;
+}
+
+.my-area-layout.company-account .my-area-nav button {
+  min-height: 42px;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.my-area-layout.company-account .my-area-nav-icon,
+.my-area-layout.company-account .my-area-nav-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.my-area-layout.company-account .my-area-main {
+  padding: 28px clamp(20px, 2.2vw, 34px) 48px;
+}
+
+.company-dashboard-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.company-dashboard-stats .my-area-stat-card {
+  min-width: 0;
+  min-height: 104px;
+  gap: 12px;
+  padding: 14px;
+}
+
+.company-dashboard-stats .my-area-stat-icon,
+.company-dashboard-stats .whatsapp-icon-card {
+  flex-basis: 54px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+}
+
+.company-dashboard-stats .my-area-stat-icon.company-active {
+  background: #e8f5ec;
+  color: #078c35;
+}
+
+.company-dashboard-stats .my-area-stat-icon.company-favorites {
+  background: #fff0ef;
+  color: #e32929;
+}
+
+.company-dashboard-stats .my-area-stat-card small {
+  color: #34445a;
+  font-size: 0.74rem;
+}
+
+.company-dashboard-stats .my-area-stat-card strong {
+  margin-top: 2px;
+  font-size: clamp(1.7rem, 2.4vw, 2.25rem);
+}
+
+.company-public-link,
+.company-profile-open-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: #078c35;
+  padding: 0 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.company-statistics-placeholder {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border: 1px solid #e1e9f1;
+  border-radius: 16px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
+}
+
+.company-statistics-icon {
+  display: grid;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 13px;
+  background: #e7f4ff;
+  color: #0a63bd;
+}
+
+.company-statistics-placeholder h2,
+.company-statistics-placeholder p {
+  margin: 0;
+}
+
+.company-statistics-placeholder h2 {
+  color: #12345a;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.company-statistics-placeholder p {
+  margin-top: 7px;
+  color: #647b92;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.company-profile-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 20px 0;
+  border: 1px solid #e1e9f1;
+  border-radius: 13px;
+  background: #f8fbfe;
+  padding: 18px;
+}
+
+.company-profile-logo-placeholder,
+.company-public-logo-placeholder {
+  display: grid;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 15px;
+  background: #8bea45;
+  color: #073a27;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.company-profile-preview > div {
+  display: grid;
+  gap: 5px;
+}
+
+.company-profile-preview strong {
+  color: #12345a;
+  font-size: 1.1rem;
+}
+
+.company-profile-preview span {
+  color: #647b92;
+  font-size: 0.82rem;
+}
+
+.company-profile-preview p {
+  margin: 3px 0 0;
+  color: #536b84;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.company-profile-open-button {
+  border: 1px solid #078c35;
+  border-radius: 9px;
+  background: #078c35;
+  color: #fff;
+  padding: 0 14px;
+  text-decoration: none;
+}
+
+.my-area-profile-grid .company-profile-description-field {
+  grid-column: 1 / -1;
+}
+
+.my-area-profile-grid textarea {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid #cbd9e7;
+  border-radius: 9px;
+  background: #fff;
+  color: #183553;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.86rem;
+  resize: vertical;
+}
+
+.my-area-profile-grid textarea:focus {
+  outline: 2px solid rgba(8, 140, 89, 0.18);
+  border-color: #078c59;
+}
+
+.company-public-page {
+  min-height: 100vh;
+  background: #f3f7fb;
+  color: #183553;
+  font-family: 'Inter', sans-serif;
+}
+
+.company-public-header {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #e1e9f1;
+  background: #fff;
+  padding: 12px max(22px, calc((100% - 1180px) / 2));
+}
+
+.company-public-brand,
+.company-public-portal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: #183553;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.company-public-brand {
+  font-size: 1.1rem;
+}
+
+.company-public-brand img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.company-public-brand span {
+  color: #078c35;
+}
+
+.company-public-portal-link {
+  color: #536b84;
+  font-size: 0.82rem;
+}
+
+.company-public-main {
+  width: min(1180px, calc(100% - 44px));
+  min-height: 45vh;
+  margin: 0 auto;
+  padding: 34px 0 56px;
+}
+
+.company-public-identity {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 26px;
+  border: 1px solid #e1e9f1;
+  border-radius: 18px;
+  background: #fff;
+  padding: clamp(20px, 3vw, 34px);
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
+}
+
+.company-public-logo,
+.company-public-identity > .company-public-logo-placeholder {
+  flex: 0 0 112px;
+  width: 112px;
+  height: 112px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.company-public-identity > .company-public-logo-placeholder {
+  font-size: 1.9rem;
+}
+
+.company-public-copy {
+  min-width: 0;
+}
+
+.company-public-eyebrow {
+  color: #078c35;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.company-public-copy h1 {
+  margin: 4px 0;
+  color: #12345a;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.company-public-city {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0 0;
+  color: #647b92;
+  font-size: 0.9rem;
+}
+
+.company-public-description {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: #536b84;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.company-public-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.company-public-whatsapp,
+.company-public-share {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #078c35;
+  border-radius: 9px;
+  background: #078c35;
+  color: #fff;
+  padding: 0 15px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.company-public-share {
+  border-color: #cbd9e7;
+  background: #fff;
+  color: #183553;
+  cursor: pointer;
+}
+
+.company-public-whatsapp.disabled {
+  border-color: #d7e0e9;
+  background: #f1f5f9;
+  color: #71849a;
+}
+
+.company-public-share-feedback {
+  display: block;
+  margin-top: 8px;
+  color: #078c35;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.company-public-feedback {
+  border: 1px solid #dce5ee;
+  border-radius: 12px;
+  background: #fff;
+  color: #536b84;
+  padding: 18px;
+}
+
+.company-public-feedback.error {
+  border-color: #f2c5c5;
+  background: #fff6f6;
+  color: #a12626;
+}
+
+@media (max-width: 1050px) {
+  .company-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .my-area-layout.company-account {
+    grid-template-columns: 1fr;
+  }
+
+  .my-area-layout.company-account .my-area-sidebar {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .my-area-layout.company-account .my-area-user {
+    display: none;
+  }
+
+  .my-area-layout.company-account .my-area-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .my-area-layout.company-account .my-area-nav button {
+    flex: 0 0 auto;
+  }
+
+  .my-area-layout.company-account .my-area-main {
+    padding: 22px 16px 36px;
+  }
+
+  .company-dashboard-stats .my-area-stat-card {
+    min-height: 90px;
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .company-dashboard-stats .my-area-stat-icon,
+  .company-dashboard-stats .whatsapp-icon-card {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .company-dashboard-stats .my-area-stat-icon svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .company-dashboard-stats .my-area-stat-card small {
+    font-size: 0.66rem;
+  }
+
+  .company-dashboard-stats .my-area-stat-card strong {
+    font-size: 1.55rem;
+  }
+
+  .company-public-header {
+    min-height: 64px;
+    padding: 10px 16px;
+  }
+
+  .company-public-main {
+    width: calc(100% - 28px);
+    padding: 20px 0 40px;
+  }
+
+  .company-public-identity {
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 14px;
+  }
+
+  .company-public-logo,
+  .company-public-identity > .company-public-logo-placeholder {
+    flex-basis: 68px;
+    width: 68px;
+    height: 68px;
+    border-radius: 13px;
+  }
+
+  .company-public-identity > .company-public-logo-placeholder {
+    font-size: 1.2rem;
+  }
+
+  .company-public-copy h1 {
+    font-size: 1.45rem;
+  }
+
+  .company-public-description {
+    font-size: 0.82rem;
+  }
+
+  .company-profile-preview {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .company-profile-preview .company-profile-logo-placeholder {
+    flex-basis: 56px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+  }
+
+  .my-area-profile-grid .company-profile-description-field {
+    grid-column: auto;
+  }
+}
+
 .my-area-guest-home {
   border: 0;
   background: transparent;

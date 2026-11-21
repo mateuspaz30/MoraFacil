@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Shield, Store, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -197,6 +197,9 @@ const getAccountSectionFromPath = (pathname) => {
   if (section === 'favoritos') return 'favorites'
   if (section === 'minha-conta' || section === 'conta') return 'account'
   if (section === 'administracao' || section === 'admin') return 'admin'
+  if (section === 'dashboard') return 'dashboard'
+  if (section === 'estatisticas') return 'statistics'
+  if (section === 'perfil-publico') return 'public-profile'
   return 'overview'
 }
 const getAccountSectionPath = (section) => {
@@ -206,10 +209,18 @@ const getAccountSectionPath = (section) => {
     favorites: 'favoritos',
     account: 'minha-conta',
     admin: 'administração',
+    dashboard: 'dashboard',
+    statistics: 'estatisticas',
+    'public-profile': 'perfil-publico',
   }
   const sectionPath = sectionPaths[section]
   return `${getAppBasePath()}minha-area${sectionPath ? `/${encodeURIComponent(sectionPath)}` : ''}`
 }
+const getCompanyPublicSlugFromPath = (pathname) => {
+  const [route, slug] = getRelativeAppPath(pathname).split('/')
+  return route === 'imobiliaria' ? decodeURIComponent(slug || '') : ''
+}
+const getCompanyPublicProfilePath = (slug) => `${getAppBasePath()}imobiliaria/${encodeURIComponent(slug)}`
 const getAccountTypeLabel = (userType) => ({
   pessoa_fisica: 'Pessoa Física',
   corretor: 'Corretor',
@@ -651,6 +662,8 @@ function App() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
   const [profileEditForm, setProfileEditForm] = useState({})
+  const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
+  const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [accountSection, setAccountSection] = useState(() => getAccountSectionFromPath(window.location.pathname) || 'overview')
@@ -815,19 +828,55 @@ function App() {
       try {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel')
+          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url')
           .eq('user_id', authUser.id)
           .maybeSingle()
         if (error) throw error
         if (mounted) setUserProfile(data)
       } catch (error) {
         console.error('Falha ao carregar os dados da conta:', error)
-        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira se a migração de perfis foi aplicada. ${error.message}`)
+        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil e, para imobiliárias, supabase/migrations/20261121_company_public_profiles.sql. ${error.message}`)
       }
     }
     loadUserProfile()
     return () => { mounted = false }
   }, [authUser])
+
+  useEffect(() => {
+    const slug = getCompanyPublicSlugFromPath(currentPath)
+    if (!slug || !supabase) return undefined
+
+    let active = true
+    const loadPublicCompanyProfile = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_public_company_profile', {
+          target_slug: slug,
+        })
+        if (error) throw error
+        if (!active) return
+        const profile = Array.isArray(data) ? data[0] : data
+        setPublicCompanyProfile({
+          slug,
+          status: profile ? 'loaded' : 'not-found',
+          data: profile || null,
+          error: '',
+        })
+      } catch (error) {
+        console.error('Falha ao carregar o perfil público da imobiliária:', error)
+        if (active) {
+          setPublicCompanyProfile({
+            slug,
+            status: 'error',
+            data: null,
+            error: `Não foi possível carregar este perfil público. Execute supabase/migrations/20261121_company_public_profiles.sql no Supabase. ${error.message}`,
+          })
+        }
+      }
+    }
+
+    loadPublicCompanyProfile()
+    return () => { active = false }
+  }, [currentPath])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -1643,6 +1692,8 @@ function App() {
     }
     if (accountUserType === 'imobiliaria') {
       updates.nome_responsavel = profileEditForm.responsibleName.trim()
+      updates.public_city = profileEditForm.publicCity.trim() || null
+      updates.public_description = profileEditForm.publicDescription.trim() || null
     }
 
     setProfileSaving(true)
@@ -1652,7 +1703,7 @@ function App() {
         .from('user_profiles')
         .update(updates)
         .eq('user_id', authUser.id)
-        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel')
+        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url')
         .maybeSingle()
       if (error) throw error
       if (!data) {
@@ -1681,6 +1732,8 @@ function App() {
       name: accountProfile.name,
       phone: formatPhone(accountProfile.phone),
       responsibleName: accountProfile.responsibleName,
+      publicCity: accountProfile.publicCity,
+      publicDescription: accountProfile.publicDescription,
     })
     setProfileEditing(true)
     setProfileMessage('')
@@ -2015,11 +2068,15 @@ function App() {
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
   const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
+  const isCompanyAccount = accountUserType === 'imobiliaria'
   const visibleAccountSection = isStandardAccount
     && !['account', 'favorites'].includes(accountSection)
     && !(isAdmin && accountSection === 'admin')
     ? 'listings'
-    : accountSection
+    : isCompanyAccount && accountSection === 'overview'
+      ? 'dashboard'
+      : accountSection
+  const isCompanyDashboard = isCompanyAccount && visibleAccountSection === 'dashboard'
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -2029,6 +2086,10 @@ function App() {
     creci: accountUserProfile?.creci || authUser?.user_metadata?.creci || '',
     phone: accountUserProfile?.telefone || authUser?.user_metadata?.telefone || '',
     companyName: accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || '',
+    publicSlug: accountUserProfile?.public_slug || '',
+    publicCity: accountUserProfile?.public_city || '',
+    publicDescription: accountUserProfile?.public_description || '',
+    publicLogoUrl: accountUserProfile?.public_logo_url || '',
     cnpj: accountUserProfile?.cnpj || authUser?.user_metadata?.cnpj || '',
     responsibleName: accountUserProfile?.nome_responsavel || authUser?.user_metadata?.nome_responsavel || '',
     email: authUser?.email || '',
@@ -2082,6 +2143,41 @@ function App() {
   const favoriteListings = favoriteListingIds
     .map((id) => publicPublishedListings.find((item) => String(item.id) === String(id)))
     .filter(Boolean)
+  const companyPublicRouteSlug = getCompanyPublicSlugFromPath(currentPath)
+  const activePublicCompanyProfile = publicCompanyProfile.slug === companyPublicRouteSlug
+    ? publicCompanyProfile
+    : {
+      slug: companyPublicRouteSlug,
+      status: companyPublicRouteSlug ? (supabase ? 'loading' : 'error') : 'idle',
+      data: null,
+      error: 'O perfil público da imobiliária precisa estar conectado ao Supabase.',
+    }
+  const companyPublicListings = activePublicCompanyProfile.data
+    ? publicPublishedListings
+      .filter((item) => item.user_id === activePublicCompanyProfile.data.user_id)
+      .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
+    : []
+  const shareCompanyPublicProfile = async () => {
+    setPublicProfileShareMessage('')
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: activePublicCompanyProfile.data?.company_name || 'Perfil da imobiliária',
+          url: window.location.href,
+        })
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(window.location.href)
+        setPublicProfileShareMessage('Link copiado.')
+      } else {
+        throw new Error('O compartilhamento não está disponível neste navegador.')
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Falha ao compartilhar o perfil público da imobiliária:', error)
+        setPublicProfileShareMessage('Não foi possível compartilhar o perfil agora.')
+      }
+    }
+  }
 
   const handleToggleFavorite = useCallback(async (listing) => {
     if (!authUser) {
@@ -2215,6 +2311,81 @@ function App() {
     )
   }
 
+  if (companyPublicRouteSlug) {
+    const company = activePublicCompanyProfile.data
+    const phoneDigits = String(company?.phone || '').replace(/\D/g, '')
+    const whatsappNumber = phoneDigits
+      ? phoneDigits.startsWith('55') ? phoneDigits : `55${phoneDigits}`
+      : ''
+    const companyCity = company?.city
+      || companyPublicListings[0]?.city
+      || 'Cidade não informada'
+
+    return (
+      <div className="company-public-page">
+        <header className="company-public-header">
+          <button type="button" className="company-public-brand" onClick={() => navigateToPath(getAppBasePath())}>
+            <img src={logo} alt="" />
+            <strong>Mora <span>Fácil</span></strong>
+          </button>
+          <button type="button" className="company-public-portal-link" onClick={() => navigateToPath(getAppBasePath())}>
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar ao portal
+          </button>
+        </header>
+        <main className="company-public-main">
+          {activePublicCompanyProfile.status === 'loading' ? (
+            <p className="company-public-feedback" role="status">Carregando perfil da imobiliária…</p>
+          ) : activePublicCompanyProfile.status === 'error' ? (
+            <p className="company-public-feedback error" role="alert">{activePublicCompanyProfile.error}</p>
+          ) : activePublicCompanyProfile.status === 'not-found' ? (
+            <p className="company-public-feedback" role="status">Este perfil público não foi encontrado ou ainda não está disponível.</p>
+          ) : company && (
+            <>
+              <section className="company-public-identity" aria-labelledby="company-public-name">
+                {company.logo_url ? (
+                  <img className="company-public-logo" src={company.logo_url} alt={`Logo de ${company.company_name}`} />
+                ) : (
+                  <span className="company-public-logo-placeholder" aria-hidden="true">
+                    {String(company.company_name || 'Imobiliária').slice(0, 2).toLocaleUpperCase('pt-BR')}
+                  </span>
+                )}
+                <div className="company-public-copy">
+                  <span className="company-public-eyebrow">Perfil da imobiliária</span>
+                  <h1 id="company-public-name">{company.company_name}</h1>
+                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{companyCity}</p>
+                  <p className="company-public-description">{company.description || 'Esta imobiliária ainda não adicionou uma descrição.'}</p>
+                  <div className="company-public-actions">
+                    {whatsappNumber ? (
+                      <a className="company-public-whatsapp" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">
+                        <WhatsAppIcon size={20} /> WhatsApp
+                      </a>
+                    ) : (
+                      <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
+                    )}
+                    <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
+                      <Share2 size={18} aria-hidden="true" /> Compartilhar
+                    </button>
+                  </div>
+                  {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
+                </div>
+              </section>
+              <ListingShowcase
+                listings={companyPublicListings}
+                heading={`Imóveis de ${company.company_name}`}
+                emptyMessage="Esta imobiliária ainda não possui imóveis publicados."
+                favoriteListingIds={favoriteListingIds}
+                favoriteActionId={favoriteActionId}
+                favoriteMessage={favoriteMessage}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            </>
+          )}
+        </main>
+        <SiteFooter />
+      </div>
+    )
+  }
+
   return (
     <div className="real-estate-shell">
       <header className="top-header hero-header">
@@ -2249,7 +2420,7 @@ function App() {
           <section className="account-popover account-page" aria-label="Minha Área">
             {authUser ? (
             <>
-            <div className={`my-area-layout${isStandardAccount ? ' standard-account' : ''}`}>
+            <div className={`my-area-layout${isStandardAccount ? ' standard-account' : ''}${isCompanyAccount ? ' company-account' : ''}`}>
               <aside className="my-area-sidebar" aria-label="Navegação da Minha Área">
                 <button type="button" className="my-area-brand" onClick={() => navigateToPath(getAppBasePath())}>
                   <img src={logo} alt="" />
@@ -2259,11 +2430,16 @@ function App() {
                   <span className="my-area-avatar">{userFirstName.charAt(0)}</span>
                   <div><strong>{accountDisplayName}</strong><small>{getAccountTypeLabel(accountUserType)}</small></div>
                 </div>
-                <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}${isAdmin ? ' with-admin' : ''}`}>
+                <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}${isCompanyAccount ? ' company-account' : ''}${isAdmin ? ' with-admin' : ''}`}>
                   {[
                     ...(isStandardAccount ? [
                     ['listings', Building2, 'Meus Imóveis'],
-                    ['favorites', Heart, 'Favoritos'],
+                    ['account', User, 'Minha Conta'],
+                  ] : isCompanyAccount ? [
+                    ['dashboard', House, 'Dashboard'],
+                    ['listings', Building2, 'Meus Imóveis'],
+                    ['statistics', ChartNoAxesColumn, 'Estatísticas'],
+                    ['public-profile', Globe2, 'Perfil Público'],
                     ['account', User, 'Minha Conta'],
                   ] : [
                     ['overview', House, 'Visão Geral'],
@@ -2292,18 +2468,44 @@ function App() {
                 </div>
               </aside>
               <main className="my-area-main">
-                <header className={`my-area-topbar${visibleAccountSection === 'overview' ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
+              <header className={`my-area-topbar${(visibleAccountSection === 'overview' || isCompanyDashboard) ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                    {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
-                    <h1>{visibleAccountSection === 'admin' ? 'Administração' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : 'Minha Conta'}</h1>
-                    {visibleAccountSection === 'overview' && <p>Olá, {accountDisplayName}. Acompanhe seus imóveis em um só lugar.</p>}
+                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyDashboard ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
+                  <h1>{visibleAccountSection === 'admin' ? 'Administração' : isCompanyDashboard ? 'Dashboard' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : visibleAccountSection === 'statistics' ? 'Estatísticas' : visibleAccountSection === 'public-profile' ? 'Perfil Público' : 'Minha Conta'}</h1>
+                  {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
                   </div>
                   <div className="my-area-topbar-actions">
-                    {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
+                  {isCompanyDashboard && accountProfile.publicSlug && <button type="button" className="company-public-link" onClick={() => navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
+                  {(visibleAccountSection === 'overview' || isCompanyDashboard || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
                   </div>
                 </header>
-                {visibleAccountSection === 'overview' && (
+              {(visibleAccountSection === 'overview' || isCompanyDashboard) && (
                   <>
+                  {isCompanyAccount ? (
+                    <>
+                      <section className="my-area-stats-grid company-dashboard-stats" aria-label="Indicadores básicos dos imóveis">
+                        <article className="my-area-stat-card">
+                          <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
+                          <div><small>Imóveis ativos</small><strong>{new Intl.NumberFormat('pt-BR').format(activeListings.length)}</strong></div>
+                        </article>
+                        <article className="my-area-stat-card">
+                          <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
+                          <div><small>Visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(totalListingViews)}</strong></div>
+                        </article>
+                        <article className="my-area-stat-card">
+                          <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
+                          <div><small>Cliques no WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)}</strong></div>
+                        </article>
+                        <article className="my-area-stat-card">
+                          <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
+                          <div><small>Favoritos recebidos</small><strong>{receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)}</strong></div>
+                        </article>
+                      </section>
+                      {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
+                      <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
+                    </>
+                  ) : (
+                    <>
                     <section className="my-area-stats-grid" aria-label="Resumo dos imóveis">
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
@@ -2384,7 +2586,40 @@ function App() {
                       )}
                     </section>
                     <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
+                      </>
+                    )}
                   </>
+                )}
+                {visibleAccountSection === 'statistics' && isCompanyAccount && (
+                  <section className="company-statistics-placeholder" aria-label="Estatísticas da imobiliária">
+                    <span className="company-statistics-icon"><ChartNoAxesColumn size={28} aria-hidden="true" /></span>
+                    <div>
+                      <h2>Estatísticas detalhadas em breve</h2>
+                      <p>Os indicadores básicos dos seus imóveis já estão disponíveis no Dashboard. A análise por período será adicionada em uma próxima etapa.</p>
+                    </div>
+                  </section>
+                )}
+                {visibleAccountSection === 'public-profile' && isCompanyAccount && (
+                  <section className="my-area-panel company-profile-settings" aria-labelledby="company-profile-settings-title">
+                    <div className="my-area-panel-heading">
+                      <div><h2 id="company-profile-settings-title">Seu perfil público</h2><p>Veja como sua imobiliária aparece para os visitantes.</p></div>
+                    </div>
+                    <div className="company-profile-preview">
+                      <span className="company-profile-logo-placeholder" aria-hidden="true">{accountProfile.companyName.slice(0, 2).toLocaleUpperCase('pt-BR') || 'MF'}</span>
+                      <div>
+                        <strong>{accountProfile.companyName || 'Nome da imobiliária'}</strong>
+                        <span>{accountProfile.publicCity || 'Cidade não informada'}</span>
+                        <p>{accountProfile.publicDescription || 'Adicione uma descrição para apresentar sua imobiliária aos visitantes.'}</p>
+                      </div>
+                    </div>
+                    {accountProfile.publicSlug ? (
+                      <button type="button" className="company-profile-open-button" onClick={() => navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))}>
+                        Abrir perfil público <ExternalLink size={17} aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <p className="my-area-feedback error" role="alert">O link público ainda não está disponível. Execute a migration supabase/migrations/20261121_company_public_profiles.sql no Supabase.</p>
+                    )}
+                  </section>
                 )}
                 {visibleAccountSection === 'admin' && isAdmin && (
                   <AdminPanel
@@ -2453,6 +2688,8 @@ function App() {
                             <label className="form-group my-area-readonly-field">Nome da Imobiliária 🔒<input value={accountProfile.companyName} readOnly aria-readonly="true" /></label>
                             <label className="form-group my-area-readonly-field">CNPJ 🔒<input value={formatCnpj(accountProfile.cnpj)} readOnly aria-readonly="true" /></label>
                             <label className="form-group">Responsável<input value={profileEditForm.responsibleName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, responsibleName: event.target.value }))} required /></label>
+                            <label className="form-group">Cidade do perfil público<input value={profileEditForm.publicCity || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicCity: event.target.value }))} placeholder="Ex.: Ipuã-SP" maxLength="100" /></label>
+                            <label className="form-group company-profile-description-field">Descrição pública<textarea value={profileEditForm.publicDescription || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDescription: event.target.value }))} placeholder="Apresente sua imobiliária aos visitantes." maxLength="500" rows="4" /></label>
                           </>
                         ) : (
                           <>
@@ -2475,6 +2712,8 @@ function App() {
                             <div><dt>Nome da Imobiliária</dt><dd>{accountProfile.companyName || 'Não informado'}</dd></div>
                             <div><dt>CNPJ 🔒</dt><dd>{formatCnpj(accountProfile.cnpj) || 'Não informado'}</dd></div>
                             <div><dt>Responsável</dt><dd>{accountProfile.responsibleName || 'Não informado'}</dd></div>
+                            <div><dt>Cidade do perfil público</dt><dd>{accountProfile.publicCity || 'Não informada'}</dd></div>
+                            <div><dt>Descrição pública</dt><dd>{accountProfile.publicDescription || 'Não informada'}</dd></div>
                           </>
                         ) : (
                           <>

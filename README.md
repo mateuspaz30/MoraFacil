@@ -27,7 +27,9 @@ A permissão inicial de administrador deve ser provisionada separadamente para a
 
 O cadastro permite escolher entre pessoa física, corretor e imobiliária. Para bancos existentes, execute [`supabase/migrations/20261119_add_user_profiles.sql`](supabase/migrations/20261119_add_user_profiles.sql), [`supabase/migrations/20261119_enable_user_profile_updates.sql`](supabase/migrations/20261119_enable_user_profile_updates.sql) e [`supabase/migrations/20261119_make_account_identifiers_immutable.sql`](supabase/migrations/20261119_make_account_identifiers_immutable.sql), nesta ordem, no SQL Editor do Supabase. As migrações criam os perfis vinculados às contas, validam CPF/CNPJ/CRECI, impedem duplicidades, permitem a edição de dados não permanentes e bloqueiam alterações de CPF, CNPJ, CRECI e e-mail.
 
-Usuários autenticados podem acessar a área pessoal em `/minha-area` para consultar seus imóveis e dados cadastrais.
+Usuários autenticados podem acessar a área pessoal em `/minha-area` para consultar seus imóveis e dados cadastrais. Pessoas físicas e corretores têm atalhos para “Meus Imóveis” e “Minha Conta”. Imobiliárias têm navegação própria com Dashboard, imóveis, estatísticas, perfil público e conta.
+
+Para bancos existentes, depois das migrações de perfil acima, execute [`supabase/migrations/20261121_company_public_profiles.sql`](supabase/migrations/20261121_company_public_profiles.sql). Ela cria o slug público da imobiliária, os campos de cidade/descrição/logo e a função `get_public_company_profile`, que disponibiliza apenas informações públicas sem expor CNPJ ou dados do responsável. A cidade e a descrição podem ser preenchidas em “Minha Área” > “Minha Conta”; logo e indicadores avançados permanecem para etapas futuras.
 
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_view_count.sql`](supabase/migrations/20261119_add_listing_view_count.sql) no SQL Editor do Supabase. A migração adiciona o contador de visualizações e a função atômica que o incrementa ao abrir os detalhes de um imóvel aprovado.
 
