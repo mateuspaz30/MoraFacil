@@ -255,22 +255,6 @@ function FilterIcon({ name }) {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.3" stroke="currentColor" strokeWidth="2" /><path d="m16.2 16.2 4.3 4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
 }
 
-const pauseListing = async (listing) => {
-  if (await changeListingStatus(listing, 'pausado')) {
-    setModerationMessage(`“${listing.title}” foi pausado.`)
-    return true
-  }
-  return false
-}
-
-const reactivateListing = async (listing) => {
-  if (await changeListingStatus(listing, 'aprovado')) {
-    setModerationMessage(`“${listing.title}” foi reativado e está publicado.`)
-    return true
-  }
-  return false
-}
-
 function FilterSelect({ id, label, value, options, onChange, emphasized = false, icon, fieldClassName = '' }) {
   const purposeFilterClass = id === 'search-type' && ['Venda', 'Aluguel'].includes(value)
     ? ` purpose-filter-${value === 'Aluguel' ? 'aluguel' : 'venda'}`
@@ -1736,6 +1720,22 @@ function App() {
     })
     setStatusSavingId(null)
     return true
+  }
+
+  const pauseListing = async (listing) => {
+    if (await changeListingStatus(listing, 'pausado')) {
+      setModerationMessage(`“${listing.title}” foi pausado.`)
+      return true
+    }
+    return false
+  }
+
+  const reactivateListing = async (listing) => {
+    if (await changeListingStatus(listing, 'aprovado')) {
+      setModerationMessage(`“${listing.title}” foi reativado e está publicado.`)
+      return true
+    }
+    return false
   }
 
   const saveFeaturedListing = async (event, listing, draft) => {
