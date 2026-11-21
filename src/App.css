@@ -6021,37 +6021,6 @@ dl.my-area-profile-grid > div {
   margin-top: auto;
 }
 
-.standard-account-dashboard .standard-listing-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 18px;
-  padding-top: 5px;
-  color: #66809b;
-  font-size: 0.76rem;
-}
-
-.standard-account-dashboard .standard-listing-metrics > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.standard-account-dashboard .standard-listing-metrics svg {
-  flex: 0 0 auto;
-  color: #0a3d74;
-}
-
-.standard-account-dashboard .standard-listing-metrics .whatsapp-icon-card {
-  display: inline-flex;
-  color: #25d366;
-}
-
-.standard-account-dashboard .standard-listing-metrics strong {
-  color: #12345a;
-  font-size: 0.82rem;
-}
-
 .standard-account-dashboard .standard-listing-actions {
   grid-column: 2;
   grid-row: 2;
