@@ -6020,6 +6020,33 @@ dl.my-area-profile-grid > div {
   padding: 0 3px 4px;
 }
 
+.standard-account-dashboard .moderation-message {
+  border-color: #b7e5c8;
+  background: #eaf8ef;
+  color: #176b3e;
+}
+
+.standard-account-dashboard .standard-listing-actions .admin-featured-controls {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.standard-account-dashboard .standard-listing-actions .admin-featured-order {
+  grid-column: 1;
+}
+
+.standard-account-dashboard .standard-listing-actions .admin-featured-controls button {
+  grid-column: 2;
+  min-height: 30px;
+  border-color: #078c59;
+  background: #078c59;
+  white-space: nowrap;
+}
+
+.standard-account-dashboard .standard-listing-actions .admin-featured-controls button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .standard-account-dashboard .standard-listing-view,
 .standard-account-dashboard .standard-listing-edit,
 .standard-account-dashboard .standard-listing-menu-trigger {

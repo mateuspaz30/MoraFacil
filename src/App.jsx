@@ -1827,7 +1827,7 @@ function App() {
   })()
   const accountUserProfile = userProfile?.user_id === authUser?.id ? userProfile : null
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
-  const isStandardAccount = !isAdmin && ['pessoa_fisica', 'corretor'].includes(accountUserType)
+  const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
   const visibleAccountSection = isStandardAccount && !['account', 'favorites'].includes(accountSection) ? 'listings' : accountSection
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
@@ -2261,13 +2261,13 @@ function App() {
                         <p>Gerencie seus anúncios e acompanhe o status de cada imóvel.</p>
                       </div>
                     )}
-            {!isStandardAccount && ownFeaturedListings.map((item) => (
+            {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && ownFeaturedListings.map((item) => (
               <p className="moderation-message" role="status" key={item.id}>
                 Seu anúncio “{item.title}” está destacado na posição {item.ordem_destaque} da Home.
               </p>
             ))}
-            {!isStandardAccount && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
-            {!isStandardAccount && <div className="account-dashboard-toolbar">
+            {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
+            {(!isStandardAccount || (isAdmin && ['review', 'neighborhoods'].includes(accountFilter))) && <div className="account-dashboard-toolbar">
               <div className="account-filter-tabs" role="tablist" aria-label="Filtrar imóveis">
                 <button type="button" className={accountFilter === 'all' ? 'active' : ''} onClick={() => setAccountFilter('all')}>Todos ({userListings.length})</button>
                 <button type="button" className={accountFilter === 'pending' ? 'active' : ''} onClick={() => setAccountFilter('pending')}>Em análise ({pendingListings.length})</button>
@@ -2278,18 +2278,33 @@ function App() {
                 {isAdmin && <button type="button" className={`admin-review-tab${accountFilter === 'neighborhoods' ? ' active' : ''}`} onClick={() => { setAccountFilter('neighborhoods'); setNeighborhoodManagerError(''); setNeighborhoodManagerMessage('') }}>Bairros</button>}
               </div>
             </div>}
-            {isStandardAccount ? (
+            {isStandardAccount && !(isAdmin && ['review', 'neighborhoods'].includes(accountFilter)) ? (
               <div className="standard-account-dashboard">
                 <div className="standard-account-content">
+                  {isAdmin && ownFeaturedListings.map((item) => (
+                    <p className="moderation-message" role="status" key={item.id}>
+                      Seu anúncio “{item.title}” está destacado na posição {item.ordem_destaque} da Home.
+                    </p>
+                  ))}
+                  {isAdmin && moderationMessage && <p className="moderation-message" role="status">{moderationMessage}</p>}
                   <div className="my-area-listings-filters" aria-label="Filtros de imóveis">
                     <label>
-                      <span className="sr-only">Filtrar por status</span>
-                      <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
+                      <span className="sr-only">{isAdmin ? 'Filtrar por status ou recurso administrativo' : 'Filtrar por status'}</span>
+                      <select value={accountFilter} onChange={(event) => {
+                        const nextFilter = event.target.value
+                        setAccountFilter(nextFilter)
+                        if (nextFilter === 'neighborhoods') {
+                          setNeighborhoodManagerError('')
+                          setNeighborhoodManagerMessage('')
+                        }
+                      }}>
                         <option value="all">Todos os status</option>
                         <option value="published">Aprovados</option>
                         <option value="pending">Em análise</option>
                         <option value="rejected">Reprovados</option>
                         <option value="completed">Concluídos</option>
+                        {isAdmin && <option value="review">Anúncios pendentes ({adminPendingListings.length})</option>}
+                        {isAdmin && <option value="neighborhoods">Gerenciar bairros</option>}
                       </select>
                     </label>
                     <label>
@@ -2309,6 +2324,16 @@ function App() {
                         const statusKey = getListingStatusKey(item)
                         const purpose = getListingPurpose(item)
                         const propertyType = getListingPropertyType(item)
+                        const featuredDraft = featuredDrafts[item.id] || {
+                          destaqueHome: item.destaque_home === true,
+                          ordemDestaque: item.ordem_destaque == null ? '' : String(item.ordem_destaque),
+                        }
+                        const updateFeaturedDraft = (updates) => {
+                          setFeaturedDrafts((current) => ({
+                            ...current,
+                            [item.id]: { ...featuredDraft, ...updates },
+                          }))
+                        }
                         const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
                           ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
                           : 'Data não informada'
@@ -2330,6 +2355,49 @@ function App() {
                               <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
                             </div>
                             <div className="standard-listing-actions">
+                              {isAdmin && (
+                                <form className="admin-featured-controls" onSubmit={(event) => saveFeaturedListing(event, item, featuredDraft)}>
+                                  <label className="admin-featured-toggle" htmlFor={`featured-home-${item.id}`}>
+                                    <input
+                                      id={`featured-home-${item.id}`}
+                                      type="checkbox"
+                                      checked={featuredDraft.destaqueHome}
+                                      onChange={(event) => {
+                                        const isFeatured = event.target.checked
+                                        const nextOrder = publishedListings.reduce((highest, candidate) => (
+                                          candidate.destaque_home === true
+                                            ? Math.max(highest, Number(candidate.ordem_destaque) || 0)
+                                            : highest
+                                        ), 0) + 1
+                                        updateFeaturedDraft({
+                                          destaqueHome: isFeatured,
+                                          ordemDestaque: isFeatured
+                                            ? featuredDraft.ordemDestaque || String(nextOrder)
+                                            : '',
+                                        })
+                                      }}
+                                    />
+                                    <span>⭐ Destacar na página inicial</span>
+                                  </label>
+                                  {featuredDraft.destaqueHome && (
+                                    <label className="admin-featured-order" htmlFor={`featured-order-${item.id}`}>
+                                      Ordem do destaque
+                                      <input
+                                        id={`featured-order-${item.id}`}
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={featuredDraft.ordemDestaque}
+                                        onChange={(event) => updateFeaturedDraft({ ordemDestaque: event.target.value })}
+                                        required
+                                      />
+                                    </label>
+                                  )}
+                                  <button type="submit" disabled={featuredSavingId === item.id}>
+                                    {featuredSavingId === item.id ? 'Salvando…' : 'Salvar destaque'}
+                                  </button>
+                                </form>
+                              )}
                               {statusKey === 'published' && <button type="button" className="standard-listing-view" onClick={() => navigateToPath(`${getAppBasePath()}imovel/${encodeURIComponent(getListingSlug(item))}/`)}><ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />Ver anúncio</button>}
                               <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={17} strokeWidth={2.2} aria-hidden="true" />Editar imóvel</button>
                               <div className="standard-listing-menu-wrap">
