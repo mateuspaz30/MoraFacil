@@ -6021,20 +6021,55 @@ dl.my-area-profile-grid > div {
   margin-top: auto;
 }
 
-.standard-account-dashboard .standard-listing-card-body > .account-card-views,
-.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp {
-  justify-content: flex-end;
+.standard-listing-engagement {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
-  margin: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f0f4f8;
 }
 
-.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp .whatsapp-icon-card {
+.standard-listing-engagement-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  color: #0a3d74;
+}
+
+.standard-listing-engagement-item + .standard-listing-engagement-item {
+  border-left: 1px solid #d5e0eb;
+}
+
+.standard-listing-engagement-item > svg {
   flex: 0 0 auto;
+  color: #0a3d74;
 }
 
-.standard-account-dashboard .standard-listing-card-body > .account-card-views strong,
-.standard-account-dashboard .standard-listing-card-body > .account-card-whatsapp strong {
-  margin-left: 0;
+.standard-listing-engagement-item.whatsapp > svg {
+  color: #25d366;
+}
+
+.standard-listing-engagement-item > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.standard-listing-engagement-item strong {
+  color: #12345a;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.standard-listing-engagement-item span {
+  overflow: hidden;
+  color: #66809b;
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .standard-account-dashboard .standard-listing-actions {

@@ -2483,8 +2483,16 @@ function App() {
                               </div>
                               <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
                               <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
-                              <p className="account-card-views"><span aria-hidden="true"><Eye size={16} /></span> Visualizações <strong>{Number(item.visualizacoes) || 0}</strong></p>
-                              <p className="account-card-whatsapp"><span className="whatsapp-icon-card compact" aria-hidden="true"><WhatsAppIcon size={17} /></span> Cliques WhatsApp <strong>{Number(item.whatsapp_clicks) || 0}</strong></p>
+                              <div className="standard-listing-engagement" aria-label="Métricas deste imóvel">
+                                <div className="standard-listing-engagement-item">
+                                  <Eye size={23} strokeWidth={2.2} aria-hidden="true" />
+                                  <div><strong>{Number(item.visualizacoes) || 0}</strong><span>visualizações</span></div>
+                                </div>
+                                <div className="standard-listing-engagement-item whatsapp">
+                                  <WhatsAppIcon size={25} />
+                                  <div><strong>{Number(item.whatsapp_clicks) || 0}</strong><span>cliques no WhatsApp</span></div>
+                                </div>
+                              </div>
                             </div>
                             <div className="standard-listing-actions">
                               {isAdmin && (
