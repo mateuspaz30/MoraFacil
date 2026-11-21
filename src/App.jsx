@@ -14,7 +14,7 @@ import StandardListingGallery from './StandardListingGallery.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { FavoriteButton, getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
+import { FavoriteButton, getListingDetailUrl, getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -505,7 +505,7 @@ function MapListingPopup({ listing }) {
   const bedrooms = Number(listing.bedrooms) || 0
   const bathrooms = Number(listing.bathrooms) || 0
   const parking = Number(listing.parking_spaces || listing.garages) || 0
-  const detailUrl = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/`
+  const detailUrl = getListingDetailUrl(listing)
   const purpose = getListingPurpose(listing)
   const purposeLabel = getListingPurposeLabel(listing)
   const propertyType = getListingPropertyType(listing)
@@ -2200,7 +2200,10 @@ function App() {
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
-    const routeListing = listings.find((item) => getListingSlug(item) === routeSlug)
+    const routeListingId = new URLSearchParams(window.location.search).get('id')
+    const routeListing = routeListingId
+      ? listings.find((item) => String(item.id) === routeListingId && getListingSlug(item) === routeSlug)
+      : listings.find((item) => getListingSlug(item) === routeSlug)
     if (routeListing) return (
       <ListingDetailPage
         listing={routeListing}
@@ -2652,7 +2655,7 @@ function App() {
                                   </button>
                                 </form>
                               )}
-                              {statusKey === 'published' && <button type="button" className="standard-listing-view" onClick={() => navigateToPath(`${getAppBasePath()}imovel/${encodeURIComponent(getListingSlug(item))}/`)}><ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />Ver anúncio</button>}
+                              {statusKey === 'published' && <button type="button" className="standard-listing-view" onClick={() => navigateToPath(getListingDetailUrl(item))}><ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />Ver anúncio</button>}
                               <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={17} strokeWidth={2.2} aria-hidden="true" />Editar imóvel</button>
                               <div className="standard-listing-menu-wrap">
                                 <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} aria-hidden="true" /></button>
@@ -3096,7 +3099,7 @@ function App() {
               </div>
             </div>
             <a
-              href={`${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(activeHeroListing))}/`}
+              href={getListingDetailUrl(activeHeroListing)}
               className="hero-listing-cta"
             >
               <span className="hero-cta-desktop">Saiba mais</span>

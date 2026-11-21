@@ -35,6 +35,10 @@ export const getListingSlug = (listing) => slugify([
   getCityLabel(listing.city),
 ].filter(Boolean).join('-'))
 
+export const getListingDetailUrl = (listing) => (
+  `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/?id=${encodeURIComponent(String(listing.id))}`
+)
+
 export const getListingLocation = (listing) => {
   const city = getCityLabel(listing.city)
   const cityName = city.replace(/-SP$/i, '')
@@ -236,8 +240,7 @@ export function ListingShowcase({
         ? emptyMessage && <p className="favorite-empty">{emptyMessage}</p>
         : <div className="property-showcase-grid" id="imoveis-disponiveis">
         {listings.map((listing) => {
-          const slug = getListingSlug(listing)
-          const url = `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(slug)}/`
+          const url = getListingDetailUrl(listing)
           const purpose = getListingPurpose(listing)
           const purposeLabel = getListingPurposeLabel(listing)
           const propertyType = getListingPropertyType(listing)
@@ -246,6 +249,10 @@ export function ListingShowcase({
           const bedrooms = Number(listing.bedrooms) || 0
           const bathrooms = Number(listing.bathrooms) || 0
           const parking = Number(listing.parking_spaces || listing.garages) || 0
+          const logListingOpen = () => {
+            console.log('Card:', listing.id, listing.title)
+            console.log('Abrindo:', listing.id)
+          }
 
           return (
             <article className="showcase-property-card account-dashboard-card standard-listing-card" key={listing.id}>
@@ -275,7 +282,7 @@ export function ListingShowcase({
                   <p className="showcase-property-date standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
                 </div>
               </a>
-              <a className="showcase-property-cta" href={url}>Saiba Mais <span aria-hidden="true">→</span></a>
+              <a className="showcase-property-cta" href={url} onClick={logListingOpen}>Saiba Mais <span aria-hidden="true">→</span></a>
             </article>
           )
         })}
