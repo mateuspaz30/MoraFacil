@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bath, BedDouble, Building2, CalendarDays, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
 import './ListingShowcase.css'
-import { getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
+import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
+import ListingPhotoCount from './ListingPhotoCount.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 
@@ -170,10 +171,7 @@ const openTrackedContact = async (event, onTrack) => {
 }
 
 function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite, isBusy, onToggleFavorite }) {
-  const images = [...new Set([
-    ...(Array.isArray(listing.images) ? listing.images : []),
-    listing.image,
-  ].filter(Boolean))]
+  const images = getListingImages(listing)
   const [imageIndex, setImageIndex] = useState(0)
 
   const changeImage = (event, direction) => {
@@ -197,6 +195,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite
           />
         )}
         <span className={`showcase-type-badge account-status-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+        <ListingPhotoCount listing={listing} />
       </a>
       <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={isBusy} onToggle={onToggleFavorite} />
       {images.length > 1 && (
@@ -304,10 +303,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const streetLine = [listing.street, listing.number].filter(Boolean).join(', ')
   const fullAddress = streetLine || listing.address || getListingLocation(listing)
   const addressQuery = [fullAddress, neighborhood, city, listing.cep].filter(Boolean).join(', ')
-  const galleryImages = useMemo(() => [...new Set([
-    ...(Array.isArray(listing.images) ? listing.images : []),
-    listing.image,
-  ].filter(Boolean))], [listing.images, listing.image])
+  const galleryImages = useMemo(() => getListingImages(listing), [listing])
   const image = galleryImages[activeImageIndex] || ''
   const description = listing.description || 'Descrição não informada.'
   const purpose = getListingPurpose(listing)

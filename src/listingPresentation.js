@@ -21,6 +21,11 @@ export const getListingPurpose = (listing) => {
 
 export const getListingPurposeLabel = (listing) => getListingPurpose(listing) === 'aluguel' ? 'Aluguel' : 'Venda'
 
+export const getListingImages = (listing) => [...new Set([
+  ...(Array.isArray(listing?.images) ? listing.images : []),
+  listing?.image,
+].filter((image) => typeof image === 'string' && image.trim()))]
+
 export const getListingPropertyType = (listing) => {
   const category = String(listing?.property_category || '').trim().toLocaleLowerCase('pt-BR')
   const legacyType = String(listing?.type || '').trim().toLocaleLowerCase('pt-BR')

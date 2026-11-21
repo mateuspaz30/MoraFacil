@@ -8,8 +8,9 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
-import { getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
+import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
 import AdminPanel from './AdminPanel.jsx'
+import ListingPhotoCount from './ListingPhotoCount.jsx'
 import StandardListingGallery from './StandardListingGallery.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
@@ -497,10 +498,7 @@ function AnnouncementMapFocus({ focus }) {
 function MapListingPopup({ listing }) {
   const map = useMap()
   const touchStartX = useRef(null)
-  const images = [...new Set([
-    ...(Array.isArray(listing.images) ? listing.images : []),
-    listing.image,
-  ].filter(Boolean))]
+  const images = getListingImages(listing)
   const [imageIndex, setImageIndex] = useState(0)
   const bedrooms = Number(listing.bedrooms) || 0
   const bathrooms = Number(listing.bathrooms) || 0
@@ -535,9 +533,9 @@ function MapListingPopup({ listing }) {
             <>
               <button type="button" className="map-detail-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
               <button type="button" className="map-detail-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
-              <span className="map-detail-gallery-count">{imageIndex + 1}/{images.length}</span>
             </>
           )}
+          <ListingPhotoCount listing={listing} />
         </div>
         <div className="map-detail-content">
           <h3>{listing.title}</h3>
@@ -3063,6 +3061,7 @@ function App() {
               isBusy={favoriteActionId !== null || favoriteListingsLoading}
               onToggle={handleToggleFavorite}
             />
+            <ListingPhotoCount listing={activeHeroListing} />
             {heroCarouselListings.length > 1 && (
               <>
                 <button
