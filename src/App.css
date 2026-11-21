@@ -6748,6 +6748,9 @@ dl.my-area-profile-grid > div {
   align-items: center;
   gap: 6px;
   align-self: flex-start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
   padding: 4px 7px;
   border-radius: 999px;
   background: #f0f3f6;
