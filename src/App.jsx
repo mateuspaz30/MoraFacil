@@ -1695,6 +1695,9 @@ function App() {
         .select('*')
         .single()
       if (error) throw error
+      if (data.status !== status) {
+        throw new Error(`O banco manteve o status “${data.status || 'vazio'}” em vez de “${status}”.`)
+      }
       updatedListing = {
         ...data,
         coordinates: [data.latitude, data.longitude],
