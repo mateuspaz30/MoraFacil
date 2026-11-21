@@ -6417,6 +6417,166 @@ dl.my-area-profile-grid > div {
   min-width: 0;
 }
 
+.admin-overview {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.admin-overview-section {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-overview-section > h2,
+.admin-management > h2 {
+  margin: 0;
+  color: #0a2742;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.admin-status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-status-card {
+  display: flex;
+  min-width: 0;
+  min-height: 100px;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 16px;
+  border: 1px solid #d5e0eb;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 5px 15px rgba(14, 47, 76, 0.07);
+}
+
+.admin-status-icon {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 52px;
+  place-items: center;
+  border-radius: 11px;
+}
+
+.admin-status-card.pending .admin-status-icon {
+  background: #fff4e2;
+  color: #e88700;
+}
+
+.admin-status-card.approved .admin-status-icon {
+  background: #eaf6eb;
+  color: #078c24;
+}
+
+.admin-status-card.rejected .admin-status-icon {
+  background: #fdecec;
+  color: #df3838;
+}
+
+.admin-status-copy {
+  min-width: 0;
+  padding-left: 15px;
+  border-left: 1px solid #d1dce7;
+}
+
+.admin-status-copy h3,
+.admin-status-copy p {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-status-copy h3 {
+  color: #142b43;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.admin-status-copy strong {
+  display: block;
+  color: #102a43;
+  font-size: 2.3rem;
+  font-weight: 850;
+  letter-spacing: -0.05em;
+  line-height: 1.08;
+}
+
+.admin-status-copy p {
+  color: #53677c;
+  font-size: 0.7rem;
+}
+
+.admin-management {
+  display: grid;
+  gap: 9px;
+  padding: 10px 12px 12px;
+  border: 1px solid #d3e0ee;
+  border-radius: 13px;
+  background: #e8f0f9;
+}
+
+.admin-management > h2 {
+  padding-left: 4px;
+}
+
+.admin-management-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-management-cards article {
+  display: flex;
+  min-width: 0;
+  min-height: 66px;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border: 1px solid #d5e0eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #153655;
+  box-shadow: 0 4px 12px rgba(14, 47, 76, 0.05);
+}
+
+.admin-management-cards article > svg {
+  flex: 0 0 auto;
+}
+
+.admin-management-cards article div {
+  min-width: 0;
+}
+
+.admin-management-cards article span,
+.admin-management-cards article strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-management-cards article span {
+  color: #263b51;
+  font-size: 0.75rem;
+}
+
+.admin-management-cards article strong {
+  color: #102a43;
+  font-size: 1.65rem;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
 .admin-rejected-icon {
   color: #dc3545;
 }
@@ -6428,6 +6588,31 @@ dl.my-area-profile-grid > div {
 .admin-recent-listings,
 .admin-section-content {
   min-width: 0;
+}
+
+.admin-overview .admin-recent-listings {
+  margin-top: 0;
+}
+
+.admin-recent-listings .admin-data-table .standard-listing-status.approved {
+  background: #e5f8d7;
+  color: #24821d;
+}
+
+.admin-recent-listings .admin-data-table .standard-listing-status.pending {
+  background: #fff0c7;
+  color: #986200;
+}
+
+.admin-recent-listings .admin-data-table .standard-listing-status.rejected {
+  background: #fde7e7;
+  color: #bd3b3b;
+}
+
+.admin-recent-listings .admin-data-table .standard-listing-status.paused,
+.admin-recent-listings .admin-data-table .standard-listing-status.completed {
+  background: #e8eef8;
+  color: #4a6384;
 }
 
 .admin-section-content {
@@ -7153,6 +7338,14 @@ dl.my-area-profile-grid > div {
   .admin-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .admin-status-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-management-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
@@ -7168,6 +7361,10 @@ dl.my-area-profile-grid > div {
 
   .admin-panel-nav button {
     flex: 0 0 auto;
+  }
+
+  .admin-status-cards {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .admin-listing-tools,

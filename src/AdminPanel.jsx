@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react'
 import {
   ArrowDown,
   ArrowUp,
+  BriefcaseBusiness,
   Building2,
   CalendarDays,
   Check,
   CircleCheck,
+  CircleX,
+  Clock3,
   Eye,
   MapPin,
   Pause,
@@ -17,6 +20,7 @@ import {
   Star,
   Trash2,
   User,
+  UsersRound,
   X,
 } from 'lucide-react'
 import { getListingPurpose, getListingPropertyType } from './listingPresentation.js'
@@ -257,6 +261,8 @@ export default function AdminPanel({
   const approved = listings.filter((listing) => statusKey(listing) === 'approved')
   const rejected = listings.filter((listing) => statusKey(listing) === 'rejected')
   const activeNeighborhoods = neighborhoods.filter((neighborhood) => neighborhood.active)
+  const realtors = users.filter((user) => user.userType === 'corretor')
+  const agencies = users.filter((user) => user.userType === 'imobiliaria')
   const featured = listings
     .filter((listing) => listing.status === 'aprovado' && listing.destaque_home)
     .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
@@ -314,28 +320,68 @@ export default function AdminPanel({
       {listingsError && <p className="my-area-feedback error" role="alert">{listingsError}</p>}
 
       {section === 'overview' && (
-        <>
-          <div className="my-area-stats-grid admin-stats-grid">
-            <article className="my-area-stat-card"><span className="my-area-stat-icon"><Eye size={25} /></span><div><small>Pendentes</small><strong>{pending.length}</strong></div></article>
-            <article className="my-area-stat-card"><span className="my-area-stat-icon views"><CircleCheck size={25} /></span><div><small>Aprovados</small><strong>{approved.length}</strong></div></article>
-            <article className="my-area-stat-card"><span className="my-area-stat-icon admin-rejected-icon"><X size={25} /></span><div><small>Reprovados</small><strong>{rejected.length}</strong></div></article>
-            <article className="my-area-stat-card"><span className="my-area-stat-icon admin-neighborhood-icon"><Building2 size={25} /></span><div><small>Bairros Ativos</small><strong>{activeNeighborhoods.length}</strong></div></article>
-          </div>
+        <div className="admin-overview">
+          <section className="admin-overview-section" aria-labelledby="admin-listing-status-title">
+            <h2 id="admin-listing-status-title">Situação dos anúncios</h2>
+            <div className="admin-status-cards">
+              <article className="admin-status-card pending">
+                <span className="admin-status-icon"><Clock3 size={30} strokeWidth={1.8} /></span>
+                <div className="admin-status-copy">
+                  <h3>Pendentes</h3>
+                  <strong>{pending.length}</strong>
+                  <p>{pending.length === 0 ? 'Nenhum anúncio aguardando análise' : `${pending.length} anúncio${pending.length === 1 ? '' : 's'} aguardando análise`}</p>
+                </div>
+              </article>
+              <article className="admin-status-card approved">
+                <span className="admin-status-icon"><CircleCheck size={30} strokeWidth={1.8} /></span>
+                <div className="admin-status-copy">
+                  <h3>Aprovados</h3>
+                  <strong>{approved.length}</strong>
+                  <p>Anúncios aprovados</p>
+                </div>
+              </article>
+              <article className="admin-status-card rejected">
+                <span className="admin-status-icon"><CircleX size={30} strokeWidth={1.8} /></span>
+                <div className="admin-status-copy">
+                  <h3>Reprovados</h3>
+                  <strong>{rejected.length}</strong>
+                  <p>{rejected.length === 0 ? 'Nenhum anúncio reprovado' : `${rejected.length} anúncio${rejected.length === 1 ? '' : 's'} reprovado${rejected.length === 1 ? '' : 's'}`}</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section className="admin-management" aria-labelledby="admin-management-title">
+            <h2 id="admin-management-title">Gerenciamento</h2>
+            <div className="admin-management-cards">
+              <article><MapPin size={28} strokeWidth={1.8} /><div><span>Bairros ativos</span><strong>{activeNeighborhoods.length}</strong></div></article>
+              <article><UsersRound size={28} strokeWidth={1.8} /><div><span>Usuários</span><strong>{usersLoading ? '—' : users.length}</strong></div></article>
+              <article><BriefcaseBusiness size={28} strokeWidth={1.8} /><div><span>Corretores</span><strong>{usersLoading ? '—' : realtors.length}</strong></div></article>
+              <article><Building2 size={28} strokeWidth={1.8} /><div><span>Imobiliárias</span><strong>{usersLoading ? '—' : agencies.length}</strong></div></article>
+            </div>
+          </section>
+
           <section className="my-area-recent-listings admin-recent-listings">
             <header className="my-area-recent-heading"><h2>Últimos anúncios enviados</h2><button type="button" onClick={() => onSectionChange('listings')}>Ver todos <span aria-hidden="true">→</span></button></header>
             {latest.length ? (
               <div className="admin-table-scroll">
                 <table className="my-area-listings-table admin-data-table">
                   <thead><tr><th>Título</th><th>Usuário</th><th>Data</th><th>Status</th><th>Ação</th></tr></thead>
-                  <tbody>{latest.map((listing) => {
+                  <tbody>{latest.slice(0, 4).map((listing) => {
                     const owner = ownersById.get(listing.user_id)
-                    return <tr key={listing.id}><td>{listing.title}</td><td>{owner?.name || listing.advertiser || 'Não informado'}</td><td>{formatDate(listing.created_at)}</td><td><span className={`standard-listing-status ${statusKey(listing)}`}>{statusLabel(listing)}</span></td><td><button type="button" onClick={() => setPreviewListing(listing)}>Visualizar</button></td></tr>
+                    return <tr key={listing.id}>
+                      <td>{listing.title}</td>
+                      <td>{owner?.name || listing.advertiser || 'Não informado'}</td>
+                      <td>{formatDate(listing.created_at)}</td>
+                      <td><span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" />{statusLabel(listing)}</span></td>
+                      <td><button type="button" onClick={() => setPreviewListing(listing)}>Visualizar</button></td>
+                    </tr>
                   })}</tbody>
                 </table>
               </div>
             ) : <p className="account-empty">Ainda não há anúncios cadastrados.</p>}
           </section>
-        </>
+        </div>
       )}
 
       {section === 'pending' && (
