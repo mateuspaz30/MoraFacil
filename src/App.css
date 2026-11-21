@@ -6034,8 +6034,9 @@ dl.my-area-profile-grid > div {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
   color: #0a3d74;
 }
 
@@ -6056,6 +6057,8 @@ dl.my-area-profile-grid > div {
   display: grid;
   gap: 1px;
   min-width: 0;
+  justify-items: center;
+  text-align: center;
 }
 
 .standard-listing-engagement-item strong {
@@ -6065,10 +6068,10 @@ dl.my-area-profile-grid > div {
 }
 
 .standard-listing-engagement-item span {
-  overflow: hidden;
+  overflow: visible;
   color: #66809b;
-  font-size: 0.74rem;
-  text-overflow: ellipsis;
+  font-size: 0.66rem;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
