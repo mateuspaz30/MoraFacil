@@ -69,6 +69,7 @@ O Mora Fácil é um portal imobiliário voltado principalmente a Ipuã-SP. Ele p
 - RLS está habilitado em `listings`, `favorites`, `admin_users` e `neighborhoods`.
 - Anúncios aprovados são visíveis publicamente; proprietários veem seus próprios anúncios e administradores podem gerenciá-los. Novos anúncios autenticados começam `em_analise`.
 - Em `favorites`, cada usuário autenticado só pode consultar, adicionar e remover os próprios favoritos; a política de inclusão permite apenas anúncios aprovados.
+- `public.count_my_listing_favorites()` permite ao usuário autenticado consultar somente a contagem agregada de favoritos recebidos em seus próprios anúncios.
 - Administradores podem moderar anúncios e gerenciar bairros. Bairros inativos deixam de ser opções para novos anúncios; bairros referenciados não podem ser excluídos.
 - A migração `20260920_create_property_images_bucket.sql` cria o bucket público `property-images`. Leitura das imagens é pública; envio, atualização e exclusão exigem autenticação e restringem o caminho ao identificador do próprio usuário.
 - As migrações em `supabase/migrations/` registram a evolução do banco: localização, Storage de imagens, administração, vagas, tipo comercial, galeria, moderação, destaques, bairros gerenciados, perfis, métricas e favoritos.
@@ -88,7 +89,7 @@ O Mora Fácil é um portal imobiliário voltado principalmente a Ipuã-SP. Ele p
 
 ## Funcionalidades em desenvolvimento
 
-O banco de cada ambiente existente precisa receber as migrações incrementais correspondentes. Para ativar favoritos em um banco existente, execute `supabase/migrations/20261120_create_favorites.sql` no SQL Editor do Supabase. Bancos novos também recebem a tabela e as políticas pelo `supabase/schema.sql`.
+O banco de cada ambiente existente precisa receber as migrações incrementais correspondentes. Para ativar favoritos em um banco existente, execute `supabase/migrations/20261120_create_favorites.sql` e `supabase/migrations/20261121_count_listing_favorites.sql` no SQL Editor do Supabase. Bancos novos também recebem a tabela, as políticas e a função pelo `supabase/schema.sql`.
 
 ## Pendências técnicas encontradas
 

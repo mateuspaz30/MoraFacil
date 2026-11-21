@@ -609,6 +609,8 @@ function App() {
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
+  const [receivedFavoriteCount, setReceivedFavoriteCount] = useState(null)
+  const [receivedFavoriteCountError, setReceivedFavoriteCountError] = useState('')
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
   const pendingFavoriteListingRef = useRef(null)
@@ -1029,6 +1031,29 @@ function App() {
     }
 
     loadFavorites()
+    return () => { mounted = false }
+  }, [authUser])
+
+  useEffect(() => {
+    if (!authUser || !supabase) return undefined
+
+    let mounted = true
+    const loadReceivedFavoriteCount = async () => {
+      setReceivedFavoriteCount(null)
+      setReceivedFavoriteCountError('')
+      try {
+        const { data, error } = await supabase.rpc('count_my_listing_favorites')
+        if (error) throw error
+        if (mounted) setReceivedFavoriteCount(Number(data) || 0)
+      } catch (error) {
+        console.error('Falha ao carregar os favoritos recebidos nos anúncios:', error)
+        if (mounted) {
+          setReceivedFavoriteCountError(`Não foi possível carregar os favoritos recebidos. Execute supabase/migrations/20261121_count_listing_favorites.sql no Supabase. ${error.message}`)
+        }
+      }
+    }
+
+    loadReceivedFavoriteCount()
     return () => { mounted = false }
   }, [authUser])
 
@@ -2626,7 +2651,8 @@ function App() {
                     <div><House size={22} aria-hidden="true" /><span>Imóveis cadastrados</span><strong>{userListings.length}</strong></div>
                     <div><Eye size={22} aria-hidden="true" /><span>Visualizações totais</span><strong>{totalListingViews}</strong></div>
                     <div><WhatsAppIcon size={22} /><span>Contatos recebidos</span><strong>{totalWhatsAppClicks}</strong></div>
-                    <div className="favorites-summary"><Heart size={22} aria-hidden="true" /><span>Favoritos</span><strong>{favoriteListingIds.length}</strong></div>
+                    <div className="favorites-summary"><Heart size={22} aria-hidden="true" /><span>Favoritos recebidos</span><strong>{receivedFavoriteCount ?? '—'}</strong></div>
+                    {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
                   </section>
                   <section className="standard-account-insight-card standard-account-status-card">
                     <h2>Situação dos anúncios</h2>
