@@ -116,7 +116,7 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const purpose = getListingPurpose(listing)
@@ -134,6 +134,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
     <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="admin-preview-modal" role="dialog" aria-modal="true" aria-labelledby="admin-preview-title">
         <header><h2 id="admin-preview-title">Visualização administrativa</h2><button type="button" aria-label="Fechar" onClick={onClose}><X size={22} /></button></header>
+        {moderationError && <p className="my-area-feedback error" role="alert">{moderationError}</p>}
         <div className="admin-preview-content">
           <StandardListingGallery listing={listing} purpose={purpose} showThumbnails={false} />
           <div className="admin-preview-details">
@@ -194,6 +195,7 @@ export default function AdminPanel({
   onToggleFeatured,
   onMoveFeatured,
   featuredSavingId,
+  moderationError,
   neighborhoodDraft,
   editingNeighborhoodName,
   neighborhoodSaving,
@@ -383,7 +385,7 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} saving={featuredSavingId === previewListing.id} />}
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">

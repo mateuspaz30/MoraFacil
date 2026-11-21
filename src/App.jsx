@@ -669,6 +669,7 @@ function App() {
   const [rejectionListingId, setRejectionListingId] = useState(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [moderationMessage, setModerationMessage] = useState('')
+  const [moderationError, setModerationError] = useState('')
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
 
@@ -1675,30 +1676,39 @@ function App() {
   }
 
   const changeListingStatus = async (listing, status, motivoReprovacao = null) => {
-    const updates = { status, motivo_reprovacao: motivoReprovacao }
-    let updatedListing = { ...listing, ...updates }
+    setModerationError('')
+    if (!supabase || !authUser) {
+      const message = 'Não foi possível atualizar o anúncio: conexão com o Supabase ou sessão indisponível.'
+      setModerationError(message)
+      setModerationMessage(message)
+      return false
+    }
 
-    if (supabase && authUser) {
-      try {
-        const { data, error } = await supabase
-          .from('listings')
-          .update(updates)
-          .eq('id', listing.id)
-          .select('*')
-          .single()
-        if (error) throw error
-        updatedListing = {
-          ...data,
-          coordinates: [data.latitude, data.longitude],
-          location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
-          area: formatArea(data.area),
-          parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
-          owner: data.user_id === authUser.id,
-        }
-      } catch (error) {
-        setModerationMessage(`Não foi possível atualizar o anúncio: ${error.message}`)
-        return false
+    const updates = { status, motivo_reprovacao: motivoReprovacao }
+    let updatedListing
+
+    try {
+      const { data, error } = await supabase
+        .from('listings')
+        .update(updates)
+        .eq('id', listing.id)
+        .select('*')
+        .single()
+      if (error) throw error
+      updatedListing = {
+        ...data,
+        coordinates: [data.latitude, data.longitude],
+        location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+        area: formatArea(data.area),
+        parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+        owner: data.user_id === authUser.id,
       }
+    } catch (error) {
+      console.error('Falha ao atualizar status do anúncio:', error)
+      const message = `Não foi possível atualizar o anúncio: ${error.message}`
+      setModerationError(message)
+      setModerationMessage(message)
+      return false
     }
 
     setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
@@ -2330,6 +2340,7 @@ function App() {
                     neighborhoodsError={neighborhoodsError}
                     neighborhoodsStatus={neighborhoodsStatus}
                     moderationMessage={moderationMessage}
+                    moderationError={moderationError}
                     onNeighborhoodDraftChange={setNeighborhoodDraft}
                     onNewNeighborhood={() => {
                       setEditingNeighborhoodName(null)
