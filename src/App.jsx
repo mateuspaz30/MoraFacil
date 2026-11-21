@@ -652,6 +652,8 @@ function App() {
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
   const [receivedFavoriteCount, setReceivedFavoriteCount] = useState(null)
   const [receivedFavoriteCountError, setReceivedFavoriteCountError] = useState('')
+  const [listingFavoriteCounts, setListingFavoriteCounts] = useState({ userId: null, counts: {} })
+  const [listingFavoriteCountsError, setListingFavoriteCountsError] = useState('')
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
   const pendingFavoriteListingRef = useRef(null)
@@ -1138,6 +1140,38 @@ function App() {
     loadReceivedFavoriteCount()
     return () => { mounted = false }
   }, [authUser])
+
+  useEffect(() => {
+    const userType = userProfile?.user_id === authUser?.id
+      ? userProfile.tipo_usuario
+      : authUser?.user_metadata?.tipo_usuario
+    if (!authUser || !supabase || userType !== 'imobiliaria') return undefined
+
+    let mounted = true
+    const loadListingFavoriteCounts = async () => {
+      setListingFavoriteCounts({ userId: authUser.id, counts: {} })
+      setListingFavoriteCountsError('')
+      try {
+        const { data, error } = await supabase.rpc('count_my_listing_favorites_by_listing')
+        if (error) throw error
+        if (mounted) {
+          setListingFavoriteCounts({
+            userId: authUser.id,
+            counts: Object.fromEntries((data || []).map((item) => [String(item.listing_id), Number(item.favorite_count) || 0])),
+          })
+        }
+      } catch (error) {
+        console.error('Falha ao carregar os favoritos por imóvel:', error)
+        if (mounted) {
+          setListingFavoriteCounts({ userId: authUser.id, counts: {} })
+          setListingFavoriteCountsError(`Não foi possível carregar os favoritos por imóvel. Execute supabase/migrations/20261121_company_listing_statistics.sql no Supabase. ${error.message}`)
+        }
+      }
+    }
+
+    loadListingFavoriteCounts()
+    return () => { mounted = false }
+  }, [authUser, userProfile])
 
   const selectedCity = appliedFilters.search.trim()
   const selectedCityKey = selectedCity.toLocaleLowerCase('pt-BR').replace(/-sp$/i, '')
@@ -2142,6 +2176,29 @@ function App() {
   const listingsWithoutInteractionsCount = userListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   )).length
+  const listingFavoriteCountById = listingFavoriteCounts.userId === authUser?.id ? listingFavoriteCounts.counts : {}
+  const listingsWithoutPerformance = userListings.filter((item) => (
+    (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
+  ))
+  const mostPerformedViewListing = mostViewedListing
+  const mostContactedListing = mostWhatsAppClickedListing
+  const statisticsSummaries = [
+    mostPerformedViewListing && Number(mostPerformedViewListing.visualizacoes) > 0
+      ? `${mostPerformedViewListing.title} é o imóvel mais visualizado da sua carteira.`
+      : 'Sua carteira ainda não possui visualizações registradas.',
+    mostContactedListing && Number(mostContactedListing.whatsapp_clicks) > 0
+      ? `${mostContactedListing.title} recebeu mais contatos via WhatsApp.`
+      : 'Sua carteira ainda não possui cliques no WhatsApp registrados.',
+    listingsWithoutPerformance.length > 0
+      ? `${listingsWithoutPerformance.length} ${listingsWithoutPerformance.length === 1 ? 'imóvel ainda não possui interações' : 'imóveis ainda não possuem interações'}.`
+      : 'Todos os seus imóveis já possuem visualizações ou cliques no WhatsApp.',
+  ]
+  const rankedStatisticsListings = [...userListings]
+    .sort((first, second) => (
+      (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0)
+      || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
+      || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
+    ))
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
   const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
@@ -2477,9 +2534,10 @@ function App() {
               <main className="my-area-main">
               <header className={`my-area-topbar${(visibleAccountSection === 'overview' || isCompanyDashboard) ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyDashboard ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
+                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyAccount ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
                   <h1>{visibleAccountSection === 'admin' ? 'Administração' : isCompanyDashboard ? 'Dashboard' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : visibleAccountSection === 'statistics' ? 'Estatísticas' : visibleAccountSection === 'public-profile' ? 'Perfil Público' : 'Minha Conta'}</h1>
                   {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
+                  {isCompanyAccount && visibleAccountSection === 'statistics' && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
                   </div>
                   <div className="my-area-topbar-actions">
                   {isCompanyDashboard && <button type="button" className="company-public-link" onClick={() => accountProfile.publicSlug ? navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug)) : openMyArea('public-profile')}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
@@ -2635,13 +2693,84 @@ function App() {
                   </>
                 )}
                 {visibleAccountSection === 'statistics' && isCompanyAccount && (
-                  <section className="company-statistics-placeholder" aria-label="Estatísticas da imobiliária">
-                    <span className="company-statistics-icon"><ChartNoAxesColumn size={28} aria-hidden="true" /></span>
-                    <div>
-                      <h2>Estatísticas detalhadas em breve</h2>
-                      <p>Os indicadores básicos dos seus imóveis já estão disponíveis no Dashboard. A análise por período será adicionada em uma próxima etapa.</p>
-                    </div>
-                  </section>
+                  <div className="company-statistics-page">
+                    <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores de desempenho">
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
+                        <div><small>Total de visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(totalListingViews)}</strong></div>
+                      </article>
+                      <article className="my-area-stat-card">
+                        <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span>
+                        <div><small>Total de cliques WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)}</strong></div>
+                      </article>
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
+                        <div><small>Total de favoritos</small><strong>{receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)}</strong></div>
+                      </article>
+                      <article className="my-area-stat-card">
+                        <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
+                        <div><small>Imóveis ativos</small><strong>{new Intl.NumberFormat('pt-BR').format(activeListings.length)}</strong></div>
+                      </article>
+                    </section>
+                    {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
+                    {listingFavoriteCountsError && <p className="my-area-feedback error" role="alert">{listingFavoriteCountsError}</p>}
+                    <section className="company-statistics-table-card" aria-labelledby="company-statistics-table-title">
+                      <header>
+                        <div><h2 id="company-statistics-table-title">Desempenho dos imóveis</h2><p>Indicadores acumulados de cada anúncio.</p></div>
+                      </header>
+                      {rankedStatisticsListings.length ? (
+                        <div className="company-statistics-table-scroll">
+                          <table className="company-statistics-table">
+                            <thead>
+                              <tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr>
+                            </thead>
+                            <tbody>
+                              {rankedStatisticsListings.map((item) => (
+                                <tr key={item.id}>
+                                  <td>
+                                    <div className="company-statistics-property">
+                                      {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span aria-hidden="true"><House size={22} /></span>}
+                                      <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)}</small></div>
+                                    </div>
+                                  </td>
+                                  <td>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)}</td>
+                                  <td>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)}</td>
+                                  <td>{listingFavoriteCountsError
+                                    ? '—'
+                                    : listingFavoriteCounts.userId === authUser.id
+                                      ? new Intl.NumberFormat('pt-BR').format(listingFavoriteCountById[String(item.id)] ?? 0)
+                                      : '…'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : <p className="company-statistics-empty">Você ainda não cadastrou imóveis.</p>}
+                    </section>
+                    <section className="company-statistics-highlights" aria-label="Destaques de desempenho">
+                      <article className="company-statistics-highlight">
+                        <h2><span aria-hidden="true">🏆</span> Mais visualizado</h2>
+                        <p>{statisticsSummaries[0]}</p>
+                      </article>
+                      <article className="company-statistics-highlight">
+                        <h2><span aria-hidden="true">💬</span> Mais interesse</h2>
+                        <p>{statisticsSummaries[1]}</p>
+                      </article>
+                      <article className="company-statistics-highlight no-performance">
+                        <h2><span aria-hidden="true">⚠️</span> Sem desempenho</h2>
+                        {listingsWithoutPerformance.length ? (
+                          <>
+                            <p>{statisticsSummaries[2]}</p>
+                            <ul>{listingsWithoutPerformance.map((item) => <li key={item.id}>{item.title}</li>)}</ul>
+                          </>
+                        ) : <p>Todos os imóveis já possuem visualizações ou cliques no WhatsApp.</p>}
+                      </article>
+                    </section>
+                    <section className="company-statistics-summary" aria-labelledby="company-statistics-summary-title">
+                      <h2 id="company-statistics-summary-title">Resumo automático</h2>
+                      <ul>{statisticsSummaries.map((summary) => <li key={summary}>{summary}</li>)}</ul>
+                    </section>
+                  </div>
                 )}
                 {visibleAccountSection === 'public-profile' && isCompanyAccount && (
                   <section className="my-area-panel company-profile-settings" aria-labelledby="company-profile-settings-title">

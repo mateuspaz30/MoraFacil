@@ -31,6 +31,8 @@ Usuários autenticados podem acessar a área pessoal em `/minha-area` para consu
 
 Para bancos existentes, depois das migrações de perfil acima, execute [`supabase/migrations/20261121_company_public_profiles.sql`](supabase/migrations/20261121_company_public_profiles.sql). Ela cria o slug público da imobiliária, os campos de cidade/descrição/logo e a função `get_public_company_profile`, que disponibiliza apenas informações públicas sem expor CNPJ ou dados do responsável. A cidade e a descrição podem ser preenchidas em “Minha Área” > “Minha Conta”; logo e indicadores avançados permanecem para etapas futuras.
 
+Para habilitar as estatísticas por imóvel em bancos existentes, execute [`supabase/migrations/20261121_company_listing_statistics.sql`](supabase/migrations/20261121_company_listing_statistics.sql) depois das migrações de favoritos. A função retorna, apenas para o usuário autenticado, a contagem de favoritos recebidos por anúncio, sem liberar acesso às linhas da tabela `favorites`.
+
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_view_count.sql`](supabase/migrations/20261119_add_listing_view_count.sql) no SQL Editor do Supabase. A migração adiciona o contador de visualizações e a função atômica que o incrementa ao abrir os detalhes de um imóvel aprovado.
 
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_whatsapp_clicks.sql`](supabase/migrations/20261119_add_listing_whatsapp_clicks.sql) no SQL Editor do Supabase. A migração adiciona o contador de cliques de contato e a função atômica que o incrementa ao clicar em um botão de contato de um imóvel aprovado.
