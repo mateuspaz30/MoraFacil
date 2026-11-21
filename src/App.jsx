@@ -1890,9 +1890,12 @@ function App() {
 
     console.info('[Minha Área diagnóstico]', {
       isAdmin,
+      authUserId: authUser.id,
       accountUserType,
       userProfileTipoUsuario: accountUserProfile?.tipo_usuario ?? null,
+      userProfileUserId: accountUserProfile?.user_id ?? null,
       profileLoadedForCurrentUser: accountUserProfile !== null,
+      userProfileError: userProfileError || null,
       accountUserTypeSource: accountUserProfile?.tipo_usuario
         ? 'user_profiles'
         : authUser?.user_metadata?.tipo_usuario
@@ -1920,6 +1923,7 @@ function App() {
     isAdmin,
     isMyAreaRoute,
     isStandardAccount,
+    userProfileError,
     visibleAccountSection,
   ])
   const ownFeaturedListings = authUser
