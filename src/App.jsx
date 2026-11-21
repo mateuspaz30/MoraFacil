@@ -1647,8 +1647,11 @@ function App() {
         .update(updates)
         .eq('user_id', authUser.id)
         .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel')
-        .single()
+        .maybeSingle()
       if (error) throw error
+      if (!data) {
+        throw new Error('Nenhum perfil foi atualizado. O perfil desta conta não foi encontrado ou a política de atualização do Supabase não está aplicada. Confira a migração supabase/migrations/20261119_make_account_identifiers_immutable.sql.')
+      }
       setUserProfile(data)
       setProfileEditing(false)
       setProfileMessage('Dados atualizados com sucesso.')
