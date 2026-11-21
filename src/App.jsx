@@ -1870,6 +1870,58 @@ function App() {
   const standardAccountListings = visibleAccountListings.filter((item) => (
     listingPurposeFilter === 'all' || getListingPurpose(item) === listingPurposeFilter
   ))
+  const accountLayoutDiagnostic = (() => {
+    if (visibleAccountSection !== 'listings') return visibleAccountSection
+    if (isAdmin && accountFilter === 'neighborhoods') return 'admin-neighborhood-manager'
+    if (isAdmin && accountFilter === 'review' && adminReviewLoading) return 'admin-review-loading'
+    if (isAdmin && accountFilter === 'review' && adminReviewError) return 'admin-review-error'
+    if (visibleAccountListings.length === 0) return 'listings-empty-state'
+    if (isStandardAccount && isAdmin && accountFilter === 'review') return 'standard-admin-review-cards'
+    if (isStandardAccount) return 'standard-account-dashboard'
+    if (isAdmin && accountFilter === 'review') return 'legacy-admin-review-cards'
+    return 'legacy-account-listings'
+  })()
+
+  useEffect(() => {
+    if (
+      !isMyAreaRoute
+      || authUser?.email?.trim().toLowerCase() !== 'mateus_ipua@hotmail.com'
+    ) return
+
+    console.info('[Minha Área diagnóstico]', {
+      isAdmin,
+      accountUserType,
+      userProfileTipoUsuario: accountUserProfile?.tipo_usuario ?? null,
+      profileLoadedForCurrentUser: accountUserProfile !== null,
+      accountUserTypeSource: accountUserProfile?.tipo_usuario
+        ? 'user_profiles'
+        : authUser?.user_metadata?.tipo_usuario
+          ? 'auth_metadata'
+          : 'none',
+      isStandardAccount,
+      accountSection,
+      currentSection: visibleAccountSection,
+      accountFilter,
+      adminReviewLoading,
+      adminReviewHasError: Boolean(adminReviewError),
+      adminPendingListingsCount: adminPendingListings.length,
+      renderedListingsBranch: accountLayoutDiagnostic,
+    })
+  }, [
+    accountFilter,
+    accountLayoutDiagnostic,
+    accountSection,
+    accountUserProfile,
+    accountUserType,
+    adminPendingListings.length,
+    adminReviewError,
+    adminReviewLoading,
+    authUser,
+    isAdmin,
+    isMyAreaRoute,
+    isStandardAccount,
+    visibleAccountSection,
+  ])
   const ownFeaturedListings = authUser
     ? userListings
       .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isApprovedListing(item))
