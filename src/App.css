@@ -5779,7 +5779,7 @@ dl.my-area-profile-grid > div {
 
 .standard-account-insight-card > div {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) 28px;
   align-items: center;
   gap: 10px;
   color: #0a3d74;
@@ -5791,8 +5791,12 @@ dl.my-area-profile-grid > div {
 }
 
 .standard-account-insight-card > div strong {
+  width: 28px;
+  justify-self: end;
   color: #132d4b;
   font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .standard-account-insight-card .favorites-summary svg {
@@ -5800,7 +5804,7 @@ dl.my-area-profile-grid > div {
 }
 
 .standard-account-status-card > div {
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) 28px;
 }
 
 .standard-account-status-card > div i {
