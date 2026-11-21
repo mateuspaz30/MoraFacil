@@ -3823,10 +3823,10 @@
 }
 
 .map-detail-location svg {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  color: #697582;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #0a3d74;
 }
 
 .map-detail-card .detail-price {
@@ -3848,16 +3848,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   color: #273344;
   text-align: center;
 }
 
-.map-detail-features > div > span {
-  color: #667280;
-  font-size: 0.78rem;
-  line-height: 1;
+.map-detail-features > div > svg,
+.map-detail-property-type svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #31516d;
 }
 
 .map-detail-features strong {
@@ -7759,9 +7761,9 @@ dl.my-area-profile-grid > div {
 }
 
 .map-panel:not(.map-panel-fullscreen) .map-detail-location svg {
-  width: 12px;
-  height: 12px;
-  flex-basis: 12px;
+  width: 16px;
+  height: 16px;
+  flex-basis: 16px;
 }
 
 .map-panel:not(.map-panel-fullscreen) .map-detail-card .detail-price {
@@ -7773,10 +7775,6 @@ dl.my-area-profile-grid > div {
 .map-panel:not(.map-panel-fullscreen) .map-detail-features {
   gap: 3px;
   margin-top: 6px;
-}
-
-.map-panel:not(.map-panel-fullscreen) .map-detail-features > div > span {
-  font-size: 0.68rem;
 }
 
 .map-panel:not(.map-panel-fullscreen) .map-detail-features strong {

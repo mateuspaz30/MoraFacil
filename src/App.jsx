@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Shield, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, Check, CircleCheck, Eye, ExternalLink, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -154,6 +154,13 @@ const sampleListings = [
     image: 'https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=1200&q=85',
   },
 ]
+
+const propertyTypeIcons = {
+  casa: Home,
+  apartamento: Building2,
+  terreno: LandPlot,
+  ponto_comercial: Store,
+}
 
 const approvedSampleListings = sampleListings.map((listing) => ({ ...listing, status: 'aprovado' }))
 const defaultNeighborhoods = [...new Set(sampleListings.map((listing) => listing.neighborhood))]
@@ -502,6 +509,7 @@ function MapListingPopup({ listing }) {
   const purpose = getListingPurpose(listing)
   const purposeLabel = getListingPurposeLabel(listing)
   const propertyType = getListingPropertyType(listing)
+  const PropertyTypeIcon = propertyTypeIcons[propertyType.key]
 
   const changeImage = (direction) => {
     setImageIndex((current) => (current + direction + images.length) % images.length)
@@ -533,14 +541,14 @@ function MapListingPopup({ listing }) {
         </div>
         <div className="map-detail-content">
           <h3>{listing.title}</h3>
-          <p className="map-detail-location"><FilterIcon name="pin" /><span>{getListingLocation(listing)}</span></p>
-          <p className="map-detail-property-type"><span aria-hidden="true">{propertyType.icon}</span>{propertyType.label}</p>
+          <p className="map-detail-location"><MapPin size={16} strokeWidth={2} aria-hidden="true" /><span>{getListingLocation(listing)}</span></p>
+          <p className="map-detail-property-type"><PropertyTypeIcon size={16} strokeWidth={2} aria-hidden="true" />{propertyType.label}</p>
           <p className={`detail-price purpose-price purpose-${purpose}`}>{listing.price}</p>
           <div className="map-detail-features">
-            <div><span aria-hidden="true">🛏</span><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
-            <div><span aria-hidden="true">🚿</span><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
-            <div><span aria-hidden="true">🚗</span><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
-            <div><span aria-hidden="true">📐</span><strong>{formatArea(listing.area)}</strong><small>Área</small></div>
+            <div><BedDouble size={16} strokeWidth={2} aria-hidden="true" /><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
+            <div><Bath size={16} strokeWidth={2} aria-hidden="true" /><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
+            <div><Car size={16} strokeWidth={2} aria-hidden="true" /><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
+            <div><Ruler size={16} strokeWidth={2} aria-hidden="true" /><strong>{formatArea(listing.area)}</strong><small>Área</small></div>
           </div>
           <a className="detail-button" href={detailUrl}>Saiba mais <span aria-hidden="true">→</span></a>
         </div>
