@@ -2641,6 +2641,7 @@ function App() {
                   {[
                     ...(isStandardAccount ? [
                     ['listings', Building2, 'Meus Imóveis'],
+                    ['favorites', Heart, 'Favoritos'],
                     ['account', User, 'Minha Conta'],
                   ] : isCompanyAccount ? [
                     ['dashboard', House, 'Dashboard'],
