@@ -2177,9 +2177,12 @@ function App() {
   const companyPreviewMostViewed = companyPreviewListings.reduce((best, item) => (
     !best || item.visualizacoes > best.visualizacoes ? item : best
   ), null)
-  const companyPreviewMostContacted = companyPreviewListings.reduce((best, item) => (
-    !best || item.whatsapp_clicks > best.whatsapp_clicks ? item : best
-  ), null)
+  const companyPreviewListingsByViews = [...companyPreviewListings]
+    .sort((first, second) => second.visualizacoes - first.visualizacoes)
+  const companyPreviewListingsByWhatsApp = [...companyPreviewListings]
+    .sort((first, second) => second.whatsapp_clicks - first.whatsapp_clicks)
+  const companyPreviewMaxViews = Math.max(0, ...companyPreviewListings.map((item) => item.visualizacoes))
+  const companyPreviewMaxWhatsAppClicks = Math.max(0, ...companyPreviewListings.map((item) => item.whatsapp_clicks))
   const accountDisplayName = accountUserType === 'imobiliaria'
     ? accountUserProfile?.nome_imobiliaria || authUser?.user_metadata?.nome_imobiliaria || 'Imobiliária'
     : accountUserProfile?.nome_completo || authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Usuário'
@@ -2719,20 +2722,80 @@ function App() {
                       <article className="my-area-stat-card"><span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span><div><small>Cliques no WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalWhatsAppClicks)}</strong></div></article>
                       <article className="my-area-stat-card"><span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} /></span><div><small>Favoritos recebidos</small><strong>{new Intl.NumberFormat('pt-BR').format(companyPreviewTotalFavorites)}</strong></div></article>
                     </section>
-                    <section className="company-dashboard-highlights" aria-label="Destaques demonstrativos">
-                      <article className="company-dashboard-highlight-card">
-                        <header><Eye size={20} aria-hidden="true" /><h2>Mais visualizado</h2></header>
-                        <div className="company-dashboard-highlight-property"><img src={companyPreviewMostViewed.image} alt="" /><div><strong>{companyPreviewMostViewed.title}</strong><span>{companyPreviewMostViewed.location}</span><b>{companyPreviewMostViewed.visualizacoes.toLocaleString('pt-BR')} visualizações</b></div></div>
-                      </article>
-                      <article className="company-dashboard-highlight-card">
-                        <header><WhatsAppIcon size={20} /><h2>Mais cliques WhatsApp</h2></header>
-                        <div className="company-dashboard-highlight-property"><img src={companyPreviewMostContacted.image} alt="" /><div><strong>{companyPreviewMostContacted.title}</strong><span>{companyPreviewMostContacted.location}</span><b>{companyPreviewMostContacted.whatsapp_clicks} cliques</b></div></div>
-                      </article>
-                      <article className="company-dashboard-highlight-card company-dashboard-no-interactions">
-                        <header><ChartNoAxesColumn size={20} aria-hidden="true" /><h2>Sem interações</h2></header>
-                        <strong className="company-dashboard-no-interactions-count">0</strong><p>imóveis sem visualizações e cliques no WhatsApp</p>
-                      </article>
-                    </section>
+                    <div className="company-dashboard-overview-grid">
+                      <section className="company-dashboard-panel company-dashboard-chart" aria-labelledby="admin-preview-chart-title">
+                        <header className="company-dashboard-panel-heading">
+                          <div><h2 id="admin-preview-chart-title">Desempenho no período</h2><p>Visualizações acumuladas por imóvel</p></div>
+                          <span className="company-dashboard-chart-legend"><i aria-hidden="true" /> Visualizações</span>
+                        </header>
+                        <div className="company-dashboard-chart-list" role="img" aria-label="Comparação demonstrativa de visualizações acumuladas por imóvel">
+                          {companyPreviewListingsByViews.map((item) => {
+                            const height = companyPreviewMaxViews > 0 ? (item.visualizacoes / companyPreviewMaxViews) * 100 : 0
+                            return (
+                              <div className="company-dashboard-chart-column" key={item.id} title={`${item.title}: ${item.visualizacoes.toLocaleString('pt-BR')} visualizações`}>
+                                <strong>{item.visualizacoes.toLocaleString('pt-BR')}</strong>
+                                <div className="company-dashboard-chart-bar-track"><span style={{ height: `${height}%` }} /></div>
+                                <small>{item.title}</small>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <p className="company-dashboard-chart-note">Dados demonstrativos acumulados; não há histórico por data.</p>
+                      </section>
+                      <section className="company-dashboard-panel company-dashboard-whatsapp-ranking" aria-labelledby="admin-preview-ranking-title">
+                        <header className="company-dashboard-panel-heading"><div><h2 id="admin-preview-ranking-title">Mais cliques no WhatsApp</h2><p>Imóveis com mais cliques acumulados</p></div></header>
+                        <ol>
+                          {companyPreviewListingsByWhatsApp.map((item, index) => {
+                            const width = companyPreviewMaxWhatsAppClicks > 0 ? (item.whatsapp_clicks / companyPreviewMaxWhatsAppClicks) * 100 : 0
+                            return (
+                              <li key={item.id}>
+                                <div className="company-dashboard-ranking-label"><span>{index + 1}</span><strong title={item.title}>{item.title}</strong><b>{item.whatsapp_clicks.toLocaleString('pt-BR')}</b></div>
+                                <div className="company-dashboard-ranking-track"><span style={{ width: `${width}%` }} /></div>
+                              </li>
+                            )
+                          })}
+                        </ol>
+                      </section>
+                    </div>
+                    <div className="company-dashboard-performance-grid">
+                      <section className="company-dashboard-panel company-dashboard-listings-panel" aria-labelledby="admin-preview-listings-title">
+                        <header className="company-dashboard-panel-heading">
+                          <div><h2 id="admin-preview-listings-title">Desempenho dos imóveis</h2><p>Resumo dos anúncios com mais visualizações</p></div>
+                          <button type="button" disabled>Ver todos <ExternalLink size={15} aria-hidden="true" /></button>
+                        </header>
+                        <div className="company-dashboard-table-scroll">
+                          <table className="company-dashboard-table">
+                            <thead><tr><th scope="col">Imóvel</th><th scope="col">Status</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Taxa de interesse</th><th scope="col">Ação</th></tr></thead>
+                            <tbody>
+                              {companyPreviewListingsByViews.map((item) => (
+                                <tr key={item.id}>
+                                  <td><div className="company-dashboard-table-property"><img src={item.image} alt="" /><div><strong>{item.title}</strong><small>{item.location}</small></div></div></td>
+                                  <td><span className="company-dashboard-status published">Publicado</span></td>
+                                  <td>{item.visualizacoes.toLocaleString('pt-BR')}</td>
+                                  <td>{item.whatsapp_clicks.toLocaleString('pt-BR')}</td>
+                                  <td>{new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(item.visualizacoes > 0 ? (item.whatsapp_clicks / item.visualizacoes) * 100 : 0)}%</td>
+                                  <td><button className="company-dashboard-edit-button" type="button" disabled aria-label={`Editar ${item.title}`}><Pencil size={16} aria-hidden="true" /> Editar</button></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                      <aside className="company-dashboard-aside">
+                        <section className="company-dashboard-panel company-dashboard-attention" aria-labelledby="admin-preview-attention-title">
+                          <header className="company-dashboard-panel-heading"><div><h2 id="admin-preview-attention-title">Pontos de atenção</h2><p>Imóveis sem visualizações e sem cliques</p></div><ChartNoAxesColumn size={20} aria-hidden="true" /></header>
+                          <strong className="company-dashboard-attention-count">0</strong>
+                          <p className="company-dashboard-empty">Nenhum imóvel demonstrativo está sem interações.</p>
+                        </section>
+                        <section className="company-dashboard-panel company-dashboard-most-viewed" aria-labelledby="admin-preview-most-viewed-title">
+                          <header className="company-dashboard-panel-heading"><div><h2 id="admin-preview-most-viewed-title">Mais visualizado</h2></div><Eye size={20} aria-hidden="true" /></header>
+                          <div className="company-dashboard-most-viewed-property">
+                            <img src={companyPreviewMostViewed.image} alt="" />
+                            <div><strong>{companyPreviewMostViewed.title}</strong><small>{companyPreviewMostViewed.location}</small><b>{companyPreviewMostViewed.visualizacoes.toLocaleString('pt-BR')} visualizações</b></div>
+                          </div>
+                        </section>
+                      </aside>
+                    </div>
                     <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Dados demonstrativos para homologação.</p>
                   </div>
                 )}
