@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -2668,6 +2668,7 @@ function App() {
                         <Icon size={28} strokeWidth={2.2} />
                       </span>
                       <span className="my-area-nav-label">{label}</span>
+                      <ChevronRight className="my-area-nav-chevron" size={20} strokeWidth={2.2} aria-hidden="true" />
                     </button>
                   ))}
                 </nav>

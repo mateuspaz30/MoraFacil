@@ -9806,3 +9806,153 @@ dl.my-area-profile-grid > div {
   flex: 0 0 12px;
   color: #fff;
 }
+
+.my-area-nav-chevron {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .my-area-sidebar,
+  .my-area-layout.standard-account .my-area-sidebar,
+  .my-area-layout.company-account .my-area-sidebar {
+    gap: 14px;
+    padding: 18px 16px 14px;
+    background: linear-gradient(180deg, #062a49 0%, #0b385d 100%);
+  }
+
+  .my-area-brand,
+  .my-area-layout.standard-account .my-area-brand {
+    gap: 10px;
+    padding: 0 4px;
+    font-size: 1.08rem;
+  }
+
+  .my-area-brand img,
+  .my-area-layout.standard-account .my-area-brand img {
+    width: 42px;
+    height: 42px;
+    margin-left: 0;
+  }
+
+  .my-area-user,
+  .my-area-layout.company-account .my-area-user {
+    display: flex;
+    gap: 12px;
+    padding: 14px 4px;
+  }
+
+  .my-area-avatar,
+  .my-area-layout.standard-account .my-area-avatar {
+    flex-basis: 44px;
+    height: 44px;
+  }
+
+  .my-area-user strong {
+    font-size: 0.9rem;
+  }
+
+  .my-area-user small {
+    font-size: 0.78rem;
+  }
+
+  .my-area-nav,
+  .my-area-nav.standard-account,
+  .my-area-nav.with-admin,
+  .my-area-nav.company-account,
+  .my-area-layout.company-account .my-area-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+    overflow: visible;
+  }
+
+  .my-area-nav button,
+  .my-area-layout.standard-account .my-area-nav button,
+  .my-area-layout.company-account .my-area-nav button {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 20px;
+    grid-template-rows: 1fr;
+    justify-items: stretch;
+    align-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    height: 58px;
+    min-height: 58px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: rgba(106, 157, 196, 0.16);
+    font-size: 0.9rem;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .my-area-nav button:hover,
+  .my-area-nav button.active {
+    background: linear-gradient(100deg, #176b3e, #1d603b);
+  }
+
+  .my-area-nav button.active {
+    box-shadow: inset 4px 0 #8bea45;
+  }
+
+  .my-area-nav button > .my-area-nav-icon,
+  .my-area-layout.company-account .my-area-nav-icon {
+    display: grid;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+  }
+
+  .my-area-nav-label {
+    display: block;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .my-area-nav-icon svg,
+  .my-area-layout.company-account .my-area-nav-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .my-area-nav-chevron {
+    display: block;
+    justify-self: end;
+    width: 20px;
+    height: 20px;
+    color: #d3e2ef;
+  }
+
+  .my-area-sidebar-footer {
+    display: grid;
+    width: 100%;
+    margin-top: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 8px;
+  }
+
+  .my-area-sidebar-action {
+    min-height: 40px;
+    gap: 10px;
+    padding: 4px;
+    font-size: 0.85rem;
+  }
+
+  .my-area-sidebar-action svg {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
