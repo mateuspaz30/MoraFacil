@@ -2250,18 +2250,11 @@ function App() {
   const listingsWithoutPerformance = userListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   ))
-  const listingsWithManyViewsAndFewContacts = userListings.filter((item) => (
-    (Number(item.visualizacoes) || 0) > 100 && (Number(item.whatsapp_clicks) || 0) < 5
-  ))
-  const listingsWithoutViews = userListings.filter((item) => (Number(item.visualizacoes) || 0) === 0)
   const interestRate = (item) => {
     const views = Number(item?.visualizacoes) || 0
     const clicks = Number(item?.whatsapp_clicks) || 0
     return views > 0 ? (clicks / views) * 100 : 0
   }
-  const bestInterestListing = userListings
-    .filter((item) => (Number(item.visualizacoes) || 0) > 0)
-    .reduce((best, item) => !best || interestRate(item) > interestRate(best) ? item : best, null)
   const formatInterestRate = (item) => `${new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
@@ -2285,6 +2278,15 @@ function App() {
       || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
       || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
     ))
+  const dashboardChartListings = rankedStatisticsListings.slice(0, 6)
+  const dashboardChartMaxViews = Math.max(0, ...dashboardChartListings.map((item) => Number(item.visualizacoes) || 0))
+  const dashboardWhatsAppListings = [...userListings]
+    .sort((first, second) => (
+      (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
+      || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
+    ))
+    .slice(0, 4)
+  const dashboardMaxWhatsAppClicks = Math.max(0, ...dashboardWhatsAppListings.map((item) => Number(item.whatsapp_clicks) || 0))
   const boroughPerformance = [...activeListings.reduce((boroughs, item) => {
     const name = String(item.neighborhood || '').trim().replace(/\s+/g, ' ') || 'Bairro não informado'
     const key = normalizeNeighborhoodName(name)
@@ -2816,92 +2818,107 @@ function App() {
                         </article>
                       </section>
                       {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
-                      <section className="company-dashboard-highlights" aria-label="Destaques dos imóveis">
-                        <article className="company-dashboard-highlight-card">
-                          <header><Eye size={20} aria-hidden="true" /><h2>Mais visualizado</h2></header>
-                          {mostViewedListing ? (
-                            <div className="company-dashboard-highlight-property">
-                              {mostViewedListing.image
-                                ? <img src={mostViewedListing.image} alt="" loading="lazy" />
-                                : <span className="company-dashboard-highlight-placeholder"><House size={24} aria-hidden="true" /></span>}
-                              <div>
-                                <strong>{mostViewedListing.title}</strong>
-                                <span>{mostViewedListing.location || getListingLocation(mostViewedListing)}</span>
-                                <b>{new Intl.NumberFormat('pt-BR').format(Number(mostViewedListing.visualizacoes) || 0)} visualizações</b>
-                              </div>
+                      <div className="company-dashboard-overview-grid">
+                        <section className="company-dashboard-panel company-dashboard-chart" aria-labelledby="company-dashboard-chart-title">
+                          <header className="company-dashboard-panel-heading">
+                            <div>
+                              <h2 id="company-dashboard-chart-title">Desempenho no período</h2>
+                              <p>Visualizações acumuladas por imóvel</p>
                             </div>
-                          ) : <p className="company-dashboard-highlight-empty">Você ainda não cadastrou imóveis.</p>}
-                        </article>
-                        <article className="company-dashboard-highlight-card">
-                          <header><WhatsAppIcon size={20} /><h2>Mais cliques WhatsApp</h2></header>
-                          {mostWhatsAppClickedListing ? (
-                            <div className="company-dashboard-highlight-property">
-                              {mostWhatsAppClickedListing.image
-                                ? <img src={mostWhatsAppClickedListing.image} alt="" loading="lazy" />
-                                : <span className="company-dashboard-highlight-placeholder"><House size={24} aria-hidden="true" /></span>}
-                              <div>
-                                <strong>{mostWhatsAppClickedListing.title}</strong>
-                                <span>{mostWhatsAppClickedListing.location || getListingLocation(mostWhatsAppClickedListing)}</span>
-                                <b>{new Intl.NumberFormat('pt-BR').format(Number(mostWhatsAppClickedListing.whatsapp_clicks) || 0)} cliques</b>
-                              </div>
+                            <span className="company-dashboard-chart-legend"><i aria-hidden="true" /> Visualizações</span>
+                          </header>
+                          {dashboardChartListings.length ? (
+                            <div className="company-dashboard-chart-list" role="img" aria-label="Comparação de visualizações acumuladas por imóvel">
+                              {dashboardChartListings.map((item) => {
+                                const views = Number(item.visualizacoes) || 0
+                                const height = dashboardChartMaxViews > 0 ? (views / dashboardChartMaxViews) * 100 : 0
+                                return (
+                                  <div className="company-dashboard-chart-column" key={item.id} title={`${item.title}: ${new Intl.NumberFormat('pt-BR').format(views)} visualizações`}>
+                                    <strong>{new Intl.NumberFormat('pt-BR').format(views)}</strong>
+                                    <div className="company-dashboard-chart-bar-track"><span style={{ height: `${height}%` }} /></div>
+                                    <small>{item.title}</small>
+                                  </div>
+                                )
+                              })}
                             </div>
-                          ) : <p className="company-dashboard-highlight-empty">Você ainda não cadastrou imóveis.</p>}
-                        </article>
-                        <article className="company-dashboard-highlight-card company-dashboard-no-interactions">
-                          <header><ChartNoAxesColumn size={20} aria-hidden="true" /><h2>Sem interações</h2></header>
-                          <strong className="company-dashboard-no-interactions-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
-                          <p>{listingsWithoutInteractionsCount === 1 ? 'imóvel sem visualizações e cliques no WhatsApp' : 'imóveis sem visualizações e cliques no WhatsApp'}</p>
-                        </article>
-                      </section>
-                      <section className="company-opportunities" aria-labelledby="company-opportunities-title">
-                        <header className="company-opportunities-heading">
-                          <div>
-                            <span aria-hidden="true">💡</span>
-                            <div><h2 id="company-opportunities-title">Oportunidades</h2><p>Insights para ajudar a melhorar o desempenho dos anúncios.</p></div>
+                          ) : <p className="company-dashboard-empty">Cadastre imóveis para acompanhar as visualizações.</p>}
+                          <p className="company-dashboard-chart-note">O sistema exibe totais acumulados; ainda não há histórico por data.</p>
+                        </section>
+                        <section className="company-dashboard-panel company-dashboard-whatsapp-ranking" aria-labelledby="company-dashboard-ranking-title">
+                          <header className="company-dashboard-panel-heading">
+                            <div><h2 id="company-dashboard-ranking-title">Mais cliques no WhatsApp</h2><p>Imóveis com mais cliques acumulados</p></div>
+                          </header>
+                          {dashboardWhatsAppListings.length ? (
+                            <ol>
+                              {dashboardWhatsAppListings.map((item, index) => {
+                                const clicks = Number(item.whatsapp_clicks) || 0
+                                const width = dashboardMaxWhatsAppClicks > 0 ? (clicks / dashboardMaxWhatsAppClicks) * 100 : 0
+                                return (
+                                  <li key={item.id}>
+                                    <div className="company-dashboard-ranking-label"><span>{index + 1}</span><strong title={item.title}>{item.title}</strong><b>{new Intl.NumberFormat('pt-BR').format(clicks)}</b></div>
+                                    <div className="company-dashboard-ranking-track"><span style={{ width: `${width}%` }} /></div>
+                                  </li>
+                                )
+                              })}
+                            </ol>
+                          ) : <p className="company-dashboard-empty">Seus imóveis aparecerão aqui.</p>}
+                        </section>
+                      </div>
+                      <div className="company-dashboard-performance-grid">
+                        <section className="company-dashboard-panel company-dashboard-listings-panel" aria-labelledby="company-dashboard-listings-title">
+                          <header className="company-dashboard-panel-heading">
+                            <div><h2 id="company-dashboard-listings-title">Desempenho dos imóveis</h2><p>Resumo dos anúncios com mais visualizações</p></div>
+                            <button type="button" onClick={() => openMyArea('listings')}>Ver todos <ExternalLink size={15} aria-hidden="true" /></button>
+                          </header>
+                          <div className="company-dashboard-table-scroll">
+                            <table className="company-dashboard-table">
+                              <thead><tr><th scope="col">Imóvel</th><th scope="col">Status</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Taxa de interesse</th><th scope="col">Ação</th></tr></thead>
+                              <tbody>
+                                {rankedStatisticsListings.slice(0, 5).map((item) => (
+                                  <tr key={item.id}>
+                                    <td>
+                                      <div className="company-dashboard-table-property">
+                                        {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span><House size={20} aria-hidden="true" /></span>}
+                                        <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)}</small></div>
+                                      </div>
+                                    </td>
+                                    <td><span className={`company-dashboard-status ${getListingStatusKey(item)}`}>{getListingStatusLabel(item)}</span></td>
+                                    <td>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)}</td>
+                                    <td>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)}</td>
+                                    <td>{formatInterestRate(item)}</td>
+                                    <td><button className="company-dashboard-edit-button" type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar ${item.title}`}><Pencil size={16} aria-hidden="true" /> Editar</button></td>
+                                  </tr>
+                                ))}
+                                {!rankedStatisticsListings.length && <tr><td className="company-dashboard-table-empty" colSpan="6">Você ainda não cadastrou imóveis.</td></tr>}
+                              </tbody>
+                            </table>
                           </div>
-                        </header>
-                        <div className="company-opportunities-grid">
-                          <article className="company-opportunity-card">
-                            <h3>Muitos acessos, poucos contatos</h3>
-                            {listingsWithManyViewsAndFewContacts.length ? (
+                        </section>
+                        <aside className="company-dashboard-aside">
+                          <section className="company-dashboard-panel company-dashboard-attention" aria-labelledby="company-dashboard-attention-title">
+                            <header className="company-dashboard-panel-heading">
+                              <div><h2 id="company-dashboard-attention-title">Pontos de atenção</h2><p>Imóveis sem visualizações e sem cliques</p></div>
+                              <ChartNoAxesColumn size={20} aria-hidden="true" />
+                            </header>
+                            {listingsWithoutPerformance.length ? (
                               <>
-                                <ul className="company-opportunity-list">
-                                  {listingsWithManyViewsAndFewContacts.map((item) => (
-                                    <li key={item.id}>
-                                      <strong>{item.title}</strong>
-                                      <span>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)} visualizações</span>
-                                      <span>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)} cliques WhatsApp</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                                <p className="company-opportunity-suggestion">Sugestão: revisar fotos, descrição ou preço.</p>
+                                <strong className="company-dashboard-attention-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
+                                <ul>{listingsWithoutPerformance.slice(0, 3).map((item) => <li key={item.id}>{item.title}</li>)}</ul>
+                                <button type="button" onClick={() => openMyArea('listings')}>Revisar imóveis</button>
                               </>
-                            ) : <p className="company-opportunity-empty">Nenhum imóvel atende a esse critério no momento.</p>}
-                          </article>
-                          <article className="company-opportunity-card">
-                            <h3>Sem visualizações</h3>
-                            {listingsWithoutViews.length ? (
-                              <>
-                                <ul className="company-opportunity-list">
-                                  {listingsWithoutViews.map((item) => <li key={item.id}><strong>{item.title}</strong></li>)}
-                                </ul>
-                                <p className="company-opportunity-suggestion">Sugestão: revisar o anúncio ou criar destaque.</p>
-                              </>
-                            ) : <p className="company-opportunity-empty">Todos os imóveis já receberam visualizações.</p>}
-                          </article>
-                          <article className="company-opportunity-card company-opportunity-best">
-                            <h3>Melhor desempenho</h3>
-                            {bestInterestListing ? (
-                              <div className="company-opportunity-best-content">
-                                <strong>{bestInterestListing.title}</strong>
-                                <span>{new Intl.NumberFormat('pt-BR').format(Number(bestInterestListing.visualizacoes) || 0)} visualizações</span>
-                                <span>{new Intl.NumberFormat('pt-BR').format(Number(bestInterestListing.whatsapp_clicks) || 0)} cliques WhatsApp</span>
-                                <b>Taxa de interesse: {formatInterestRate(bestInterestListing)}</b>
+                            ) : <p className="company-dashboard-empty">Todos os anúncios já têm visualizações ou cliques no WhatsApp.</p>}
+                          </section>
+                          <section className="company-dashboard-panel company-dashboard-most-viewed" aria-labelledby="company-dashboard-most-viewed-title">
+                            <header className="company-dashboard-panel-heading"><div><h2 id="company-dashboard-most-viewed-title">Mais visualizado</h2></div><Eye size={20} aria-hidden="true" /></header>
+                            {mostViewedListing ? (
+                              <div className="company-dashboard-most-viewed-property">
+                                {mostViewedListing.image ? <img src={mostViewedListing.image} alt="" loading="lazy" /> : <span><House size={23} aria-hidden="true" /></span>}
+                                <div><strong>{mostViewedListing.title}</strong><small>{mostViewedListing.location || getListingLocation(mostViewedListing)}</small><b>{new Intl.NumberFormat('pt-BR').format(Number(mostViewedListing.visualizacoes) || 0)} visualizações</b></div>
                               </div>
-                            ) : <p className="company-opportunity-empty">Ainda não há visualizações para calcular a taxa de interesse.</p>}
-                          </article>
-                        </div>
-                      </section>
+                            ) : <p className="company-dashboard-empty">Cadastre um imóvel para ver os destaques.</p>}
+                          </section>
+                        </aside>
+                      </div>
                       <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                     </>
                   ) : (
