@@ -7045,6 +7045,159 @@ dl.my-area-profile-grid > div {
   line-height: 1.5;
 }
 
+.company-borough-section {
+  display: grid;
+  gap: 14px;
+}
+
+.company-borough-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.company-borough-section-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.company-borough-heading-icon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: #e8f5ec;
+  color: #078c35;
+}
+
+.company-borough-section-heading h2,
+.company-borough-section-heading p {
+  margin: 0;
+}
+
+.company-borough-section-heading h2 {
+  color: #12345a;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.company-borough-section-heading p {
+  margin-top: 4px;
+  color: #71849a;
+  font-size: 0.8rem;
+}
+
+.company-borough-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.company-borough-card {
+  min-width: 0;
+  border: 1px solid #e1e9f1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
+}
+
+.company-borough-card > header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.company-borough-medal {
+  display: grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0f4f8;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.company-borough-card h3 {
+  overflow: hidden;
+  margin: 0;
+  color: #12345a;
+  font-size: 0.94rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-borough-views {
+  display: block;
+  color: #12345a;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.company-borough-views span {
+  color: #71849a;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.company-borough-card-metrics {
+  display: grid;
+  gap: 8px;
+  margin-top: 13px;
+  border-top: 1px solid #e8eef4;
+  padding-top: 11px;
+}
+
+.company-borough-card-metrics > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #536b84;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.company-borough-card-metrics > span > svg {
+  flex: 0 0 17px;
+  color: #078c35;
+}
+
+.company-borough-table-card {
+  margin-top: 0;
+}
+
+.company-borough-table-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #183553;
+}
+
+.company-borough-table-name svg {
+  color: #078c35;
+}
+
+.company-borough-insights {
+  border-left: 4px solid #8bea45;
+}
+
+.company-borough-empty {
+  border: 1px solid #e1e9f1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px;
+}
+
 .company-profile-preview {
   display: flex;
   align-items: flex-start;
@@ -7319,6 +7472,10 @@ dl.my-area-profile-grid > div {
     grid-template-columns: 1fr;
   }
 
+  .company-borough-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .company-preview-property-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7383,6 +7540,10 @@ dl.my-area-profile-grid > div {
   }
 
   .company-opportunities-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .company-borough-cards {
     grid-template-columns: 1fr;
   }
 

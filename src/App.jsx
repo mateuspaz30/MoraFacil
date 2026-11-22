@@ -704,7 +704,7 @@ function App() {
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
   const [receivedFavoriteCount, setReceivedFavoriteCount] = useState(null)
   const [receivedFavoriteCountError, setReceivedFavoriteCountError] = useState('')
-  const [listingFavoriteCounts, setListingFavoriteCounts] = useState({ userId: null, counts: {} })
+  const [listingFavoriteCounts, setListingFavoriteCounts] = useState({ userId: null, counts: {}, status: 'idle' })
   const [listingFavoriteCountsError, setListingFavoriteCountsError] = useState('')
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
@@ -1201,7 +1201,7 @@ function App() {
 
     let mounted = true
     const loadListingFavoriteCounts = async () => {
-      setListingFavoriteCounts({ userId: authUser.id, counts: {} })
+      setListingFavoriteCounts({ userId: authUser.id, counts: {}, status: 'loading' })
       setListingFavoriteCountsError('')
       try {
         const { data, error } = await supabase.rpc('count_my_listing_favorites_by_listing')
@@ -1210,12 +1210,13 @@ function App() {
           setListingFavoriteCounts({
             userId: authUser.id,
             counts: Object.fromEntries((data || []).map((item) => [String(item.listing_id), Number(item.favorite_count) || 0])),
+            status: 'loaded',
           })
         }
       } catch (error) {
         console.error('Falha ao carregar os favoritos por imóvel:', error)
         if (mounted) {
-          setListingFavoriteCounts({ userId: authUser.id, counts: {} })
+          setListingFavoriteCounts({ userId: authUser.id, counts: {}, status: 'error' })
           setListingFavoriteCountsError(`Não foi possível carregar os favoritos por imóvel. Execute supabase/migrations/20261121_company_listing_statistics.sql no Supabase. ${error.message}`)
         }
       }
@@ -2245,6 +2246,7 @@ function App() {
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   )).length
   const listingFavoriteCountById = listingFavoriteCounts.userId === authUser?.id ? listingFavoriteCounts.counts : {}
+  const listingFavoriteCountsStatus = listingFavoriteCounts.userId === authUser?.id ? listingFavoriteCounts.status : 'loading'
   const listingsWithoutPerformance = userListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   ))
@@ -2283,6 +2285,58 @@ function App() {
       || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
       || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
     ))
+  const boroughPerformance = [...activeListings.reduce((boroughs, item) => {
+    const name = String(item.neighborhood || '').trim().replace(/\s+/g, ' ') || 'Bairro não informado'
+    const key = normalizeNeighborhoodName(name)
+    const borough = boroughs.get(key) || {
+      name,
+      listingCount: 0,
+      visualizacoes: 0,
+      whatsapp_clicks: 0,
+      favoritos: listingFavoriteCountsStatus === 'loaded' ? 0 : null,
+    }
+    borough.listingCount += 1
+    borough.visualizacoes += Number(item.visualizacoes) || 0
+    borough.whatsapp_clicks += Number(item.whatsapp_clicks) || 0
+    if (borough.favoritos !== null) borough.favoritos += listingFavoriteCountById[String(item.id)] || 0
+    boroughs.set(key, borough)
+    return boroughs
+  }, new Map()).values()]
+    .sort((first, second) => (
+      second.visualizacoes - first.visualizacoes
+      || second.whatsapp_clicks - first.whatsapp_clicks
+      || second.listingCount - first.listingCount
+      || first.name.localeCompare(second.name, 'pt-BR')
+    ))
+  const topBoroughs = boroughPerformance.slice(0, 5)
+  const boroughTotalViews = boroughPerformance.reduce((total, borough) => total + borough.visualizacoes, 0)
+  const leadingBorough = boroughPerformance[0] || null
+  const mostContactedBorough = [...boroughPerformance]
+    .sort((first, second) => second.whatsapp_clicks - first.whatsapp_clicks || second.visualizacoes - first.visualizacoes)[0] || null
+  const averageBoroughListingCount = boroughPerformance.length
+    ? activeListings.length / boroughPerformance.length
+    : 0
+  const boroughWithCaptureOpportunity = boroughPerformance
+    .filter((borough) => borough.visualizacoes > 0 && borough.listingCount < averageBoroughListingCount)
+    .sort((first, second) => (
+      second.visualizacoes / second.listingCount - first.visualizacoes / first.listingCount
+      || second.visualizacoes - first.visualizacoes
+    ))[0] || null
+  const boroughInsights = boroughPerformance.length === 0
+    ? ['Não há imóveis ativos para analisar por bairro.']
+    : [
+      leadingBorough.visualizacoes > 0
+        ? (leadingBorough.visualizacoes >= boroughTotalViews / 2
+          ? `O bairro ${leadingBorough.name} concentra a maior parte da demanda atual.`
+          : `O bairro ${leadingBorough.name} lidera em visualizações na sua carteira.`)
+        : 'Ainda não há visualizações registradas nos imóveis ativos por bairro.',
+      mostContactedBorough.whatsapp_clicks > 0
+        ? `${mostContactedBorough.name} possui o maior volume de contatos via WhatsApp.`
+        : 'Ainda não há cliques no WhatsApp registrados nos imóveis ativos por bairro.',
+      boroughWithCaptureOpportunity
+        ? `Existem oportunidades para captar mais imóveis na região ${boroughWithCaptureOpportunity.name}.`
+        : 'Ainda não há dados suficientes para apontar uma oportunidade de captação por bairro.',
+    ]
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
   const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
@@ -2991,6 +3045,70 @@ function App() {
                           </table>
                         </div>
                       ) : <p className="company-statistics-empty">Você ainda não cadastrou imóveis.</p>}
+                    </section>
+                    <section className="company-borough-section" aria-labelledby="company-borough-title">
+                      <header className="company-borough-section-heading">
+                        <div>
+                          <span className="company-borough-heading-icon" aria-hidden="true"><MapPin size={22} /></span>
+                          <div>
+                            <h2 id="company-borough-title">Bairros mais procurados</h2>
+                            <p>Demanda acumulada nos imóveis ativos.</p>
+                          </div>
+                        </div>
+                      </header>
+                      {topBoroughs.length ? (
+                        <>
+                          <div className="company-borough-cards">
+                            {topBoroughs.map((borough, index) => (
+                              <article className="company-borough-card" key={normalizeNeighborhoodName(borough.name)}>
+                                <header>
+                                  <span className="company-borough-medal" aria-hidden="true">{['🥇', '🥈', '🥉'][index] || `${index + 1}.`}</span>
+                                  <h3>{borough.name}</h3>
+                                </header>
+                                <strong className="company-borough-views">{new Intl.NumberFormat('pt-BR').format(borough.visualizacoes)} <span>visualizações</span></strong>
+                                <div className="company-borough-card-metrics">
+                                  <span><WhatsAppIcon size={17} />{new Intl.NumberFormat('pt-BR').format(borough.whatsapp_clicks)} cliques WhatsApp</span>
+                                  <span><Building2 size={17} aria-hidden="true" />{new Intl.NumberFormat('pt-BR').format(borough.listingCount)} {borough.listingCount === 1 ? 'imóvel' : 'imóveis'}</span>
+                                  <span><Heart size={17} aria-hidden="true" />{borough.favoritos === null
+                                    ? listingFavoriteCountsStatus === 'loading' ? 'Carregando favoritos' : 'Favoritos indisponíveis'
+                                    : `${new Intl.NumberFormat('pt-BR').format(borough.favoritos)} favoritos`}</span>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                          <section className="company-statistics-table-card company-borough-table-card" aria-labelledby="company-borough-table-title">
+                            <header>
+                              <div><h2 id="company-borough-table-title">Desempenho por bairro</h2><p>Bairros ordenados por visualizações dos imóveis ativos.</p></div>
+                            </header>
+                            <div className="company-statistics-table-scroll">
+                              <table className="company-statistics-table company-borough-table">
+                                <thead>
+                                  <tr><th scope="col">Bairro</th><th scope="col">Imóveis</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr>
+                                </thead>
+                                <tbody>
+                                  {boroughPerformance.map((borough) => (
+                                    <tr key={normalizeNeighborhoodName(borough.name)}>
+                                      <td><strong className="company-borough-table-name"><MapPin size={16} aria-hidden="true" />{borough.name}</strong></td>
+                                      <td>{new Intl.NumberFormat('pt-BR').format(borough.listingCount)}</td>
+                                      <td>{new Intl.NumberFormat('pt-BR').format(borough.visualizacoes)}</td>
+                                      <td>{new Intl.NumberFormat('pt-BR').format(borough.whatsapp_clicks)}</td>
+                                      <td>{borough.favoritos === null
+                                        ? listingFavoriteCountsStatus === 'loading' ? '…' : '—'
+                                        : new Intl.NumberFormat('pt-BR').format(borough.favoritos)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section className="company-statistics-summary company-borough-insights" aria-labelledby="company-borough-insights-title">
+                            <h2 id="company-borough-insights-title">Insights de demanda</h2>
+                            <ul>{boroughInsights.map((insight) => <li key={insight}>{insight}</li>)}</ul>
+                          </section>
+                        </>
+                      ) : (
+                        <p className="company-statistics-empty company-borough-empty">Não há imóveis ativos para apresentar dados por bairro.</p>
+                      )}
                     </section>
                     <section className="company-statistics-highlights" aria-label="Destaques de desempenho">
                       <article className="company-statistics-highlight">
