@@ -2248,6 +2248,22 @@ function App() {
   const listingsWithoutPerformance = userListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   ))
+  const listingsWithManyViewsAndFewContacts = userListings.filter((item) => (
+    (Number(item.visualizacoes) || 0) > 100 && (Number(item.whatsapp_clicks) || 0) < 5
+  ))
+  const listingsWithoutViews = userListings.filter((item) => (Number(item.visualizacoes) || 0) === 0)
+  const interestRate = (item) => {
+    const views = Number(item?.visualizacoes) || 0
+    const clicks = Number(item?.whatsapp_clicks) || 0
+    return views > 0 ? (clicks / views) * 100 : 0
+  }
+  const bestInterestListing = userListings
+    .filter((item) => (Number(item.visualizacoes) || 0) > 0)
+    .reduce((best, item) => !best || interestRate(item) > interestRate(best) ? item : best, null)
+  const formatInterestRate = (item) => `${new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(interestRate(item))}%`
   const mostPerformedViewListing = mostViewedListing
   const mostContactedListing = mostWhatsAppClickedListing
   const statisticsSummaries = [
@@ -2676,11 +2692,12 @@ function App() {
                       <header><div><h2 id="admin-preview-statistics-title">Desempenho dos imóveis</h2><p>Dados ilustrativos para homologação.</p></div></header>
                       <div className="company-statistics-table-scroll">
                         <table className="company-statistics-table">
-                          <thead><tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr></thead>
+                          <thead><tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th><th scope="col">Taxa de Interesse</th></tr></thead>
                           <tbody>{companyPreviewListings.map((item) => (
                             <tr key={item.id}>
                               <td><div className="company-statistics-property"><img src={item.image} alt="" /><div><strong>{item.title}</strong><small>{item.location}</small></div></div></td>
                               <td>{item.visualizacoes.toLocaleString('pt-BR')}</td><td>{item.whatsapp_clicks}</td><td>{item.favoritos}</td>
+                              <td>{new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(item.visualizacoes > 0 ? item.whatsapp_clicks / item.visualizacoes * 100 : 0)}%</td>
                             </tr>
                           ))}</tbody>
                         </table>
@@ -2781,6 +2798,55 @@ function App() {
                           <strong className="company-dashboard-no-interactions-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
                           <p>{listingsWithoutInteractionsCount === 1 ? 'imóvel sem visualizações e cliques no WhatsApp' : 'imóveis sem visualizações e cliques no WhatsApp'}</p>
                         </article>
+                      </section>
+                      <section className="company-opportunities" aria-labelledby="company-opportunities-title">
+                        <header className="company-opportunities-heading">
+                          <div>
+                            <span aria-hidden="true">💡</span>
+                            <div><h2 id="company-opportunities-title">Oportunidades</h2><p>Insights para ajudar a melhorar o desempenho dos anúncios.</p></div>
+                          </div>
+                        </header>
+                        <div className="company-opportunities-grid">
+                          <article className="company-opportunity-card">
+                            <h3>Muitos acessos, poucos contatos</h3>
+                            {listingsWithManyViewsAndFewContacts.length ? (
+                              <>
+                                <ul className="company-opportunity-list">
+                                  {listingsWithManyViewsAndFewContacts.map((item) => (
+                                    <li key={item.id}>
+                                      <strong>{item.title}</strong>
+                                      <span>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)} visualizações</span>
+                                      <span>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)} cliques WhatsApp</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <p className="company-opportunity-suggestion">Sugestão: revisar fotos, descrição ou preço.</p>
+                              </>
+                            ) : <p className="company-opportunity-empty">Nenhum imóvel atende a esse critério no momento.</p>}
+                          </article>
+                          <article className="company-opportunity-card">
+                            <h3>Sem visualizações</h3>
+                            {listingsWithoutViews.length ? (
+                              <>
+                                <ul className="company-opportunity-list">
+                                  {listingsWithoutViews.map((item) => <li key={item.id}><strong>{item.title}</strong></li>)}
+                                </ul>
+                                <p className="company-opportunity-suggestion">Sugestão: revisar o anúncio ou criar destaque.</p>
+                              </>
+                            ) : <p className="company-opportunity-empty">Todos os imóveis já receberam visualizações.</p>}
+                          </article>
+                          <article className="company-opportunity-card company-opportunity-best">
+                            <h3>Melhor desempenho</h3>
+                            {bestInterestListing ? (
+                              <div className="company-opportunity-best-content">
+                                <strong>{bestInterestListing.title}</strong>
+                                <span>{new Intl.NumberFormat('pt-BR').format(Number(bestInterestListing.visualizacoes) || 0)} visualizações</span>
+                                <span>{new Intl.NumberFormat('pt-BR').format(Number(bestInterestListing.whatsapp_clicks) || 0)} cliques WhatsApp</span>
+                                <b>Taxa de interesse: {formatInterestRate(bestInterestListing)}</b>
+                              </div>
+                            ) : <p className="company-opportunity-empty">Ainda não há visualizações para calcular a taxa de interesse.</p>}
+                          </article>
+                        </div>
                       </section>
                       <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
                     </>
@@ -2900,7 +2966,7 @@ function App() {
                         <div className="company-statistics-table-scroll">
                           <table className="company-statistics-table">
                             <thead>
-                              <tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr>
+                              <tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th><th scope="col">Taxa de Interesse</th></tr>
                             </thead>
                             <tbody>
                               {rankedStatisticsListings.map((item) => (
@@ -2918,6 +2984,7 @@ function App() {
                                     : listingFavoriteCounts.userId === authUser.id
                                       ? new Intl.NumberFormat('pt-BR').format(listingFavoriteCountById[String(item.id)] ?? 0)
                                       : '…'}</td>
+                                  <td>{formatInterestRate(item)}</td>
                                 </tr>
                               ))}
                             </tbody>

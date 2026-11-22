@@ -33,6 +33,8 @@ Para bancos existentes, depois das migrações de perfil acima, execute [`supaba
 
 Para habilitar as estatísticas por imóvel em bancos existentes, execute [`supabase/migrations/20261121_company_listing_statistics.sql`](supabase/migrations/20261121_company_listing_statistics.sql) depois das migrações de favoritos. A função retorna, apenas para o usuário autenticado, a contagem de favoritos recebidos por anúncio, sem liberar acesso às linhas da tabela `favorites`.
 
+O Dashboard da imobiliária identifica anúncios com muitos acessos e poucos contatos, anúncios sem visualizações e a maior taxa de interesse. Em Estatísticas, a taxa por imóvel é calculada como cliques no WhatsApp divididos por visualizações; anúncios sem visualizações exibem 0,0%.
+
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_view_count.sql`](supabase/migrations/20261119_add_listing_view_count.sql) no SQL Editor do Supabase. A migração adiciona o contador de visualizações e a função atômica que o incrementa ao abrir os detalhes de um imóvel aprovado.
 
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_whatsapp_clicks.sql`](supabase/migrations/20261119_add_listing_whatsapp_clicks.sql) no SQL Editor do Supabase. A migração adiciona o contador de cliques de contato e a função atômica que o incrementa ao clicar em um botão de contato de um imóvel aprovado.
