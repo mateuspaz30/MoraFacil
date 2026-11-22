@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, House } from 'lucide-react'
 import { getListingPurposeLabel } from './listingPresentation.js'
+import useSwipeNavigation from './useSwipeNavigation.js'
 
 export default function StandardListingGallery({ listing, purpose, showThumbnails = true }) {
   const images = [...new Set([
@@ -14,10 +15,11 @@ export default function StandardListingGallery({ listing, purpose, showThumbnail
     if (images.length < 2) return
     setImageIndex((current) => (current + direction + images.length) % images.length)
   }
+  const swipe = useSwipeNavigation(changeImage)
 
   return (
     <div className="standard-listing-gallery">
-      <div className="standard-listing-gallery-main">
+      <div className="standard-listing-gallery-main" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd} onTouchCancel={swipe.onTouchCancel}>
         {images[activeImageIndex]
           ? <img src={images[activeImageIndex]} alt={`${listing.title}, foto ${activeImageIndex + 1}`} />
           : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}

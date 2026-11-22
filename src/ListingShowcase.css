@@ -91,6 +91,7 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #e4edf5;
+  touch-action: pan-y;
 }
 
 .favorite-toggle {
@@ -1025,7 +1026,7 @@
 }
 
 .listing-gallery-lightbox { position: fixed; inset: 0; z-index: 2000; display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; justify-items: center; gap: 12px; padding: 48px 20px; background: rgba(6, 18, 34, 0.94); }
-.listing-gallery-lightbox > img { display: block; max-width: min(100%, 1200px); max-height: calc(100vh - 100px); object-fit: contain; grid-column: 2; }
+.listing-gallery-lightbox > img { display: block; max-width: min(100%, 1200px); max-height: calc(100vh - 100px); object-fit: contain; grid-column: 2; touch-action: pan-y; }
 .listing-gallery-lightbox > .listing-gallery-arrow { position: static; transform: none; }
 .listing-gallery-lightbox > .listing-gallery-arrow.previous { grid-column: 1; grid-row: 1; }
 .listing-gallery-lightbox > .listing-gallery-arrow.next { grid-column: 3; grid-row: 1; }

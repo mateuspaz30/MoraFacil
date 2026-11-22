@@ -12,6 +12,7 @@ import { getListingImages, getListingPropertyType, getListingPurpose, getListing
 import AdminPanel from './AdminPanel.jsx'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
 import StandardListingGallery from './StandardListingGallery.jsx'
+import useSwipeNavigation from './useSwipeNavigation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
@@ -560,7 +561,6 @@ function AnnouncementMapFocus({ focus }) {
 
 function MapListingPopup({ listing }) {
   const map = useMap()
-  const touchStartX = useRef(null)
   const images = getListingImages(listing)
   const [imageIndex, setImageIndex] = useState(0)
   const bedrooms = Number(listing.bedrooms) || 0
@@ -573,22 +573,15 @@ function MapListingPopup({ listing }) {
   const PropertyTypeIcon = propertyTypeIcons[propertyType.key]
 
   const changeImage = (direction) => {
+    if (images.length < 2) return
     setImageIndex((current) => (current + direction + images.length) % images.length)
   }
+  const gallerySwipe = useSwipeNavigation(changeImage, 40)
 
   return (
     <Popup className="listing-map-popup" closeButton={false}>
       <article className="map-detail-card">
-        <div
-          className="map-detail-image-wrap"
-          onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null }}
-          onTouchEnd={(event) => {
-            if (touchStartX.current === null || images.length < 2) return
-            const delta = event.changedTouches[0].clientX - touchStartX.current
-            if (Math.abs(delta) > 40) changeImage(delta < 0 ? 1 : -1)
-            touchStartX.current = null
-          }}
-        >
+        <div className="map-detail-image-wrap" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
           {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
           <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
           <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
@@ -1263,6 +1256,10 @@ function App() {
       return firstOrder - secondOrder || String(first.id).localeCompare(String(second.id))
     })
   const activeHeroListing = heroCarouselListings[heroSlideIndex % Math.max(heroCarouselListings.length, 1)]
+  const heroSwipe = useSwipeNavigation((direction) => {
+    if (heroCarouselListings.length < 2) return
+    setHeroSlideIndex((current) => (current + direction + heroCarouselListings.length) % heroCarouselListings.length)
+  })
 
   useEffect(() => {
     if (heroCarouselListings.length < 2) return undefined
@@ -3897,7 +3894,7 @@ function App() {
 
       <section className="home-search-grid">
         {heroCarouselListings.length > 0 ? (
-          <article className="hero-listing-card">
+          <article className="hero-listing-card" onTouchStart={heroSwipe.onTouchStart} onTouchEnd={heroSwipe.onTouchEnd} onTouchCancel={heroSwipe.onTouchCancel}>
             {heroCarouselListings.map((item, index) => (
               <img
                 key={item.id}

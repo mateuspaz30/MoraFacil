@@ -3,6 +3,7 @@ import { Bath, BedDouble, Building2, CalendarDays, Car, Heart, House, KeyRound, 
 import './ListingShowcase.css'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
+import useSwipeNavigation from './useSwipeNavigation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 
@@ -173,15 +174,45 @@ const openTrackedContact = async (event, onTrack) => {
 function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite, isBusy, onToggleFavorite }) {
   const images = getListingImages(listing)
   const [imageIndex, setImageIndex] = useState(0)
+  const suppressClickRef = useRef(false)
 
   const changeImage = (event, direction) => {
     event.preventDefault()
     event.stopPropagation()
+    if (images.length < 2) return
     setImageIndex((current) => (current + direction + images.length) % images.length)
+  }
+  const swipe = useSwipeNavigation((direction) => {
+    if (images.length < 2) return
+    setImageIndex((current) => (current + direction + images.length) % images.length)
+  })
+  const handleTouchEnd = (event) => {
+    if (swipe.onTouchEnd(event)) {
+      suppressClickRef.current = true
+      event.preventDefault()
+      window.setTimeout(() => {
+        suppressClickRef.current = false
+      }, 500)
+    }
+  }
+  const handleClickCapture = (event) => {
+    if (!suppressClickRef.current) return
+    suppressClickRef.current = false
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   return (
-    <div className="showcase-property-image account-card-image-wrap">
+    <div
+      className="showcase-property-image account-card-image-wrap"
+      onTouchStart={(event) => {
+        suppressClickRef.current = false
+        swipe.onTouchStart(event)
+      }}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={swipe.onTouchCancel}
+      onClickCapture={handleClickCapture}
+    >
       <a className="showcase-property-image-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
         {images[imageIndex] && (
           <img
@@ -295,7 +326,6 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareFeedback, setShareFeedback] = useState('')
-  const touchStartX = useRef(null)
   const shareCloseButtonRef = useRef(null)
   const recordedListingIdRef = useRef(null)
   const city = getCityLabel(listing.city)
@@ -338,8 +368,11 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   }, [listing, onView])
 
   const changeImage = (direction) => {
+    if (galleryImages.length < 2) return
     setActiveImageIndex((current) => (current + direction + galleryImages.length) % galleryImages.length)
   }
+  const gallerySwipe = useSwipeNavigation(changeImage)
+  const lightboxSwipe = useSwipeNavigation(changeImage)
 
   const copyListingUrl = async () => {
     try {
@@ -379,17 +412,6 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [shareOpen])
-
-  const handleGalleryTouchStart = (event) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null
-  }
-
-  const handleGalleryTouchEnd = (event) => {
-    if (touchStartX.current === null || galleryImages.length < 2) return
-    const delta = event.changedTouches[0].clientX - touchStartX.current
-    if (Math.abs(delta) > 45) changeImage(delta < 0 ? 1 : -1)
-    touchStartX.current = null
-  }
 
   useEffect(() => {
     const previousTitle = document.title
@@ -499,7 +521,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
             </button>
           </div>
           <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
-            <div className="listing-detail-gallery-main" onTouchStart={handleGalleryTouchStart} onTouchEnd={handleGalleryTouchEnd}>
+            <div className="listing-detail-gallery-main" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
               {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
               <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
               <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={favoriteBusy} onToggle={onToggleFavorite} />
@@ -640,7 +662,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
       {galleryOpen && <div className="listing-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Galeria de fotos" onClick={(event) => { if (event.target === event.currentTarget) setGalleryOpen(false) }}>
         <button type="button" className="listing-gallery-lightbox-close" aria-label="Fechar galeria" onClick={() => setGalleryOpen(false)}>×</button>
         <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
-        <img src={image} alt={`${listing.title}, foto ${activeImageIndex + 1} de ${galleryImages.length}`} />
+        <img src={image} alt={`${listing.title}, foto ${activeImageIndex + 1} de ${galleryImages.length}`} onTouchStart={lightboxSwipe.onTouchStart} onTouchEnd={lightboxSwipe.onTouchEnd} onTouchCancel={lightboxSwipe.onTouchCancel} />
         <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
         <span>{activeImageIndex + 1} / {galleryImages.length}</span>
       </div>}

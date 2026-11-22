@@ -2151,6 +2151,7 @@
     position: relative;
     min-height: 260px;
     overflow: hidden;
+    touch-action: pan-y;
     border-radius: 16px;
     cursor: default;
     background: #fff;
@@ -3708,6 +3709,7 @@
   aspect-ratio: 1.84;
   border-radius: 10px;
   background: #e3eaf0;
+  touch-action: pan-y;
 }
 
 .map-detail-image {
@@ -5883,12 +5885,17 @@ dl.my-area-profile-grid > div {
   gap: 7px;
 }
 
+.standard-listing-gallery-main {
+  touch-action: pan-y;
+}
+
 .standard-account-dashboard .standard-listing-gallery-main {
   position: relative;
   overflow: hidden;
   aspect-ratio: 1.24;
   border-radius: 9px;
   background: #e7f4ff;
+  touch-action: pan-y;
 }
 
 .standard-account-dashboard .standard-listing-gallery-main > img,
