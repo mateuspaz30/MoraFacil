@@ -9845,7 +9845,7 @@ dl.my-area-profile-grid > div {
   .my-area-layout.company-account .my-area-user {
     display: flex;
     gap: 12px;
-    padding: 14px 4px;
+    padding: 10px 4px;
   }
 
   .my-area-avatar,

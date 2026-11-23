@@ -2632,7 +2632,7 @@ function App() {
                 </button>
                 <div className="my-area-user">
                   <span className="my-area-avatar">{userFirstName.charAt(0)}</span>
-                  <div><strong>{accountDisplayName}</strong><small>{getAccountTypeLabel(accountUserType)}</small></div>
+                  <div><strong>{accountDisplayName}</strong></div>
                 </div>
                 <nav className={`my-area-nav${isStandardAccount ? ' standard-account' : ''}${isCompanyAccount ? ' company-account' : ''}${isAdmin ? ' with-admin' : ''}`}>
                   {[
@@ -3338,6 +3338,7 @@ function App() {
                           </>
                         )}
                         <div><dt>Telefone</dt><dd>{formatPhone(accountProfile.phone) || 'Não informado'}</dd></div>
+                        <div><dt>Tipo de Conta</dt><dd>{getAccountTypeLabel(accountUserType)}</dd></div>
                         <div><dt>E-mail 🔒</dt><dd>{accountProfile.email}</dd></div>
                       </dl>
                     )}
