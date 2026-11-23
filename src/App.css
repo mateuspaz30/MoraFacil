@@ -9635,22 +9635,44 @@ dl.my-area-profile-grid > div {
   font-size: 0.72rem;
 }
 
+.map-mobile-popup-overlay {
+  display: none;
+}
+
 @media (max-width: 700px) {
   .map-panel .listing-map-popup {
-    top: 34px !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: 50% !important;
-    margin: 0 !important;
-    transform: translateX(-50%) !important;
+    display: none !important;
   }
 
-  .map-panel .listing-map-popup .leaflet-popup-content {
-    width: min(260px, calc(100vw - 32px)) !important;
+  .map-mobile-popup-overlay {
+    display: block;
+    position: absolute;
+    top: 34px;
+    left: 50%;
+    z-index: 1100;
+    width: min(260px, calc(100% - 32px));
+    transform: translateX(-50%);
+    pointer-events: none;
   }
 
-  .map-panel .listing-map-popup .leaflet-popup-tip-container {
-    display: none;
+  .map-mobile-popup-overlay > .map-detail-card {
+    width: 100%;
+    pointer-events: auto;
+  }
+
+  .map-panel-fullscreen .map-mobile-popup-overlay {
+    top: calc(var(--map-fullscreen-header-height) + 12px);
+  }
+
+  .map-panel:not(.map-panel-fullscreen) .map-mobile-popup-overlay {
+    top: 34px;
+  }
+
+}
+
+@media (max-width: 360px) {
+  .map-panel:not(.map-panel-fullscreen) .map-mobile-popup-overlay {
+    top: 62px;
   }
 }
 

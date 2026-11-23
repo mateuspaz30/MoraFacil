@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
@@ -559,8 +560,7 @@ function AnnouncementMapFocus({ focus }) {
   return null
 }
 
-function MapListingPopup({ listing }) {
-  const map = useMap()
+function MapListingCard({ listing, onClose }) {
   const images = getListingImages(listing)
   const [imageIndex, setImageIndex] = useState(0)
   const bedrooms = Number(listing.bedrooms) || 0
@@ -579,35 +579,57 @@ function MapListingPopup({ listing }) {
   const gallerySwipe = useSwipeNavigation(changeImage, 40)
 
   return (
-    <Popup className="listing-map-popup" closeButton={false}>
-      <article className="map-detail-card">
-        <div className="map-detail-image-wrap" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
-          {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
-          <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
-          <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={() => map.closePopup()}>×</button>
-          {images.length > 1 && (
-            <>
-              <button type="button" className="map-detail-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
-              <button type="button" className="map-detail-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
-            </>
-          )}
-          <ListingPhotoCount listing={listing} />
+    <article className="map-detail-card">
+      <div className="map-detail-image-wrap" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
+        {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
+        <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
+        <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={onClose}>×</button>
+        {images.length > 1 && (
+          <>
+            <button type="button" className="map-detail-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
+            <button type="button" className="map-detail-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
+          </>
+        )}
+        <ListingPhotoCount listing={listing} />
+      </div>
+      <div className="map-detail-content">
+        <h3>{listing.title}</h3>
+        <p className="map-detail-location"><MapPin size={16} strokeWidth={2} aria-hidden="true" /><span>{getListingLocation(listing)}</span></p>
+        <p className="map-detail-property-type"><PropertyTypeIcon size={16} strokeWidth={2} aria-hidden="true" />{propertyType.label}</p>
+        <p className={`detail-price purpose-price purpose-${purpose}`}>{listing.price}</p>
+        <div className="map-detail-features">
+          <div><BedDouble size={16} strokeWidth={2} aria-hidden="true" /><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
+          <div><Bath size={16} strokeWidth={2} aria-hidden="true" /><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
+          <div><Car size={16} strokeWidth={2} aria-hidden="true" /><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
+          <div><Ruler size={16} strokeWidth={2} aria-hidden="true" /><strong>{formatArea(listing.area)}</strong><small>Área</small></div>
         </div>
-        <div className="map-detail-content">
-          <h3>{listing.title}</h3>
-          <p className="map-detail-location"><MapPin size={16} strokeWidth={2} aria-hidden="true" /><span>{getListingLocation(listing)}</span></p>
-          <p className="map-detail-property-type"><PropertyTypeIcon size={16} strokeWidth={2} aria-hidden="true" />{propertyType.label}</p>
-          <p className={`detail-price purpose-price purpose-${purpose}`}>{listing.price}</p>
-          <div className="map-detail-features">
-            <div><BedDouble size={16} strokeWidth={2} aria-hidden="true" /><strong>{bedrooms}</strong><small>{bedrooms === 1 ? 'Quarto' : 'Quartos'}</small></div>
-            <div><Bath size={16} strokeWidth={2} aria-hidden="true" /><strong>{bathrooms}</strong><small>{bathrooms === 1 ? 'Banheiro' : 'Banheiros'}</small></div>
-            <div><Car size={16} strokeWidth={2} aria-hidden="true" /><strong>{parking}</strong><small>{parking === 1 ? 'Vaga' : 'Vagas'}</small></div>
-            <div><Ruler size={16} strokeWidth={2} aria-hidden="true" /><strong>{formatArea(listing.area)}</strong><small>Área</small></div>
-          </div>
-          <a className="detail-button" href={detailUrl}>Saiba mais <span aria-hidden="true">→</span></a>
-        </div>
-      </article>
+        <a className="detail-button" href={detailUrl}>Saiba mais <span aria-hidden="true">→</span></a>
+      </div>
+    </article>
+  )
+}
+
+function MapListingPopup({ listing, autoPan }) {
+  const map = useMap()
+
+  return (
+    <Popup className="listing-map-popup" closeButton={false} autoPan={autoPan}>
+      <MapListingCard listing={listing} onClose={() => map.closePopup()} />
     </Popup>
+  )
+}
+
+function MapMobileListingOverlay({ listing, target, onClose }) {
+  const map = useMap()
+  useMapEvents({ click: onClose })
+
+  if (!listing || !target) return null
+
+  return createPortal(
+    <div className="map-mobile-popup-overlay">
+      <MapListingCard key={listing.id} listing={listing} onClose={() => { map.closePopup(); onClose() }} />
+    </div>,
+    target,
   )
 }
 
@@ -654,8 +676,11 @@ const FacebookIcon = () => (
 
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
+  const [selectedMapListing, setSelectedMapListing] = useState(null)
+  const [isMobileMap, setIsMobileMap] = useState(() => window.matchMedia('(max-width: 700px)').matches)
   const [mapFullscreenOpen, setMapFullscreenOpen] = useState(false)
   const [announcementMapFullscreenOpen, setAnnouncementMapFullscreenOpen] = useState(false)
+  const [mapPanelElement, setMapPanelElement] = useState(null)
   const [userListings, setUserListings] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('morafacil-user-listings') || '[]')
@@ -751,6 +776,13 @@ function App() {
   const [statusSavingId, setStatusSavingId] = useState(null)
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 700px)')
+    const updateMobileMap = (event) => setIsMobileMap(event.matches)
+    mobileQuery.addEventListener('change', updateMobileMap)
+    return () => mobileQuery.removeEventListener('change', updateMobileMap)
+  }, [])
 
   useEffect(() => {
     const resetHomePropertyType = (event) => {
@@ -4134,6 +4166,7 @@ function App() {
       </div>
 
       <section
+        ref={setMapPanelElement}
         className={`map-panel${mapFullscreenOpen ? ' map-panel-fullscreen' : ''}`}
         aria-label="Mapa com imóveis disponíveis"
         role={mapFullscreenOpen ? 'dialog' : undefined}
@@ -4149,11 +4182,22 @@ function App() {
         <MapContainer center={mapCenter} zoom={14} maxZoom={18} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
           <MapResizeObserver fullscreen={mapFullscreenOpen} />
           <MapLayerSelector />
+          <MapMobileListingOverlay
+            listing={selectedMapListing}
+            target={mapPanelElement}
+            onClose={() => setSelectedMapListing(null)}
+          />
 
           {filteredListings.map((item) => (
-            <Marker key={item.id} position={item.coordinates} icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}>
+            <Marker
+              key={item.id}
+              position={item.coordinates}
+              icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}
+              eventHandlers={{ click: () => setSelectedMapListing(item) }}
+            >
               <MapListingPopup
                 listing={item}
+                autoPan={!isMobileMap}
               />
             </Marker>
           ))}
