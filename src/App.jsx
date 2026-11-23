@@ -709,6 +709,9 @@ function App() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
   const [profileEditForm, setProfileEditForm] = useState({})
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirmation: '' })
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState({ text: '', error: false })
   const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
   const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
@@ -1821,6 +1824,48 @@ function App() {
     })
     setProfileEditing(true)
     setProfileMessage('')
+  }
+
+  const updateAccountPassword = async (event) => {
+    event.preventDefault()
+    setPasswordMessage({ text: '', error: false })
+
+    if (!passwordForm.current || !passwordForm.next || !passwordForm.confirmation) {
+      setPasswordMessage({ text: 'Preencha todos os campos de senha.', error: true })
+      return
+    }
+    if (passwordForm.next !== passwordForm.confirmation) {
+      setPasswordMessage({ text: 'As senhas não coincidem.', error: true })
+      return
+    }
+    if (passwordForm.next.length < 8) {
+      setPasswordMessage({ text: 'A nova senha deve ter no mínimo 8 caracteres.', error: true })
+      return
+    }
+    if (!supabase || !authUser?.email) {
+      setPasswordMessage({ text: 'Não foi possível atualizar a senha.', error: true })
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: authUser.email,
+        password: passwordForm.current,
+      })
+      if (signInError) throw signInError
+
+      const { error } = await supabase.auth.updateUser({ password: passwordForm.next })
+      if (error) throw error
+
+      setPasswordForm({ current: '', next: '', confirmation: '' })
+      setPasswordMessage({ text: 'Senha atualizada com sucesso.', error: false })
+    } catch (error) {
+      console.error('Falha ao atualizar a senha da conta:', error)
+      setPasswordMessage({ text: 'Não foi possível atualizar a senha.', error: true })
+    } finally {
+      setPasswordSaving(false)
+    }
   }
 
   const handleLogout = async () => {
@@ -3289,6 +3334,7 @@ function App() {
                   />
                 )}
                 {visibleAccountSection === 'account' && (
+                  <>
                   <section className="my-area-panel" aria-labelledby="my-area-account-title">
                     <div className="my-area-panel-heading">
                       <div><h2 id="my-area-account-title">Dados da conta</h2><p>Confira os dados cadastrados no seu perfil.</p></div>
@@ -3343,6 +3389,52 @@ function App() {
                       </dl>
                     )}
                   </section>
+                  <section className="my-area-panel account-security-panel" aria-labelledby="account-security-title">
+                    <div className="my-area-panel-heading">
+                      <div><h2 id="account-security-title">Segurança da Conta</h2><p>Altere sua senha de acesso.</p></div>
+                    </div>
+                    {passwordMessage.text && <p className={`my-area-feedback${passwordMessage.error ? ' error' : ''}`} role={passwordMessage.error ? 'alert' : 'status'}>{passwordMessage.text}</p>}
+                    <form className="account-security-form" onSubmit={updateAccountPassword}>
+                      <label className="form-group">
+                        Senha Atual
+                        <input
+                          type="password"
+                          autoComplete="current-password"
+                          value={passwordForm.current}
+                          onChange={(event) => setPasswordForm((current) => ({ ...current, current: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label className="form-group">
+                        Nova Senha
+                        <input
+                          type="password"
+                          autoComplete="new-password"
+                          minLength={8}
+                          value={passwordForm.next}
+                          onChange={(event) => setPasswordForm((current) => ({ ...current, next: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label className="form-group">
+                        Confirmar Nova Senha
+                        <input
+                          type="password"
+                          autoComplete="new-password"
+                          minLength={8}
+                          value={passwordForm.confirmation}
+                          onChange={(event) => setPasswordForm((current) => ({ ...current, confirmation: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <div className="account-security-actions">
+                        <button type="submit" className="submit-form-btn" disabled={passwordSaving}>
+                          {passwordSaving ? 'Atualizando…' : 'Atualizar Senha'}
+                        </button>
+                      </div>
+                    </form>
+                  </section>
+                  </>
                 )}
                 {visibleAccountSection === 'favorites' && (
                   <section className="my-area-favorites" aria-label="Imóveis favoritos">
