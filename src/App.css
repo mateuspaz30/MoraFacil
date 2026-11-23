@@ -6300,6 +6300,7 @@ dl.my-area-profile-grid > div {
   .standard-account-dashboard .standard-listing-actions {
     grid-column: 1;
     grid-row: 3;
+    margin-top: 12px;
   }
 }
 
