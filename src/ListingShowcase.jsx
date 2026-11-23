@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
+import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
 import useSwipeNavigation from './useSwipeNavigation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
@@ -214,7 +215,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite
       onClickCapture={handleClickCapture}
     >
       <a className="showcase-property-image-link" href={url} aria-label={`Ver ${listing.title} em ${getListingLocation(listing)}`}>
-        {images[imageIndex] && (
+        {images[imageIndex] ? (
           <img
             src={images[imageIndex]}
             srcSet={getResponsiveImageSet(images[imageIndex])}
@@ -224,7 +225,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite
             loading="lazy"
             decoding="async"
           />
-        )}
+        ) : <ListingImagePlaceholder />}
         <span className={`showcase-type-badge account-status-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
         <ListingPhotoCount listing={listing} />
       </a>
@@ -543,14 +544,14 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
           </div>
           <section className={`listing-detail-gallery${galleryImages.length < 2 ? ' single-image' : ''}`} aria-label={`Fotos de ${listing.title}`}>
             <div className="listing-detail-gallery-main" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
-              {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <div className="listing-gallery-empty">Fotos não informadas</div>}
+              {image ? <img src={image} srcSet={getResponsiveImageSet(image)} sizes="(max-width: 760px) 100vw, 72vw" alt={`${listing.title}, foto ${activeImageIndex + 1}`} fetchPriority="high" /> : <ListingImagePlaceholder />}
               <span className={`showcase-type-badge purpose-badge purpose-${purpose}`} translate="no">{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
               <FavoriteButton listing={listing} isFavorite={isFavorite} isBusy={favoriteBusy} onToggle={onToggleFavorite} />
               {galleryImages.length > 1 && <>
                 <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
                 <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
               </>}
-              <button
+              {galleryImages.length > 0 && <button
                 type="button"
                 className="listing-gallery-count"
                 aria-label={`Ver fotos em tela cheia, foto ${galleryImages.length ? activeImageIndex + 1 : 0} de ${galleryImages.length}`}
@@ -559,7 +560,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
                 <Camera size={14} strokeWidth={2.2} aria-hidden="true" />
                 <span>{galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
                 <span className="listing-gallery-count-hint">Ver fotos</span>
-              </button>
+              </button>}
             </div>
             {galleryImages.length > 1 && <div className="listing-detail-thumbnails" aria-label="Miniaturas das fotos do imóvel">
               {thumbnailIndices.map((photoIndex) => {

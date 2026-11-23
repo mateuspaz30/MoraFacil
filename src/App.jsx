@@ -11,6 +11,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
 import AdminPanel from './AdminPanel.jsx'
+import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
 import StandardListingGallery from './StandardListingGallery.jsx'
 import useSwipeNavigation from './useSwipeNavigation.js'
@@ -581,7 +582,9 @@ function MapListingCard({ listing, onClose }) {
   return (
     <article className="map-detail-card">
       <div className="map-detail-image-wrap" onTouchStart={gallerySwipe.onTouchStart} onTouchEnd={gallerySwipe.onTouchEnd} onTouchCancel={gallerySwipe.onTouchCancel}>
-        {images.length > 0 && <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />}
+        {images.length > 0
+          ? <img className="map-detail-image" src={images[imageIndex]} alt={listing.title} />
+          : <ListingImagePlaceholder />}
         <span className={`map-detail-type-badge purpose-badge purpose-${purpose}`}>{purposeLabel.toLocaleUpperCase('pt-BR')}</span>
         <button type="button" className="map-detail-close" aria-label="Fechar detalhes do imóvel" onClick={onClose}>×</button>
         {images.length > 1 && (
@@ -3826,7 +3829,9 @@ function App() {
                   return (
                     <article key={item.id} className={`account-dashboard-card${isAdmin ? ' admin-manageable' : ''}`}>
                       <div className="account-card-image-wrap">
-                        <img src={item.image} alt={item.title} className="account-card-image" />
+                        {getListingImages(item)[0]
+                          ? <img src={getListingImages(item)[0]} alt={item.title} className="account-card-image" />
+                          : <ListingImagePlaceholder className="account-card-image" />}
                         <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(item).toLocaleUpperCase('pt-BR')}</span>
                       </div>
                       <div className="account-card-body">
@@ -4020,14 +4025,20 @@ function App() {
       <section className="home-search-grid">
         {heroCarouselListings.length > 0 ? (
           <article className="hero-listing-card" onTouchStart={heroSwipe.onTouchStart} onTouchEnd={heroSwipe.onTouchEnd} onTouchCancel={heroSwipe.onTouchCancel}>
-            {heroCarouselListings.map((item, index) => (
-              <img
-                key={item.id}
-                src={item.image}
-                alt={item.title}
-                className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
-              />
-            ))}
+            {heroCarouselListings.map((item, index) => {
+              const image = getListingImages(item)[0]
+              return image
+                ? <img
+                    key={item.id}
+                    src={image}
+                    alt={item.title}
+                    className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+                  />
+                : <ListingImagePlaceholder
+                    key={item.id}
+                    className={index === heroSlideIndex % heroCarouselListings.length ? 'active' : ''}
+                  />
+            })}
             <span className={`property-badge property-badge--${getListingPurpose(activeHeroListing) === 'aluguel' ? 'rent' : 'sale'}`} translate="no">
               <svg className="property-badge__icon" viewBox="0 0 12 12" aria-hidden="true">
                 <path fill="currentColor" fillRule="evenodd" d="M11.32 5.14 6.86.68A2.3 2.3 0 0 0 5.23 0H1.2C.54 0 0 .54 0 1.2v4.03c0 .61.24 1.2.67 1.63l4.46 4.46a1.64 1.64 0 0 0 2.32 0l3.87-3.87a1.64 1.64 0 0 0 0-2.31ZM3.3 1.4a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Z" />
@@ -4520,7 +4531,9 @@ function App() {
           <section className="property-modal" role="dialog" aria-modal="true" aria-labelledby="property-modal-title">
             <button type="button" className="modal-close" aria-label="Fechar detalhes" onClick={closeDetails}>×</button>
             <div className="modal-image-wrap">
-              <img src={selectedListing.image} alt={selectedListing.title} className="modal-image" />
+              {getListingImages(selectedListing)[0]
+                ? <img src={getListingImages(selectedListing)[0]} alt={selectedListing.title} className="modal-image" />
+                : <ListingImagePlaceholder />}
             </div>
             <div className="modal-content">
               <div className="modal-badges">

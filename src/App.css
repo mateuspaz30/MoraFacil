@@ -2752,6 +2752,88 @@
   object-fit: cover;
 }
 
+.listing-image-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 18px;
+  background: linear-gradient(145deg, #eef3f8, #dfe8f1);
+  color: #35516e;
+  text-align: center;
+}
+
+.listing-image-placeholder > svg {
+  flex: 0 0 auto;
+  color: #7189a1;
+}
+
+.listing-image-placeholder > strong {
+  color: #153b60;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+}
+
+.listing-image-placeholder > span {
+  max-width: 300px;
+  color: #60758b;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.hero-listing-card > .listing-image-placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: default;
+  transition: opacity 0.8s ease;
+}
+
+.hero-listing-card > .listing-image-placeholder.active {
+  opacity: 1;
+}
+
+.showcase-property-image-link > .listing-image-placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.listing-detail-gallery-main > .listing-image-placeholder,
+.standard-listing-gallery-main > .listing-image-placeholder,
+.map-detail-image-wrap > .listing-image-placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.map-detail-image-wrap > .listing-image-placeholder {
+  gap: 3px;
+  padding: 6px;
+}
+
+.map-detail-image-wrap > .listing-image-placeholder > svg {
+  width: 22px;
+  height: 22px;
+}
+
+.map-detail-image-wrap > .listing-image-placeholder > strong {
+  font-size: 0.64rem;
+}
+
+.map-detail-image-wrap > .listing-image-placeholder > span {
+  font-size: 0.56rem;
+  line-height: 1.2;
+}
+
 @media (min-width: 701px) {
   .account-dashboard-card .account-card-image-wrap {
     align-self: start;

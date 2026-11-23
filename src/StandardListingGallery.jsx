@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, House } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { getListingPurposeLabel } from './listingPresentation.js'
+import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
 import useSwipeNavigation from './useSwipeNavigation.js'
 
 export default function StandardListingGallery({ listing, purpose, showThumbnails = true }) {
@@ -22,7 +23,7 @@ export default function StandardListingGallery({ listing, purpose, showThumbnail
       <div className="standard-listing-gallery-main" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd} onTouchCancel={swipe.onTouchCancel}>
         {images[activeImageIndex]
           ? <img src={images[activeImageIndex]} alt={`${listing.title}, foto ${activeImageIndex + 1}`} />
-          : <span className="standard-listing-image-placeholder" aria-hidden="true"><House size={38} strokeWidth={2.2} /></span>}
+          : <ListingImagePlaceholder />}
         <span className={`account-status-badge purpose-badge purpose-${purpose}`}>{getListingPurposeLabel(listing).toLocaleUpperCase('pt-BR')}</span>
         {images.length > 1 && (
           <>
