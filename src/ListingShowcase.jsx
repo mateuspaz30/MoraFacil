@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bath, BedDouble, Building2, CalendarDays, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
@@ -327,6 +327,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const [shareOpen, setShareOpen] = useState(false)
   const [shareFeedback, setShareFeedback] = useState('')
   const shareCloseButtonRef = useRef(null)
+  const galleryCloseButtonRef = useRef(null)
   const recordedListingIdRef = useRef(null)
   const city = getCityLabel(listing.city)
   const neighborhood = listing.neighborhood || ''
@@ -337,7 +338,7 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const image = galleryImages[activeImageIndex] || ''
   const thumbnailIndices = galleryImages.length <= 4
     ? galleryImages.map((_, index) => index)
-    : [1, 2, 3, galleryImages.length - 1]
+    : [...new Set([0, 1, 2, activeImageIndex >= 3 && activeImageIndex < galleryImages.length - 1 ? activeImageIndex : galleryImages.length - 1])]
   const description = listing.description || 'Descrição não informada.'
   const purpose = getListingPurpose(listing)
   const purposeLabel = getListingPurposeLabel(listing)
@@ -369,10 +370,10 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
     onView?.(listing)
   }, [listing, onView])
 
-  const changeImage = (direction) => {
+  const changeImage = useCallback((direction) => {
     if (galleryImages.length < 2) return
     setActiveImageIndex((current) => (current + direction + galleryImages.length) % galleryImages.length)
-  }
+  }, [galleryImages.length])
   const gallerySwipe = useSwipeNavigation(changeImage)
   const lightboxSwipe = useSwipeNavigation(changeImage)
 
@@ -414,6 +415,24 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [shareOpen])
+
+  useEffect(() => {
+    if (!galleryOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    galleryCloseButtonRef.current?.focus()
+    const handleGalleryKeydown = (event) => {
+      if (event.key === 'Escape') setGalleryOpen(false)
+      if (event.key === 'ArrowLeft') changeImage(-1)
+      if (event.key === 'ArrowRight') changeImage(1)
+    }
+    window.addEventListener('keydown', handleGalleryKeydown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleGalleryKeydown)
+    }
+  }, [galleryOpen, changeImage])
 
   useEffect(() => {
     const previousTitle = document.title
@@ -531,7 +550,15 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
                 <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
                 <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
               </>}
-              <span className="listing-gallery-count"><span aria-hidden="true">▣</span> {galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
+              <button
+                type="button"
+                className="listing-gallery-count"
+                aria-label={`Abrir galeria de fotos, foto ${galleryImages.length ? activeImageIndex + 1 : 0} de ${galleryImages.length}`}
+                onClick={() => setGalleryOpen(true)}
+              >
+                <Camera size={14} strokeWidth={2.2} aria-hidden="true" />
+                <span>{galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
+              </button>
             </div>
             {galleryImages.length > 1 && <div className="listing-detail-thumbnails" aria-label="Miniaturas das fotos do imóvel">
               {thumbnailIndices.map((photoIndex) => {
@@ -675,11 +702,11 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
       )}
 
       {galleryOpen && <div className="listing-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Galeria de fotos" onClick={(event) => { if (event.target === event.currentTarget) setGalleryOpen(false) }}>
-        <button type="button" className="listing-gallery-lightbox-close" aria-label="Fechar galeria" onClick={() => setGalleryOpen(false)}>×</button>
-        <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>
+        <button ref={galleryCloseButtonRef} type="button" className="listing-gallery-lightbox-close" onClick={() => setGalleryOpen(false)}>× Fechar</button>
+        <span className="listing-gallery-lightbox-count">{activeImageIndex + 1}/{galleryImages.length}</span>
+        {galleryImages.length > 1 && <button type="button" className="listing-gallery-arrow previous" aria-label="Foto anterior" onClick={() => changeImage(-1)}>‹</button>}
         <img src={image} alt={`${listing.title}, foto ${activeImageIndex + 1} de ${galleryImages.length}`} onTouchStart={lightboxSwipe.onTouchStart} onTouchEnd={lightboxSwipe.onTouchEnd} onTouchCancel={lightboxSwipe.onTouchCancel} />
-        <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>
-        <span>{activeImageIndex + 1} / {galleryImages.length}</span>
+        {galleryImages.length > 1 && <button type="button" className="listing-gallery-arrow next" aria-label="Próxima foto" onClick={() => changeImage(1)}>›</button>}
       </div>}
     </main>
     <SiteFooter />
