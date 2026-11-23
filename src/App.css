@@ -9635,6 +9635,25 @@ dl.my-area-profile-grid > div {
   font-size: 0.72rem;
 }
 
+@media (max-width: 700px) {
+  .map-panel .listing-map-popup {
+    top: 34px !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    margin: 0 !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .map-panel .listing-map-popup .leaflet-popup-content {
+    width: min(260px, calc(100vw - 32px)) !important;
+  }
+
+  .map-panel .listing-map-popup .leaflet-popup-tip-container {
+    display: none;
+  }
+}
+
 .location-confirmation-header {
   width: min(430px, calc(100% - 20px));
   max-width: none;
