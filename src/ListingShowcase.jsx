@@ -553,11 +553,12 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
               <button
                 type="button"
                 className="listing-gallery-count"
-                aria-label={`Abrir galeria de fotos, foto ${galleryImages.length ? activeImageIndex + 1 : 0} de ${galleryImages.length}`}
+                aria-label={`Ver fotos em tela cheia, foto ${galleryImages.length ? activeImageIndex + 1 : 0} de ${galleryImages.length}`}
                 onClick={() => setGalleryOpen(true)}
               >
                 <Camera size={14} strokeWidth={2.2} aria-hidden="true" />
                 <span>{galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
+                <span className="listing-gallery-count-hint">Ver fotos</span>
               </button>
             </div>
             {galleryImages.length > 1 && <div className="listing-detail-thumbnails" aria-label="Miniaturas das fotos do imóvel">
