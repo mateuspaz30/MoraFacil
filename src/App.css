@@ -9822,9 +9822,15 @@ dl.my-area-profile-grid > div {
   .my-area-sidebar,
   .my-area-layout.standard-account .my-area-sidebar,
   .my-area-layout.company-account .my-area-sidebar {
-    gap: 14px;
-    padding: 18px 16px 14px;
+    gap: 12px;
+    padding: 10px 16px 14px;
     background: linear-gradient(180deg, #062a49 0%, #0b385d 100%);
+  }
+
+  .my-area-brand,
+  .my-area-layout.standard-account .my-area-brand,
+  .my-area-layout.company-account .my-area-brand {
+    display: none;
   }
 
   .my-area-brand,
@@ -9845,7 +9851,8 @@ dl.my-area-profile-grid > div {
   .my-area-layout.company-account .my-area-user {
     display: flex;
     gap: 12px;
-    padding: 10px 4px;
+    border-top: 0;
+    padding: 0 4px 10px;
   }
 
   .my-area-avatar,
