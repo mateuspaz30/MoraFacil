@@ -335,6 +335,9 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const addressQuery = [fullAddress, neighborhood, city, listing.cep].filter(Boolean).join(', ')
   const galleryImages = useMemo(() => getListingImages(listing), [listing])
   const image = galleryImages[activeImageIndex] || ''
+  const thumbnailIndices = galleryImages.length <= 4
+    ? galleryImages.map((_, index) => index)
+    : [1, 2, 3, galleryImages.length - 1]
   const description = listing.description || 'Descrição não informada.'
   const purpose = getListingPurpose(listing)
   const purposeLabel = getListingPurposeLabel(listing)
@@ -353,7 +356,6 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const publishedDate = listing.created_at && !Number.isNaN(new Date(listing.created_at).getTime())
     ? new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(listing.created_at))
     : 'Data não informada'
-  const visibleThumbnails = galleryImages.slice(1, 4)
   const shareText = `Confira este imóvel no Mora Fácil:\n\n${listing.title}\n${url}`
   const contactMessage = `Olá! Tenho interesse no imóvel "${listing.title}" que encontrei no Mora Fácil.\n\nLink: ${url}`
   const emailShareUrl = `mailto:?subject=${encodeURIComponent('Confira este imóvel no Mora Fácil')}&body=${encodeURIComponent(`${listing.title}\n${url}`)}`
@@ -531,15 +533,28 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
               </>}
               <span className="listing-gallery-count"><span aria-hidden="true">▣</span> {galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
             </div>
-            {galleryImages.length > 1 && <div className="listing-detail-thumbnails">
-              {visibleThumbnails.map((photo, index) => {
-                const photoIndex = index + 1
-                const isLast = index === visibleThumbnails.length - 1
-                const remaining = Math.max(galleryImages.length - 4, 0)
+            {galleryImages.length > 1 && <div className="listing-detail-thumbnails" aria-label="Miniaturas das fotos do imóvel">
+              {thumbnailIndices.map((photoIndex) => {
+                const photo = galleryImages[photoIndex]
+                const hasPhotoCountBadge = photoIndex === galleryImages.length - 1 && galleryImages.length > 4
                 return (
-                  <button type="button" className="listing-detail-thumbnail" key={`${photo}-${photoIndex}`} onClick={() => isLast && galleryImages.length > 4 ? setGalleryOpen(true) : setActiveImageIndex(photoIndex)} aria-label={isLast ? 'Ver todas as fotos' : `Ver foto ${photoIndex + 1}`}>
+                  <button
+                    type="button"
+                    className={`listing-detail-thumbnail${activeImageIndex === photoIndex ? ' active' : ''}`}
+                    key={`${photo}-${photoIndex}`}
+                    onClick={() => setActiveImageIndex(photoIndex)}
+                    aria-label={`Exibir foto ${photoIndex + 1} de ${galleryImages.length}`}
+                    aria-pressed={activeImageIndex === photoIndex}
+                  >
                     <img src={photo} alt={`Foto ${photoIndex + 1} de ${listing.title}`} />
-                    {isLast && <span className="listing-thumbnail-overlay">{remaining > 0 && <strong>+{remaining}</strong>}<small>Ver todas as fotos</small></span>}
+                    {hasPhotoCountBadge && (
+                      <span className="listing-thumbnail-count">
+                        <ListingPhotoCount
+                          listing={listing}
+                          className="listing-thumbnail-photo-count"
+                        />
+                      </span>
+                    )}
                   </button>
                 )
               })}
