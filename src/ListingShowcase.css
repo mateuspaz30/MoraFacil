@@ -1098,6 +1098,7 @@
   .listing-gallery-count { bottom: 8px; left: 8px; gap: 7px; padding: 8px 11px; font-size: 0.86rem; }
   .listing-gallery-count-hint { display: inline; border-left: 1px solid rgba(255,255,255,.35); padding-left: 7px; font-size: 0.72rem; }
   .listing-detail-price-card { order: 1; width: 100%; gap: 8px; padding: 15px; }
+  .listing-detail-price-card > .listing-contact-button.whatsapp { margin-top: 12px; }
   .listing-detail-advertiser-card { order: 2; width: 100%; }
   .listing-detail-description { order: 3; width: 100%; padding: 15px; }
   .listing-detail-address-card { order: 4; width: 100%; padding: 12px; }
