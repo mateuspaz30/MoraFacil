@@ -749,6 +749,20 @@ function App() {
   const [passwordMessage, setPasswordMessage] = useState({ text: '', error: false })
   const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
   const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
+  const [companyPublicEditMode, setCompanyPublicEditMode] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1')
+  const [companyPublicDraft, setCompanyPublicDraft] = useState({})
+  const [companyPublicLogoFile, setCompanyPublicLogoFile] = useState(null)
+  const [companyPublicCoverFile, setCompanyPublicCoverFile] = useState(null)
+  const [companyPublicLogoPreview, setCompanyPublicLogoPreview] = useState('')
+  const [companyPublicCoverPreview, setCompanyPublicCoverPreview] = useState('')
+  const companyPublicLogoPreviewRef = useRef('')
+  const companyPublicCoverPreviewRef = useRef('')
+  const [companyPublicActiveField, setCompanyPublicActiveField] = useState('')
+  const [companyPublicAboutOpen, setCompanyPublicAboutOpen] = useState(false)
+  const [companyPublicSaving, setCompanyPublicSaving] = useState(false)
+  const [companyPublicSaveError, setCompanyPublicSaveError] = useState('')
+  const [companyPublicSaveMessage, setCompanyPublicSaveMessage] = useState('')
+  const [companyPublicImageError, setCompanyPublicImageError] = useState('')
   const [companyListingFilters, setCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
   const [appliedCompanyListingFilters, setAppliedCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
   const [isAdmin, setIsAdmin] = useState(false)
@@ -789,6 +803,15 @@ function App() {
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
 
+  function clearCompanyPublicImagePreviews() {
+    if (companyPublicLogoPreviewRef.current) URL.revokeObjectURL(companyPublicLogoPreviewRef.current)
+    if (companyPublicCoverPreviewRef.current) URL.revokeObjectURL(companyPublicCoverPreviewRef.current)
+    companyPublicLogoPreviewRef.current = ''
+    companyPublicCoverPreviewRef.current = ''
+    setCompanyPublicLogoPreview('')
+    setCompanyPublicCoverPreview('')
+  }
+
   useEffect(() => {
     const mobileQuery = window.matchMedia('(max-width: 700px)')
     const updateMobileMap = (event) => setIsMobileMap(event.matches)
@@ -811,6 +834,7 @@ function App() {
   useEffect(() => {
     const updateCurrentPath = () => {
       setCurrentPath(window.location.pathname)
+      setCompanyPublicEditMode(new URLSearchParams(window.location.search).get('edit') === '1')
       const section = getAccountSectionFromPath(window.location.pathname)
       if (section) setAccountSection(section)
     }
@@ -955,6 +979,26 @@ function App() {
           data: profile || null,
           error: '',
         })
+        if (profile) {
+          clearCompanyPublicImagePreviews()
+          setCompanyPublicDraft({
+            display_name: profile.company_name || '',
+            slogan: profile.slogan || '',
+            city: profile.city || '',
+            description: profile.description || '',
+            phone: profile.phone || '',
+            whatsapp: profile.whatsapp || '',
+            instagram: profile.instagram || '',
+            facebook: profile.facebook || '',
+            website: profile.website || '',
+            business_hours: profile.business_hours || '',
+            logo_url: profile.logo_url || '',
+            cover_url: profile.cover_url || '',
+          })
+          setCompanyPublicLogoFile(null)
+          setCompanyPublicCoverFile(null)
+          setCompanyPublicActiveField('')
+        }
       } catch (error) {
         console.error('Falha ao carregar o perfil público da imobiliária:', error)
         if (active) {
@@ -962,7 +1006,7 @@ function App() {
             slug,
             status: 'error',
             data: null,
-            error: `Não foi possível carregar este perfil público. Execute as migrations supabase/migrations/20261121_company_public_profiles.sql e supabase/migrations/20261124_company_public_profile_details.sql no Supabase. ${error.message}`,
+            error: `Não foi possível carregar este perfil público. Confira se as migrations 20261121_company_public_profiles.sql, 20261124_company_public_profile_details.sql e 20261126_company_public_profile_editor.sql foram executadas no Supabase. ${error.message}`,
           })
         }
       }
@@ -971,6 +1015,11 @@ function App() {
     loadPublicCompanyProfile()
     return () => { active = false }
   }, [currentPath])
+
+  useEffect(() => () => {
+    if (companyPublicLogoPreviewRef.current) URL.revokeObjectURL(companyPublicLogoPreviewRef.current)
+    if (companyPublicCoverPreviewRef.current) URL.revokeObjectURL(companyPublicCoverPreviewRef.current)
+  }, [])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -1833,16 +1882,6 @@ function App() {
     }
     if (accountUserType === 'imobiliaria') {
       updates.nome_responsavel = profileEditForm.responsibleName.trim()
-      updates.public_city = profileEditForm.publicCity.trim() || null
-      updates.public_description = profileEditForm.publicDescription.trim() || null
-      updates.public_display_name = profileEditForm.publicDisplayName.trim() || null
-      updates.public_slogan = profileEditForm.publicSlogan.trim() || null
-      updates.public_phone = onlyDigits(profileEditForm.publicPhone || '') || null
-      updates.public_whatsapp = onlyDigits(profileEditForm.publicWhatsapp || '') || null
-      updates.public_instagram = profileEditForm.publicInstagram.trim() || null
-      updates.public_facebook = profileEditForm.publicFacebook.trim() || null
-      updates.public_website = profileEditForm.publicWebsite.trim() || null
-      updates.public_business_hours = profileEditForm.publicBusinessHours.trim() || null
     }
 
     setProfileSaving(true)
@@ -1864,9 +1903,7 @@ function App() {
     } catch (error) {
       console.error('Falha ao atualizar os dados da conta:', error)
       const message = String(error.message || '').toLowerCase()
-      setProfileMessage(message.includes('public_')
-        ? `Execute supabase/migrations/20261124_company_public_profile_details.sql no Supabase. ${error.message}`
-        : message.includes('cpf') || message.includes('user_profiles_cpf')
+      setProfileMessage(message.includes('cpf') || message.includes('user_profiles_cpf')
         ? 'Este CPF já possui uma conta cadastrada.'
         : message.includes('cnpj') || message.includes('user_profiles_cnpj')
           ? 'Este CNPJ já possui uma conta cadastrada.'
@@ -1883,19 +1920,137 @@ function App() {
       name: accountProfile.name,
       phone: formatPhone(accountProfile.phone),
       responsibleName: accountProfile.responsibleName,
-      publicCity: accountProfile.publicCity,
-      publicDescription: accountProfile.publicDescription,
-      publicDisplayName: accountProfile.publicDisplayName || accountProfile.companyName,
-      publicSlogan: accountProfile.publicSlogan,
-      publicPhone: formatPhone(accountProfile.publicPhone),
-      publicWhatsapp: formatPhone(accountProfile.publicWhatsapp),
-      publicInstagram: accountProfile.publicInstagram,
-      publicFacebook: accountProfile.publicFacebook,
-      publicWebsite: accountProfile.publicWebsite,
-      publicBusinessHours: accountProfile.publicBusinessHours,
     })
     setProfileEditing(true)
     setProfileMessage('')
+  }
+
+  const selectCompanyPublicImage = (event, imageKind) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    setCompanyPublicImageError('')
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setCompanyPublicImageError('Escolha uma imagem JPG, PNG ou WEBP.')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setCompanyPublicImageError('A imagem deve ter no máximo 8 MB.')
+      return
+    }
+    const previewUrl = URL.createObjectURL(file)
+    if (imageKind === 'logo') {
+      if (companyPublicLogoPreviewRef.current) URL.revokeObjectURL(companyPublicLogoPreviewRef.current)
+      companyPublicLogoPreviewRef.current = previewUrl
+      setCompanyPublicLogoPreview(previewUrl)
+      setCompanyPublicLogoFile(file)
+    } else {
+      if (companyPublicCoverPreviewRef.current) URL.revokeObjectURL(companyPublicCoverPreviewRef.current)
+      companyPublicCoverPreviewRef.current = previewUrl
+      setCompanyPublicCoverPreview(previewUrl)
+      setCompanyPublicCoverFile(file)
+    }
+    setCompanyPublicSaveError('')
+    setCompanyPublicSaveMessage('')
+  }
+
+  const saveCompanyPublicProfile = async () => {
+    if (!supabase || !authUser || !publicCompanyProfile.data || publicCompanyProfile.data.user_id !== authUser.id) {
+      setCompanyPublicSaveError('Somente o proprietário autenticado pode editar este perfil.')
+      return
+    }
+    setCompanyPublicSaving(true)
+    setCompanyPublicSaveError('')
+    setCompanyPublicSaveMessage('')
+
+    try {
+      const updates = {
+        public_display_name: companyPublicDraft.display_name.trim() || null,
+        public_slogan: companyPublicDraft.slogan.trim() || null,
+        public_city: companyPublicDraft.city.trim() || null,
+        public_description: companyPublicDraft.description.trim() || null,
+        public_phone: onlyDigits(companyPublicDraft.phone || '') || null,
+        public_whatsapp: onlyDigits(companyPublicDraft.whatsapp || '') || null,
+        public_instagram: companyPublicDraft.instagram.trim() || null,
+        public_facebook: companyPublicDraft.facebook.trim() || null,
+        public_website: companyPublicDraft.website.trim() || null,
+        public_business_hours: companyPublicDraft.business_hours.trim() || null,
+      }
+
+      const uploadCompanyImage = async (file, imageKind) => {
+        if (!file) return null
+        const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp'
+        const path = `${authUser.id}/company-profile/${imageKind}-${crypto.randomUUID()}.${extension}`
+        const { error } = await supabase.storage
+          .from('property-images')
+          .upload(path, file, { cacheControl: '3600', contentType: file.type, upsert: false })
+        if (error) throw error
+        const { data } = supabase.storage.from('property-images').getPublicUrl(path)
+        if (!data?.publicUrl) throw new Error('O Storage não retornou o endereço público da imagem.')
+        return data.publicUrl
+      }
+
+      const [logoUrl, coverUrl] = await Promise.all([
+        uploadCompanyImage(companyPublicLogoFile, 'logo'),
+        uploadCompanyImage(companyPublicCoverFile, 'cover'),
+      ])
+      if (logoUrl) updates.public_logo_url = logoUrl
+      if (coverUrl) updates.public_cover_url = coverUrl
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('user_id', authUser.id)
+        .select('public_display_name, public_slogan, public_city, public_description, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours, public_logo_url, public_cover_url')
+        .maybeSingle()
+      if (error) throw error
+      if (!data) throw new Error('Nenhum perfil foi atualizado. Confira as permissões e execute a migration do perfil público visual.')
+
+      const currentCompany = publicCompanyProfile.data
+      const updatedCompany = {
+        ...currentCompany,
+        company_name: data.public_display_name?.trim() || accountProfile.companyName,
+        slogan: data.public_slogan || '',
+        city: data.public_city || '',
+        description: data.public_description || '',
+        phone: data.public_phone || accountProfile.phone || '',
+        whatsapp: data.public_whatsapp || data.public_phone || accountProfile.phone || '',
+        instagram: data.public_instagram || '',
+        facebook: data.public_facebook || '',
+        website: data.public_website || '',
+        business_hours: data.public_business_hours || '',
+        logo_url: data.public_logo_url || '',
+        cover_url: data.public_cover_url || '',
+      }
+      setPublicCompanyProfile((current) => ({ ...current, data: updatedCompany }))
+      setCompanyPublicDraft({
+        display_name: updatedCompany.company_name,
+        slogan: updatedCompany.slogan,
+        city: updatedCompany.city,
+        description: updatedCompany.description,
+        phone: updatedCompany.phone,
+        whatsapp: updatedCompany.whatsapp,
+        instagram: updatedCompany.instagram,
+        facebook: updatedCompany.facebook,
+        website: updatedCompany.website,
+        business_hours: updatedCompany.business_hours,
+        logo_url: updatedCompany.logo_url,
+        cover_url: updatedCompany.cover_url,
+      })
+      clearCompanyPublicImagePreviews()
+      setCompanyPublicLogoFile(null)
+      setCompanyPublicCoverFile(null)
+      setCompanyPublicSaveMessage('Perfil público atualizado com sucesso.')
+    } catch (error) {
+      console.error('Falha ao salvar o perfil público da imobiliária:', error)
+      const errorDetail = String(error.message || 'Erro desconhecido.')
+      const migrationHint = /public_cover_url|schema cache|column .* does not exist/i.test(errorDetail)
+        ? ' Confira se supabase/migrations/20261126_company_public_profile_editor.sql foi executada no Supabase.'
+        : ''
+      setCompanyPublicSaveError(`Não foi possível salvar as alterações. ${errorDetail}${migrationHint}`)
+    } finally {
+      setCompanyPublicSaving(false)
+    }
   }
 
   const updateAccountPassword = async (event) => {
@@ -2688,6 +2843,66 @@ function App() {
 
   if (companyPublicRouteSlug) {
     const company = activePublicCompanyProfile.data
+    const isCompanyPublicOwner = Boolean(authUser && company?.user_id === authUser.id && accountUserType === 'imobiliaria')
+    const isCompanyPublicEditing = isCompanyPublicOwner && companyPublicEditMode
+    const companyPublicOriginalDraft = {
+      display_name: company?.company_name || '',
+      slogan: company?.slogan || '',
+      city: company?.city || '',
+      description: company?.description || '',
+      phone: company?.phone || '',
+      whatsapp: company?.whatsapp || '',
+      instagram: company?.instagram || '',
+      facebook: company?.facebook || '',
+      website: company?.website || '',
+      business_hours: company?.business_hours || '',
+      logo_url: company?.logo_url || '',
+      cover_url: company?.cover_url || '',
+    }
+    const hasCompanyPublicChanges = isCompanyPublicEditing && (
+      Boolean(companyPublicLogoFile || companyPublicCoverFile)
+      || Object.entries(companyPublicOriginalDraft).some(([field, value]) => (companyPublicDraft[field] ?? '') !== value)
+    )
+    const renderCompanyPublicField = (field, label, options = {}) => {
+      const { multiline = false, type = 'text', placeholder = `Adicionar ${label.toLocaleLowerCase('pt-BR')}`, maxLength = 300, className = '', id } = options
+      return (
+        <div id={id} className={`company-public-inline-editor ${className}${multiline ? ' multiline' : ''}`}>
+          {companyPublicActiveField === field ? (
+            multiline ? (
+              <textarea
+                autoFocus
+                value={companyPublicDraft[field] || ''}
+                placeholder={placeholder}
+                maxLength={maxLength}
+                  onChange={(event) => {
+                    setCompanyPublicDraft((draft) => ({ ...draft, [field]: event.target.value }))
+                    setCompanyPublicSaveError('')
+                    setCompanyPublicSaveMessage('')
+                  }}
+              />
+            ) : (
+              <input
+                autoFocus
+                type={type}
+                value={type === 'tel' ? formatPhone(companyPublicDraft[field] || '') : companyPublicDraft[field] || ''}
+                placeholder={placeholder}
+                maxLength={maxLength}
+                onChange={(event) => {
+                  setCompanyPublicDraft((draft) => ({ ...draft, [field]: event.target.value }))
+                  setCompanyPublicSaveError('')
+                  setCompanyPublicSaveMessage('')
+                }}
+              />
+            )
+          ) : (
+            <span>{field === 'phone' || field === 'whatsapp' ? formatPhone(companyPublicDraft[field] || '') : companyPublicDraft[field] || placeholder}</span>
+          )}
+          <button type="button" className="company-public-edit-trigger" onClick={() => setCompanyPublicActiveField((active) => active === field ? '' : field)}>
+            <Pencil size={14} aria-hidden="true" /> {companyPublicActiveField === field ? 'Concluir' : `Editar ${label}`}
+          </button>
+        </div>
+      )
+    }
     const phoneDigits = String(company?.phone || '').replace(/\D/g, '')
     const whatsappDigits = String(company?.whatsapp || '').replace(/\D/g, '')
     const phoneContactNumber = phoneDigits
@@ -2714,7 +2929,18 @@ function App() {
             <ArrowLeft size={18} aria-hidden="true" /> Voltar ao portal
           </button>
         </header>
-        <main className="company-public-main">
+        <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
+          {isCompanyPublicEditing && (
+            <div className="company-public-edit-notice">
+              <div><strong>Modo de edição do Perfil Público</strong><span>Você está visualizando sua página como os visitantes a enxergam.</span></div>
+              <button type="button" onClick={() => {
+                setCompanyPublicEditMode(false)
+                setCompanyPublicSaveError('')
+                setCompanyPublicSaveMessage('')
+                navigateToPath(getCompanyPublicProfilePath(companyPublicRouteSlug))
+              }}>Sair da edição</button>
+            </div>
+          )}
           {activePublicCompanyProfile.status === 'loading' ? (
             <p className="company-public-feedback" role="status">Carregando perfil da imobiliária…</p>
           ) : activePublicCompanyProfile.status === 'error' ? (
@@ -2723,25 +2949,46 @@ function App() {
             <p className="company-public-feedback" role="status">Este perfil público não foi encontrado ou ainda não está disponível.</p>
           ) : company && (
             <>
+              {(company.cover_url || isCompanyPublicEditing) && (
+                <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Imagem de capa da imobiliária">
+                  {(companyPublicCoverPreview || company.cover_url) && <img src={companyPublicCoverPreview || company.cover_url} alt="" />}
+                  {isCompanyPublicEditing && (
+                    <label className="company-public-image-trigger cover-trigger">
+                      <span><Pencil size={16} aria-hidden="true" /> Alterar capa</span>
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCompanyPublicImage(event, 'cover')} />
+                    </label>
+                  )}
+                </section>
+              )}
               <section className="company-public-identity" aria-labelledby="company-public-name">
-                {company.logo_url ? (
-                  <img className="company-public-logo" src={company.logo_url} alt={`Logo de ${company.company_name}`} />
-                ) : (
-                  <span className="company-public-logo-placeholder" aria-hidden="true">
-                    {String(company.company_name || 'Imobiliária').slice(0, 2).toLocaleUpperCase('pt-BR')}
-                  </span>
-                )}
+                <div className="company-public-logo-wrap">
+                  {(companyPublicLogoPreview || company.logo_url) ? (
+                    <img className="company-public-logo" src={companyPublicLogoPreview || company.logo_url} alt={`Logo de ${company.company_name}`} />
+                  ) : (
+                    <span className="company-public-logo-placeholder" aria-hidden="true">
+                      {String(company.company_name || 'Imobiliária').slice(0, 2).toLocaleUpperCase('pt-BR')}
+                    </span>
+                  )}
+                  {isCompanyPublicEditing && (
+                    <label className="company-public-image-trigger logo-trigger">
+                      <span><Pencil size={14} aria-hidden="true" /> Alterar logo</span>
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCompanyPublicImage(event, 'logo')} />
+                    </label>
+                  )}
+                </div>
                 <div className="company-public-copy">
                   <span className="company-public-eyebrow">Imobiliária</span>
-                  <h1 id="company-public-name">{company.company_name}</h1>
-                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />Imobiliária em {companyCity}</p>
-                  {company.slogan && <p className="company-public-slogan">{company.slogan}</p>}
+                  {isCompanyPublicEditing ? renderCompanyPublicField('display_name', 'nome público', { placeholder: company.company_name, maxLength: 120, className: 'company-public-name-editor', id: 'company-public-name' }) : <h1 id="company-public-name">{company.company_name}</h1>}
+                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{isCompanyPublicEditing ? renderCompanyPublicField('city', 'cidade', { placeholder: `Imobiliária em ${companyCity}`, maxLength: 100 }) : `Imobiliária em ${companyCity}`}</p>
+                  {isCompanyPublicEditing ? renderCompanyPublicField('slogan', 'slogan', { placeholder: 'Seu próximo imóvel está aqui.', maxLength: 160, className: 'company-public-slogan-editor' }) : company.slogan && <p className="company-public-slogan">{company.slogan}</p>}
                   <div className="company-public-actions">
-                    <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
-                      <Share2 size={18} aria-hidden="true" /> Compartilhar perfil
-                    </button>
+                    {!isCompanyPublicEditing && (
+                      <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
+                        <Share2 size={18} aria-hidden="true" /> Compartilhar perfil
+                      </button>
+                    )}
                   </div>
-                  {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
+                  {publicProfileShareMessage && !isCompanyPublicEditing && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
                 </div>
               </section>
               <section className="company-public-search" aria-labelledby="company-public-search-title">
@@ -2798,15 +3045,28 @@ function App() {
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
-              <details className="company-public-about">
+              <details className="company-public-about" open={companyPublicAboutOpen || isCompanyPublicEditing} onToggle={(event) => {
+                if (!isCompanyPublicEditing) setCompanyPublicAboutOpen(event.currentTarget.open)
+              }}>
                 <summary>
                   <Building2 size={20} aria-hidden="true" />
                   <span>Sobre {company.company_name}</span>
                   <ChevronDown size={20} aria-hidden="true" />
                 </summary>
                 <div className="company-public-about-content">
-                  {company.description && <p>{company.description}</p>}
-                  <div className="company-public-contact-details">
+                  {isCompanyPublicEditing
+                    ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000 })
+                    : company.description && <p>{company.description}</p>}
+                  {isCompanyPublicEditing ? (
+                    <div className="company-public-edit-contact-grid">
+                      {renderCompanyPublicField('phone', 'telefone comercial', { type: 'tel', placeholder: 'Telefone comercial', maxLength: 18 })}
+                      {renderCompanyPublicField('whatsapp', 'WhatsApp comercial', { type: 'tel', placeholder: 'WhatsApp comercial', maxLength: 18 })}
+                      {renderCompanyPublicField('instagram', 'Instagram', { placeholder: 'https://instagram.com/suaimobiliaria' })}
+                      {renderCompanyPublicField('facebook', 'Facebook', { placeholder: 'https://facebook.com/suaimobiliaria' })}
+                      {renderCompanyPublicField('website', 'site', { placeholder: 'https://www.suaimobiliaria.com.br' })}
+                      {renderCompanyPublicField('business_hours', 'horário de atendimento', { placeholder: 'Ex.: Segunda a sexta, das 8h às 18h.' })}
+                    </div>
+                  ) : <div className="company-public-contact-details">
                     {phoneContactNumber && (
                       <a href={`tel:+${phoneContactNumber}`}>
                         <Phone size={18} aria-hidden="true" /><span><strong>Telefone</strong>{formatPhone(company.phone)}</span>
@@ -2837,7 +3097,7 @@ function App() {
                         <Clock3 size={18} aria-hidden="true" /><span><strong>Horário de atendimento</strong>{company.business_hours}</span>
                       </div>
                     )}
-                  </div>
+                  </div>}
                 </div>
               </details>
               <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
@@ -2857,6 +3117,28 @@ function App() {
             </>
           )}
         </main>
+        {isCompanyPublicEditing && (
+          <>
+            {(companyPublicImageError || companyPublicSaveError) && <p className="company-public-save-error" role="alert">{companyPublicImageError || companyPublicSaveError}</p>}
+            {companyPublicSaveMessage && <p className="company-public-save-message" role="status">{companyPublicSaveMessage}</p>}
+            {hasCompanyPublicChanges && (
+              <div className="company-public-save-bar">
+                <span>Há alterações não salvas</span>
+                <button type="button" disabled={companyPublicSaving} onClick={() => {
+                  setCompanyPublicLogoFile(null)
+                  setCompanyPublicCoverFile(null)
+                  clearCompanyPublicImagePreviews()
+                  setCompanyPublicDraft(companyPublicOriginalDraft)
+                  setCompanyPublicSaveError('')
+                  setCompanyPublicSaveMessage('')
+                }}>Descartar</button>
+                <button type="button" disabled={companyPublicSaving} onClick={saveCompanyPublicProfile}>
+                  {companyPublicSaving ? 'Salvando…' : 'Salvar Alterações'}
+                </button>
+              </div>
+            )}
+          </>
+        )}
         <SiteFooter />
       </div>
     )
@@ -3351,20 +3633,23 @@ function App() {
                     <div className="my-area-panel-heading">
                       <div><h2 id="company-profile-settings-title">Seu perfil público</h2><p>Veja como sua imobiliária aparece para os visitantes.</p></div>
                     </div>
-                    <div className="company-profile-preview">
-                      <span className="company-profile-logo-placeholder" aria-hidden="true">{(accountProfile.publicDisplayName || accountProfile.companyName).slice(0, 2).toLocaleUpperCase('pt-BR') || 'MF'}</span>
-                      <div>
-                        <strong>{accountProfile.publicDisplayName || accountProfile.companyName || 'Nome da imobiliária'}</strong>
-                        <span>{accountProfile.publicCity || 'Cidade não informada'}</span>
-                        <p>{accountProfile.publicSlogan || accountProfile.publicDescription || 'Configure as informações exibidas no Perfil Público dentro de Minha Conta.'}</p>
-                      </div>
-                    </div>
                     {accountProfile.publicSlug ? (
-                      <button type="button" className="company-profile-open-button" onClick={() => navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))}>
-                        Abrir perfil público <ExternalLink size={17} aria-hidden="true" />
-                      </button>
+                      <div className="company-profile-actions">
+                        <button type="button" className="company-profile-open-button" onClick={() => {
+                          setCompanyPublicEditMode(false)
+                          navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))
+                        }}>
+                          Abrir perfil público <ExternalLink size={17} aria-hidden="true" />
+                        </button>
+                        <button type="button" className="company-profile-edit-button" onClick={() => {
+                          setCompanyPublicEditMode(true)
+                          navigateToPath(`${getCompanyPublicProfilePath(accountProfile.publicSlug)}?edit=1`)
+                        }}>
+                          <Pencil size={17} aria-hidden="true" /> Editar perfil público
+                        </button>
+                      </div>
                     ) : (
-                      <p className="my-area-feedback error" role="alert">O link público ainda não está disponível. Execute as migrations supabase/migrations/20261121_company_public_profiles.sql e supabase/migrations/20261124_company_public_profile_details.sql no Supabase.</p>
+                      <p className="my-area-feedback error" role="alert">O link público ainda não está disponível. Execute as migrations de perfil público no Supabase.</p>
                     )}
                   </section>
                 )}
@@ -3436,22 +3721,6 @@ function App() {
                             <label className="form-group my-area-readonly-field">Nome da Imobiliária 🔒<input value={accountProfile.companyName} readOnly aria-readonly="true" /></label>
                             <label className="form-group my-area-readonly-field">CNPJ 🔒<input value={formatCnpj(accountProfile.cnpj)} readOnly aria-readonly="true" /></label>
                             <label className="form-group">Responsável<input value={profileEditForm.responsibleName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, responsibleName: event.target.value }))} required /></label>
-                            <fieldset className="company-public-edit-section">
-                              <legend>Perfil Público</legend>
-                              <p>Essas informações são exibidas aos visitantes da vitrine da imobiliária.</p>
-                              <div className="company-public-edit-grid">
-                                <label className="form-group">Nome público<input value={profileEditForm.publicDisplayName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDisplayName: event.target.value }))} placeholder={accountProfile.companyName || 'Nome da imobiliária'} maxLength="120" /></label>
-                                <label className="form-group">Slogan<input value={profileEditForm.publicSlogan || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicSlogan: event.target.value }))} placeholder="Uma frase curta sobre sua imobiliária" maxLength="160" /></label>
-                                <label className="form-group">Cidade<input value={profileEditForm.publicCity || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicCity: event.target.value }))} placeholder="Ex.: Ipuã-SP" maxLength="100" /></label>
-                                <label className="form-group">Telefone Comercial<input type="tel" inputMode="tel" value={profileEditForm.publicPhone || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicPhone: formatPhone(event.target.value) }))} placeholder="(00) 00000-0000" maxLength="15" /></label>
-                                <label className="form-group">WhatsApp Comercial<input type="tel" inputMode="tel" value={profileEditForm.publicWhatsapp || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicWhatsapp: formatPhone(event.target.value) }))} placeholder="(00) 00000-0000" maxLength="15" /></label>
-                                <label className="form-group">Instagram<input type="url" value={profileEditForm.publicInstagram || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicInstagram: event.target.value }))} placeholder="https://instagram.com/suaimobiliaria" maxLength="300" /></label>
-                                <label className="form-group">Facebook<input type="url" value={profileEditForm.publicFacebook || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicFacebook: event.target.value }))} placeholder="https://facebook.com/suaimobiliaria" maxLength="300" /></label>
-                                <label className="form-group">Site<input type="url" value={profileEditForm.publicWebsite || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicWebsite: event.target.value }))} placeholder="https://www.suaimobiliaria.com.br" maxLength="300" /></label>
-                                <label className="form-group company-public-edit-wide">Quem Somos<textarea value={profileEditForm.publicDescription || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDescription: event.target.value }))} placeholder="Conte brevemente sobre sua imobiliária." maxLength="1000" rows="4" /></label>
-                                <label className="form-group company-public-edit-wide">Horário de Atendimento<textarea value={profileEditForm.publicBusinessHours || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicBusinessHours: event.target.value }))} placeholder="Ex.: Segunda a sexta, das 8h às 18h." maxLength="300" rows="2" /></label>
-                              </div>
-                            </fieldset>
                           </>
                         ) : (
                           <>
@@ -3486,23 +3755,6 @@ function App() {
                         <div><dt>Tipo de Conta</dt><dd>{getAccountTypeLabel(accountUserType)}</dd></div>
                         <div><dt>E-mail 🔒</dt><dd>{accountProfile.email}</dd></div>
                       </dl>
-                    )}
-                    {!profileEditing && accountUserType === 'imobiliaria' && (
-                      <section className="company-profile-account-summary" aria-labelledby="company-public-account-summary-title">
-                        <h3 id="company-public-account-summary-title">Perfil Público</h3>
-                        <dl className="my-area-profile-grid">
-                          <div><dt>Nome público</dt><dd>{accountProfile.publicDisplayName || accountProfile.companyName || 'Não informado'}</dd></div>
-                          <div><dt>Slogan</dt><dd>{accountProfile.publicSlogan || 'Não informado'}</dd></div>
-                          <div><dt>Quem Somos</dt><dd>{accountProfile.publicDescription || 'Não informado'}</dd></div>
-                          <div><dt>Cidade</dt><dd>{accountProfile.publicCity || 'Não informada'}</dd></div>
-                          <div><dt>Telefone Comercial</dt><dd>{formatPhone(accountProfile.publicPhone) || 'Não informado'}</dd></div>
-                          <div><dt>WhatsApp Comercial</dt><dd>{formatPhone(accountProfile.publicWhatsapp) || 'Não informado'}</dd></div>
-                          <div><dt>Instagram</dt><dd>{accountProfile.publicInstagram || 'Não informado'}</dd></div>
-                          <div><dt>Facebook</dt><dd>{accountProfile.publicFacebook || 'Não informado'}</dd></div>
-                          <div><dt>Site</dt><dd>{accountProfile.publicWebsite || 'Não informado'}</dd></div>
-                          <div><dt>Horário de Atendimento</dt><dd>{accountProfile.publicBusinessHours || 'Não informado'}</dd></div>
-                        </dl>
-                      </section>
                     )}
                   </section>
                   <section className="my-area-panel account-security-panel" aria-labelledby="account-security-title">
