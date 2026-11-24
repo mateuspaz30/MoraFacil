@@ -1273,7 +1273,7 @@ function App() {
   }, [authUser])
 
   useEffect(() => {
-    const userType = userProfile?.user_id === authUser?.id
+    const userType = userProfile && userProfile.user_id === authUser?.id
       ? userProfile.tipo_usuario
       : authUser?.user_metadata?.tipo_usuario
     if (!authUser || !supabase || userType !== 'imobiliaria') return undefined
