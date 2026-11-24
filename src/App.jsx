@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronDown, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -750,6 +750,8 @@ function App() {
   const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
   const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
   const [companyPublicEditMode, setCompanyPublicEditMode] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1')
+  const [companyPublicPreviewMode, setCompanyPublicPreviewMode] = useState(false)
+  const [companyPublicTab, setCompanyPublicTab] = useState('showcase')
   const [companyPublicDraft, setCompanyPublicDraft] = useState({})
   const [companyPublicLogoFile, setCompanyPublicLogoFile] = useState(null)
   const [companyPublicCoverFile, setCompanyPublicCoverFile] = useState(null)
@@ -758,7 +760,6 @@ function App() {
   const companyPublicLogoPreviewRef = useRef('')
   const companyPublicCoverPreviewRef = useRef('')
   const [companyPublicActiveField, setCompanyPublicActiveField] = useState('')
-  const [companyPublicAboutOpen, setCompanyPublicAboutOpen] = useState(false)
   const [companyPublicSaving, setCompanyPublicSaving] = useState(false)
   const [companyPublicSaveError, setCompanyPublicSaveError] = useState('')
   const [companyPublicSaveMessage, setCompanyPublicSaveMessage] = useState('')
@@ -2040,6 +2041,7 @@ function App() {
       clearCompanyPublicImagePreviews()
       setCompanyPublicLogoFile(null)
       setCompanyPublicCoverFile(null)
+      setCompanyPublicActiveField('')
       setCompanyPublicSaveMessage('Perfil público atualizado com sucesso.')
     } catch (error) {
       console.error('Falha ao salvar o perfil público da imobiliária:', error)
@@ -2844,7 +2846,8 @@ function App() {
   if (companyPublicRouteSlug) {
     const company = activePublicCompanyProfile.data
     const isCompanyPublicOwner = Boolean(authUser && company?.user_id === authUser.id && accountUserType === 'imobiliaria')
-    const isCompanyPublicEditing = isCompanyPublicOwner && companyPublicEditMode
+    const isCompanyPublicEditSession = isCompanyPublicOwner && companyPublicEditMode
+    const isCompanyPublicEditing = isCompanyPublicEditSession && !companyPublicPreviewMode
     const companyPublicOriginalDraft = {
       display_name: company?.company_name || '',
       slogan: company?.slogan || '',
@@ -2859,8 +2862,24 @@ function App() {
       logo_url: company?.logo_url || '',
       cover_url: company?.cover_url || '',
     }
-    const visibleCompanyName = companyPublicDraft.display_name?.trim() || company?.company_name || 'Imobiliária'
-    const hasCompanyPublicChanges = isCompanyPublicEditing && (
+    const companyPublicDisplay = company ? {
+      ...company,
+      company_name: companyPublicDraft.display_name ?? company.company_name,
+      slogan: companyPublicDraft.slogan ?? company.slogan,
+      city: companyPublicDraft.city ?? company.city,
+      description: companyPublicDraft.description ?? company.description,
+      phone: companyPublicDraft.phone ?? company.phone,
+      whatsapp: companyPublicDraft.whatsapp ?? company.whatsapp,
+      instagram: companyPublicDraft.instagram ?? company.instagram,
+      facebook: companyPublicDraft.facebook ?? company.facebook,
+      website: companyPublicDraft.website ?? company.website,
+      business_hours: companyPublicDraft.business_hours ?? company.business_hours,
+      logo_url: companyPublicDraft.logo_url ?? company.logo_url,
+      cover_url: companyPublicDraft.cover_url ?? company.cover_url,
+    } : null
+    const visibleCompanyName = companyPublicDisplay?.company_name?.trim() || company?.company_name || 'Imobiliária'
+    const companyInitials = String(visibleCompanyName).split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toLocaleUpperCase('pt-BR')
+    const hasCompanyPublicChanges = isCompanyPublicEditSession && (
       Boolean(companyPublicLogoFile || companyPublicCoverFile)
       || Object.entries(companyPublicOriginalDraft).some(([field, value]) => (companyPublicDraft[field] ?? '') !== value)
     )
@@ -2873,13 +2892,16 @@ function App() {
       setCompanyPublicSaveError('')
       setCompanyPublicSaveMessage('')
       setCompanyPublicEditMode(false)
+      setCompanyPublicPreviewMode(false)
       navigateToPath(getCompanyPublicProfilePath(companyPublicRouteSlug))
     }
     const renderCompanyPublicField = (field, label, options = {}) => {
-      const { multiline = false, type = 'text', placeholder = `Adicionar ${label.toLocaleLowerCase('pt-BR')}`, maxLength = 300, className = '', id } = options
+      const { multiline = false, type = 'text', placeholder = `Adicionar ${label.toLocaleLowerCase('pt-BR')}`, maxLength = 300, className = '', id, dashed = false } = options
+      const fieldValue = companyPublicDraft[field] ?? ''
+      const displayValue = field === 'phone' || field === 'whatsapp' ? formatPhone(fieldValue) : fieldValue || placeholder
       return (
-        <div id={id} className={`company-public-inline-editor ${className}${multiline ? ' multiline' : ''}`}>
-          {companyPublicActiveField === field ? (
+        <div id={id} className={`company-public-inline-editor ${className}${multiline ? ' multiline' : ''}${dashed ? ' dashed' : ''}`}>
+          {isCompanyPublicEditing && companyPublicActiveField === field ? (
             multiline ? (
               <textarea
                 autoFocus
@@ -2907,34 +2929,32 @@ function App() {
               />
             )
           ) : (
-            <span>{field === 'phone' || field === 'whatsapp' ? formatPhone(companyPublicDraft[field] || '') : companyPublicDraft[field] || placeholder}</span>
+            <button
+              type="button"
+              className="company-public-inline-value"
+              disabled={!isCompanyPublicEditing}
+              onClick={() => isCompanyPublicEditing && setCompanyPublicActiveField(field)}
+              aria-label={isCompanyPublicEditing ? `Editar ${label}` : undefined}
+            >{displayValue}</button>
           )}
-          <button
-            type="button"
-            className="company-public-edit-trigger"
-            aria-label={companyPublicActiveField === field ? `Concluir edição: ${label}` : `Editar ${label}`}
-            title={companyPublicActiveField === field ? 'Concluir edição' : `Editar ${label}`}
-            onClick={() => setCompanyPublicActiveField((active) => active === field ? '' : field)}
-          >
-            <Pencil size={14} aria-hidden="true" />
-          </button>
         </div>
       )
     }
-    const phoneDigits = String(company?.phone || '').replace(/\D/g, '')
-    const whatsappDigits = String(company?.whatsapp || '').replace(/\D/g, '')
+    const phoneDigits = String(companyPublicDisplay?.phone || '').replace(/\D/g, '')
+    const whatsappDigits = String(companyPublicDisplay?.whatsapp || '').replace(/\D/g, '')
     const phoneContactNumber = phoneDigits
       ? phoneDigits.startsWith('55') ? phoneDigits : `55${phoneDigits}`
       : ''
     const whatsappContactNumber = whatsappDigits
       ? whatsappDigits.startsWith('55') ? whatsappDigits : `55${whatsappDigits}`
       : ''
-    const instagramUrl = getSafeExternalUrl(company?.instagram)
-    const facebookUrl = getSafeExternalUrl(company?.facebook)
-    const websiteUrl = getSafeExternalUrl(company?.website)
-    const companyCity = company?.city
+    const instagramUrl = getSafeExternalUrl(companyPublicDisplay?.instagram)
+    const facebookUrl = getSafeExternalUrl(companyPublicDisplay?.facebook)
+    const websiteUrl = getSafeExternalUrl(companyPublicDisplay?.website)
+    const companyCity = companyPublicDisplay?.city
       || companyPublicListings[0]?.city
       || 'Cidade não informada'
+    const companyCityLabel = String(companyCity).replace(/[-,]\s*SP$/i, ' · SP')
 
     return (
       <div className="company-public-page">
@@ -2943,30 +2963,34 @@ function App() {
             <img src={logo} alt="" />
             <strong>Mora <span>Fácil</span></strong>
           </button>
-          <button type="button" className="company-public-portal-link" onClick={() => navigateToPath(getAppBasePath())}>
-            <ArrowLeft size={18} aria-hidden="true" /> Voltar ao portal
+          <button type="button" className="company-public-portal-link" onClick={() => navigateToPath(isCompanyPublicOwner ? getAccountSectionPath('public-profile') : getAppBasePath())}>
+            <ArrowLeft size={18} aria-hidden="true" /> {isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar ao portal'}
           </button>
         </header>
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
-          {isCompanyPublicEditing && (
+          {isCompanyPublicEditSession && (
             <div className="company-public-edit-toolbar">
               <div className="company-public-edit-toolbar-title">
                 <Pencil size={18} aria-hidden="true" />
-                <strong>Editando perfil público</strong>
+                <strong>Modo de edição</strong>
               </div>
               <span className={`company-public-edit-status${hasCompanyPublicChanges ? ' pending' : ''}`}>
-                {hasCompanyPublicChanges ? 'Alterações ainda não publicadas' : 'Todas as alterações salvas'}
+                {hasCompanyPublicChanges ? 'Alterações não publicadas' : 'Rascunho salvo'}
               </span>
-              <button type="button" className="company-public-edit-about-button" onClick={() => {
-                setCompanyPublicAboutOpen(true)
-                window.setTimeout(() => document.getElementById('company-public-about')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
-              }}>
-                <Pencil size={15} aria-hidden="true" /> Editar Quem Somos
-              </button>
+              <div className="company-public-mode-toggle" role="tablist" aria-label="Modo de visualização do perfil">
+                <button type="button" role="tab" aria-selected={!companyPublicPreviewMode} className={!companyPublicPreviewMode ? 'active' : ''} onClick={() => {
+                  setCompanyPublicPreviewMode(false)
+                  setCompanyPublicActiveField('')
+                }}>Editar Perfil</button>
+                <button type="button" role="tab" aria-selected={companyPublicPreviewMode} className={companyPublicPreviewMode ? 'active' : ''} onClick={() => {
+                  setCompanyPublicPreviewMode(true)
+                  setCompanyPublicActiveField('')
+                }}>Pré-visualizar como cliente</button>
+              </div>
               <div className="company-public-edit-toolbar-actions">
-                <button type="button" disabled={companyPublicSaving} onClick={cancelCompanyPublicEditing}>Cancelar</button>
+                <button type="button" disabled={companyPublicSaving} onClick={cancelCompanyPublicEditing}>Descartar</button>
                 <button type="button" disabled={companyPublicSaving || !hasCompanyPublicChanges} onClick={saveCompanyPublicProfile}>
-                  {companyPublicSaving ? 'Salvando…' : 'Salvar alterações'}
+                  {companyPublicSaving ? 'Publicando…' : 'Publicar alterações'}
                 </button>
               </div>
               {(companyPublicImageError || companyPublicSaveError) && <p className="company-public-save-error company-public-toolbar-feedback" role="alert">{companyPublicImageError || companyPublicSaveError}</p>}
@@ -2981,9 +3005,12 @@ function App() {
             <p className="company-public-feedback" role="status">Este perfil público não foi encontrado ou ainda não está disponível.</p>
           ) : company && (
             <>
-              {(company.cover_url || isCompanyPublicEditing) && (
+              {(companyPublicDisplay.cover_url || isCompanyPublicEditing) && (
                 <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Capa institucional da imobiliária">
-                  {(companyPublicCoverPreview || company.cover_url) && <img src={companyPublicCoverPreview || company.cover_url} alt="" />}
+                  {(companyPublicCoverPreview || companyPublicDisplay.cover_url) && <img src={companyPublicCoverPreview || companyPublicDisplay.cover_url} alt="" />}
+                  {isCompanyPublicEditing && !companyPublicDisplay.cover_url && !companyPublicCoverPreview && (
+                    <span className="company-public-cover-prompt">Adicione uma imagem institucional para apresentar sua imobiliária.</span>
+                  )}
                   {isCompanyPublicEditing && (
                     <label className="company-public-image-trigger cover-trigger">
                       <span><Camera size={16} aria-hidden="true" /> Alterar capa</span>
@@ -2992,13 +3019,14 @@ function App() {
                   )}
                 </section>
               )}
-              <section className={`company-public-identity${company.cover_url || isCompanyPublicEditing ? ' with-cover' : ''}`} aria-labelledby="company-public-name">
+              <section className={`company-public-identity${companyPublicDisplay.cover_url || isCompanyPublicEditing ? ' with-cover' : ''}`} aria-labelledby="company-public-name">
                 <div className="company-public-logo-wrap">
-                  {(companyPublicLogoPreview || company.logo_url) ? (
-                    <img className="company-public-logo" src={companyPublicLogoPreview || company.logo_url} alt={`Logo de ${visibleCompanyName}`} />
+                  {(companyPublicLogoPreview || companyPublicDisplay.logo_url) ? (
+                    <img className="company-public-logo" src={companyPublicLogoPreview || companyPublicDisplay.logo_url} alt={`Logo de ${visibleCompanyName}`} />
                   ) : (
-                    <span className="company-public-logo-placeholder" aria-hidden="true">
-                      {String(visibleCompanyName).slice(0, 2).toLocaleUpperCase('pt-BR')}
+                    <span className="company-public-logo-placeholder" aria-label={`Logo de ${visibleCompanyName}`}>
+                      <Leaf size={32} strokeWidth={2.2} aria-hidden="true" />
+                      <strong>{companyInitials}</strong>
                     </span>
                   )}
                   {isCompanyPublicEditing && (
@@ -3010,19 +3038,44 @@ function App() {
                 </div>
                 <div className="company-public-copy">
                   <span className="company-public-eyebrow">Imobiliária</span>
-                  {isCompanyPublicEditing ? renderCompanyPublicField('display_name', 'nome público', { placeholder: company.company_name, maxLength: 120, className: 'company-public-name-editor', id: 'company-public-name' }) : <h1 id="company-public-name">{company.company_name}</h1>}
-                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{isCompanyPublicEditing ? renderCompanyPublicField('city', 'cidade', { placeholder: `Imobiliária em ${companyCity}`, maxLength: 100 }) : `Imobiliária em ${companyCity}`}</p>
-                  {isCompanyPublicEditing ? renderCompanyPublicField('slogan', 'slogan', { placeholder: 'Seu próximo imóvel está aqui.', maxLength: 160, className: 'company-public-slogan-editor' }) : company.slogan && <p className="company-public-slogan">{company.slogan}</p>}
+                  {isCompanyPublicEditSession
+                    ? renderCompanyPublicField('display_name', 'nome público', { placeholder: company.company_name, maxLength: 120, className: 'company-public-name-editor', id: 'company-public-name' })
+                    : <h1 id="company-public-name">{visibleCompanyName}</h1>}
+                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{isCompanyPublicEditSession ? renderCompanyPublicField('city', 'cidade', { placeholder: companyCityLabel, maxLength: 100 }) : companyCityLabel}</p>
+                  {isCompanyPublicEditSession
+                    ? renderCompanyPublicField('slogan', 'slogan', { placeholder: 'Seu próximo imóvel está aqui.', maxLength: 160, className: 'company-public-slogan-editor', dashed: isCompanyPublicEditing })
+                    : companyPublicDisplay.slogan && <p className="company-public-slogan">{companyPublicDisplay.slogan}</p>}
                   <div className="company-public-actions">
-                    {!isCompanyPublicEditing && (
-                      <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
-                        <Share2 size={18} aria-hidden="true" /> Compartilhar perfil
-                      </button>
-                    )}
+                    {whatsappContactNumber
+                      ? <a className="company-public-whatsapp" href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer"><WhatsAppIcon size={18} /> Conversar no WhatsApp</a>
+                      : <span className="company-public-whatsapp disabled">WhatsApp não informado</span>}
+                    {isCompanyPublicEditing && <button type="button" className="company-public-share" onClick={() => setCompanyPublicTab('contacts')}><Pencil size={16} aria-hidden="true" /> Editar contato</button>}
+                    <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}><Share2 size={18} aria-hidden="true" /> Compartilhar perfil</button>
                   </div>
-                  {publicProfileShareMessage && !isCompanyPublicEditing && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
+                  {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
+                </div>
+                <div className="company-public-profile-stats">
+                  <span className="company-public-verified"><Globe2 size={16} aria-hidden="true" /> Perfil Público</span>
+                  <div className="company-public-profile-stat">
+                    <House size={27} aria-hidden="true" />
+                    <span><strong>{companyPublicListings.length} imóveis</strong><small>disponíveis</small></span>
+                  </div>
+                  <div className="company-public-profile-stat">
+                    <Tag size={27} aria-hidden="true" />
+                    <strong>{companyPublicPurposes.has('venda') && companyPublicPurposes.has('aluguel') ? 'Venda • Aluguel' : companyPublicPurposes.has('venda') ? 'Venda' : companyPublicPurposes.has('aluguel') ? 'Aluguel' : 'Consulte opções'}</strong>
+                  </div>
                 </div>
               </section>
+              <nav className="company-public-tabs" aria-label="Seções do perfil público">
+                {[
+                  ['showcase', 'Vitrine e Imóveis'],
+                  ['about', 'Sobre a Imobiliária'],
+                  ['contacts', 'Contatos e Redes'],
+                ].map(([tab, title]) => (
+                  <button type="button" key={tab} className={companyPublicTab === tab ? 'active' : ''} aria-current={companyPublicTab === tab ? 'page' : undefined} onClick={() => setCompanyPublicTab(tab)}>{title}</button>
+                ))}
+              </nav>
+              {companyPublicTab === 'showcase' && <section className="company-public-showcase-content">
               <section className="company-public-search" aria-labelledby="company-public-search-title">
                 <div className="company-public-section-heading">
                   <span className="company-public-section-eyebrow">Encontre o que procura</span>
@@ -3077,74 +3130,6 @@ function App() {
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
-              <details id="company-public-about" className="company-public-about" open={companyPublicAboutOpen} onToggle={(event) => setCompanyPublicAboutOpen(event.currentTarget.open)}>
-                <summary>
-                  <Building2 size={20} aria-hidden="true" />
-                  <span>Sobre {visibleCompanyName}</span>
-                  <ChevronDown size={20} aria-hidden="true" />
-                </summary>
-                <div className="company-public-about-content">
-                  {isCompanyPublicEditing
-                    ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000 })
-                    : company.description && <p>{company.description}</p>}
-                  <div className={`company-public-contact-details${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
-                    {(phoneContactNumber || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><Phone size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Telefone</strong>{renderCompanyPublicField('phone', 'telefone', { type: 'tel', placeholder: 'Adicionar telefone', maxLength: 18 })}</div></div>
-                        : (
-                      <a href={`tel:+${phoneContactNumber}`}>
-                        <Phone size={18} aria-hidden="true" /><span><strong>Telefone</strong>{formatPhone(company.phone)}</span>
-                      </a>
-                        )
-                    )}
-                    {(whatsappContactNumber || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><WhatsAppIcon size={18} /><div className="company-public-contact-value"><strong>WhatsApp</strong>{renderCompanyPublicField('whatsapp', 'WhatsApp', { type: 'tel', placeholder: 'Adicionar WhatsApp', maxLength: 18 })}</div></div>
-                        : (
-                      <a href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
-                        <WhatsAppIcon size={18} /><span><strong>WhatsApp</strong>{formatPhone(company.whatsapp)}</span>
-                      </a>
-                        )
-                    )}
-                    {(instagramUrl || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><InstagramIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Instagram</strong>{renderCompanyPublicField('instagram', 'Instagram', { placeholder: 'Adicionar Instagram' })}</div></div>
-                        : (
-                      <a href={instagramUrl} target="_blank" rel="noreferrer">
-                        <InstagramIcon className="public-social-icon" /><span><strong>Instagram</strong>{company.instagram}</span>
-                      </a>
-                        )
-                    )}
-                    {(facebookUrl || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><FacebookIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Facebook</strong>{renderCompanyPublicField('facebook', 'Facebook', { placeholder: 'Adicionar Facebook' })}</div></div>
-                        : (
-                      <a href={facebookUrl} target="_blank" rel="noreferrer">
-                        <FacebookIcon className="public-social-icon" /><span><strong>Facebook</strong>{company.facebook}</span>
-                      </a>
-                        )
-                    )}
-                    {(websiteUrl || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><Globe2 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Site</strong>{renderCompanyPublicField('website', 'site', { placeholder: 'Adicionar site' })}</div></div>
-                        : (
-                      <a href={websiteUrl} target="_blank" rel="noreferrer">
-                        <Globe2 size={18} aria-hidden="true" /><span><strong>Site</strong>{company.website}</span>
-                      </a>
-                        )
-                    )}
-                    {(company.business_hours || isCompanyPublicEditing) && (
-                      isCompanyPublicEditing
-                        ? <div><Clock3 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Horário de atendimento</strong>{renderCompanyPublicField('business_hours', 'horário de atendimento', { placeholder: 'Adicionar horário de atendimento' })}</div></div>
-                        : (
-                      <div>
-                        <Clock3 size={18} aria-hidden="true" /><span><strong>Horário de atendimento</strong>{company.business_hours}</span>
-                      </div>
-                        )
-                    )}
-                  </div>
-                </div>
-              </details>
               <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
                 <div className="company-public-contact-icon"><House size={24} aria-hidden="true" /></div>
                 <div>
@@ -3159,6 +3144,84 @@ function App() {
                   <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
                 )}
               </section>
+              </section>}
+              {companyPublicTab === 'about' && (
+                <section id="company-public-about" className="company-public-tab-panel" aria-labelledby="company-public-about-title">
+                  <div className="company-public-tab-heading">
+                    <div><span>Conheça nossa história</span><h2 id="company-public-about-title">Sobre {visibleCompanyName}</h2></div>
+                    {isCompanyPublicEditing && <span className="company-public-edit-hint">Clique no texto para editar</span>}
+                  </div>
+                  {isCompanyPublicEditSession
+                    ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000, className: 'company-public-about-editor' })
+                    : companyPublicDisplay.description
+                      ? <p className="company-public-about-description">{companyPublicDisplay.description}</p>
+                      : <p className="company-public-about-empty">A imobiliária ainda não adicionou uma apresentação.</p>}
+                </section>
+              )}
+              {companyPublicTab === 'contacts' && (
+                <section className="company-public-tab-panel" aria-labelledby="company-public-contacts-title">
+                  <div className="company-public-tab-heading">
+                    <div><span>Estamos aqui para ajudar</span><h2 id="company-public-contacts-title">Contatos e Redes</h2></div>
+                    {isCompanyPublicEditing && <span className="company-public-edit-hint">Clique em um contato para editar</span>}
+                  </div>
+                  <div className={`company-public-contact-details${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
+                    {(phoneContactNumber || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Phone size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Telefone</strong>{renderCompanyPublicField('phone', 'telefone', { type: 'tel', placeholder: 'Adicionar telefone', maxLength: 18 })}</div></div>
+                        : (
+                      <a href={`tel:+${phoneContactNumber}`}>
+                        <Phone size={18} aria-hidden="true" /><span><strong>Telefone</strong>{formatPhone(companyPublicDisplay.phone)}</span>
+                      </a>
+                        )
+                    )}
+                    {(whatsappContactNumber || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><WhatsAppIcon size={18} /><div className="company-public-contact-value"><strong>WhatsApp</strong>{renderCompanyPublicField('whatsapp', 'WhatsApp', { type: 'tel', placeholder: 'Adicionar WhatsApp', maxLength: 18 })}</div></div>
+                        : (
+                      <a href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
+                        <WhatsAppIcon size={18} /><span><strong>WhatsApp</strong>{formatPhone(companyPublicDisplay.whatsapp)}</span>
+                      </a>
+                        )
+                    )}
+                    {(instagramUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><InstagramIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Instagram</strong>{renderCompanyPublicField('instagram', 'Instagram', { placeholder: 'Adicionar Instagram' })}</div></div>
+                        : (
+                      <a href={instagramUrl} target="_blank" rel="noreferrer">
+                        <InstagramIcon className="public-social-icon" /><span><strong>Instagram</strong>{companyPublicDisplay.instagram}</span>
+                      </a>
+                        )
+                    )}
+                    {(facebookUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><FacebookIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Facebook</strong>{renderCompanyPublicField('facebook', 'Facebook', { placeholder: 'Adicionar Facebook' })}</div></div>
+                        : (
+                      <a href={facebookUrl} target="_blank" rel="noreferrer">
+                        <FacebookIcon className="public-social-icon" /><span><strong>Facebook</strong>{companyPublicDisplay.facebook}</span>
+                      </a>
+                        )
+                    )}
+                    {(websiteUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Globe2 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Site</strong>{renderCompanyPublicField('website', 'site', { placeholder: 'Adicionar site' })}</div></div>
+                        : (
+                      <a href={websiteUrl} target="_blank" rel="noreferrer">
+                        <Globe2 size={18} aria-hidden="true" /><span><strong>Site</strong>{companyPublicDisplay.website}</span>
+                      </a>
+                        )
+                    )}
+                    {(companyPublicDisplay.business_hours || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Clock3 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Horário de atendimento</strong>{renderCompanyPublicField('business_hours', 'horário de atendimento', { placeholder: 'Adicionar horário de atendimento' })}</div></div>
+                        : (
+                      <div>
+                        <Clock3 size={18} aria-hidden="true" /><span><strong>Horário de atendimento</strong>{companyPublicDisplay.business_hours}</span>
+                      </div>
+                        )
+                    )}
+                  </div>
+                </section>
+              )}
             </>
           )}
         </main>
@@ -3666,6 +3729,8 @@ function App() {
                         </button>
                         <button type="button" className="company-profile-edit-button" onClick={() => {
                           setCompanyPublicEditMode(true)
+                          setCompanyPublicPreviewMode(false)
+                          setCompanyPublicTab('showcase')
                           navigateToPath(`${getCompanyPublicProfilePath(accountProfile.publicSlug)}?edit=1`)
                         }}>
                           <Pencil size={17} aria-hidden="true" /> Editar perfil público
