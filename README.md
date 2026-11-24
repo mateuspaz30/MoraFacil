@@ -37,6 +37,10 @@ O Dashboard da imobiliária identifica anúncios com muitos acessos e poucos con
 
 A seção “Bairros mais procurados” agrupa visualizações, cliques no WhatsApp, favoritos e quantidade de anúncios ativos por bairro. As contagens de favoritos usam a RPC autenticada definida em `20261121_company_listing_statistics.sql`; se a migration não estiver aplicada, o sistema informa que essa métrica está indisponível em vez de mostrar um valor presumido.
 
+## Dados de demonstração Jardim Verde
+
+Para bancos existentes, execute [`supabase/migrations/20261122_add_chacara_property_category.sql`](supabase/migrations/20261122_add_chacara_property_category.sql) e, em seguida, [`supabase/seeds/jardim_verde_demo.sql`](supabase/seeds/jardim_verde_demo.sql) no SQL Editor do Supabase. O seed cria 16 anúncios aprovados marcados como demonstração, com fotos externas, métricas e localizações aproximadas; ele localiza a imobiliária pelos dados de `user_profiles` ou pelos metadados de `auth.users` e interrompe a transação se a correspondência não for única, os bairros não estiverem ativos ou as contas visitantes de teste não forem encontradas. As contas visitantes devem ser exclusivas de demonstração. Como o sistema conta favoritos por usuário autenticado, esses três visitantes geram no máximo três favoritos por anúncio; para simular contagens maiores, cadastre visitantes de teste adicionais e ajuste a carga.
+
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_view_count.sql`](supabase/migrations/20261119_add_listing_view_count.sql) no SQL Editor do Supabase. A migração adiciona o contador de visualizações e a função atômica que o incrementa ao abrir os detalhes de um imóvel aprovado.
 
 Para bancos existentes, execute [`supabase/migrations/20261119_add_listing_whatsapp_clicks.sql`](supabase/migrations/20261119_add_listing_whatsapp_clicks.sql) no SQL Editor do Supabase. A migração adiciona o contador de cliques de contato e a função atômica que o incrementa ao clicar em um botão de contato de um imóvel aprovado.

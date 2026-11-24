@@ -162,6 +162,7 @@ const sampleListings = [
 const propertyTypeIcons = {
   casa: Home,
   apartamento: Building2,
+  chacara: Home,
   terreno: LandPlot,
   ponto_comercial: Store,
 }
@@ -1269,6 +1270,7 @@ function App() {
   const filteredListings = cityListings.filter((item) => {
     const typeMatches = appliedFilters.type === 'Todos os imóveis'
       || (appliedFilters.type === 'Terrenos' && (item.property_category === 'terreno' || item.type === 'terreno'))
+      || (appliedFilters.type === 'Chácaras' && item.property_category === 'chacara')
       || (appliedFilters.type === 'Venda' && getListingPurpose(item) === 'venda')
       || (appliedFilters.type === 'Aluguel' && getListingPurpose(item) === 'aluguel')
       || (appliedFilters.type === 'Ponto Comercial' && (item.property_category === 'ponto_comercial' || item.type === 'ponto_comercial'))
@@ -1361,7 +1363,7 @@ function App() {
     setAnnouncementSubmitting(false)
     setAnnouncementError('')
     setAnnouncementSuccess(false)
-    setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
+    setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'chacara' ? 'Chácara' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setAnnouncementMapFocus(null)
     setLocationConfirmed(Boolean(listing?.coordinates))
@@ -1572,7 +1574,7 @@ function App() {
       bedrooms: Number.parseInt(announcement.bedrooms, 10) || 0,
       parking_spaces: Number.parseInt(announcement.parking_spaces, 10) || 0,
       area: formatArea(announcement.area),
-      property_category: announcementCategory.toLocaleLowerCase('pt-BR').replaceAll(' ', '_'),
+      property_category: announcementCategory === 'Chácara' ? 'chacara' : announcementCategory.toLocaleLowerCase('pt-BR').replaceAll(' ', '_'),
       purpose: announcement.type === 'aluguel' ? 'aluguel' : 'venda',
       status: editingListingId && isAdmin ? announcement.status : 'em_analise',
       motivo_reprovacao: editingListingId && isAdmin ? announcement.motivo_reprovacao || null : null,
@@ -3513,7 +3515,7 @@ function App() {
                 <button type="button" className={accountFilter === 'completed' ? 'active' : ''} onClick={() => setAccountFilter('completed')}>Concluídos ({completedListings.length})</button>
               </div>
             </div>}
-            {isStandardAccount && !(isAdmin && ['review', 'neighborhoods'].includes(accountFilter)) ? (
+            {(isStandardAccount || isCompanyAccount) && !(isAdmin && ['review', 'neighborhoods'].includes(accountFilter)) ? (
               <div className={`standard-account-dashboard${accountFilter === 'manage' ? ' admin-manage-all' : ''}`}>
                 <div className="standard-account-content">
                   {isAdmin && ownFeaturedListings.map((item) => (
@@ -4142,7 +4144,7 @@ function App() {
           id="search-type"
           label="Tipo"
           value={draftFilters.type}
-          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos', 'Ponto Comercial']}
+          options={['Todos os imóveis', 'Venda', 'Aluguel', 'Terrenos', 'Chácaras', 'Ponto Comercial']}
           icon="home"
           onChange={(type) => setDraftFilters({ ...draftFilters, type })}
         />
@@ -4264,6 +4266,7 @@ function App() {
                   {[
                     ['Casa', <svg key="casa" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m3 10 9-7 9 7M5.5 9v11h13V9M9.5 20v-6h5v6" /></svg>],
                     ['Apartamento', <svg key="apartamento" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 21V4h14v17M3 21h18M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1m-3 5v-3" /></svg>],
+                    ['Chácara', <Home key="chacara" size="1em" strokeWidth={1.7} />],
                     ['Terreno', <LandPlot key="terreno" size="1em" strokeWidth={2} />],
                     ['Ponto Comercial', <svg key="ponto-comercial" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16v11H4zM3 10l2-6h14l2 6M3 10c0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0M9 21v-6h4v6m4-7h.01" /></svg>],
                   ].map(([category, icon]) => (
@@ -4271,7 +4274,7 @@ function App() {
                       setAnnouncementCategory(category)
                       if (category === 'Terreno') setAnnouncement((current) => ({ ...current, type: 'terreno' }))
                       if (category === 'Ponto Comercial') setAnnouncement((current) => ({ ...current, type: 'ponto_comercial' }))
-                      if (category === 'Casa' || category === 'Apartamento') setAnnouncement((current) => ({ ...current, type: ['terreno', 'ponto_comercial'].includes(current.type) ? 'venda' : current.type }))
+                      if (category === 'Casa' || category === 'Apartamento' || category === 'Chácara') setAnnouncement((current) => ({ ...current, type: ['terreno', 'ponto_comercial'].includes(current.type) ? 'venda' : current.type }))
                     }}>
                       <span className="announcement-category-icon" aria-hidden="true">{icon}</span><strong>{category}</strong>{announcementCategory === category && <span className="announcement-category-check" aria-hidden="true">✓</span>}
                     </button>

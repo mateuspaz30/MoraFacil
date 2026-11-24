@@ -443,7 +443,7 @@ create table public.listings (
   user_id uuid not null references auth.users(id) on delete cascade,
   title text not null,
   type text not null check (type in ('venda', 'aluguel', 'terreno', 'ponto_comercial')),
-  property_category text not null default 'casa' check (property_category in ('casa', 'apartamento', 'terreno', 'ponto_comercial')),
+  property_category text not null default 'casa' check (property_category in ('casa', 'apartamento', 'chacara', 'terreno', 'ponto_comercial')),
   purpose text not null default 'venda' check (purpose in ('venda', 'aluguel')),
   status text not null default 'em_analise' check (status in ('em_analise', 'aprovado', 'reprovado', 'concluido', 'pausado')),
   destaque_home boolean not null default false,

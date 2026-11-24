@@ -13,6 +13,7 @@ export const PORTAL_CITY = 'Ipuã-SP'
 const propertyTypeIcons = {
   casa: House,
   apartamento: Building2,
+  chacara: House,
   terreno: LandPlot,
   ponto_comercial: Store,
 }

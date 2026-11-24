@@ -6,6 +6,7 @@ export const purposeColors = {
 const propertyTypes = {
   casa: { label: 'Casa', icon: '🏠' },
   apartamento: { label: 'Apartamento', icon: '🏢' },
+  chacara: { label: 'Chácara', icon: '🏡' },
   terreno: { label: 'Terreno', icon: '🌱' },
   ponto_comercial: { label: 'Ponto Comercial', icon: '🏬' },
 }
