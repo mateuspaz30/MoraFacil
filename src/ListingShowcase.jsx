@@ -39,9 +39,18 @@ export const getListingSlug = (listing) => slugify([
   getCityLabel(listing.city),
 ].filter(Boolean).join('-'))
 
-export const getListingDetailUrl = (listing) => (
-  `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/?id=${encodeURIComponent(String(listing.id))}`
-)
+export const getListingDetailUrl = (listing, companyOrigin = null) => {
+  const search = new URLSearchParams({ id: String(listing.id) })
+  if (companyOrigin?.slug) {
+    search.set('origem', 'imobiliaria')
+    search.set('slug', companyOrigin.slug)
+    if (companyOrigin.name) search.set('nome', companyOrigin.name)
+    if (companyOrigin.editing) search.set('edit', '1')
+    if (companyOrigin.preview) search.set('preview', '1')
+    if (companyOrigin.tab && companyOrigin.tab !== 'showcase') search.set('aba', companyOrigin.tab)
+  }
+  return `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/?${search.toString()}`
+}
 
 export const getListingLocation = (listing) => {
   const city = getCityLabel(listing.city)
@@ -248,6 +257,7 @@ function ShowcasePropertyImage({ listing, purpose, purposeLabel, url, isFavorite
 export function ListingShowcase({
   listings,
   city,
+  companyOrigin,
   heading: customHeading,
   headingId = 'property-showcase-title',
   showHeading = true,
@@ -273,7 +283,7 @@ export function ListingShowcase({
         ? emptyMessage && <p className="favorite-empty">{emptyMessage}</p>
         : <div className="property-showcase-grid" id="imoveis-disponiveis">
         {listings.map((listing) => {
-          const url = getListingDetailUrl(listing)
+          const url = getListingDetailUrl(listing, companyOrigin)
           const purpose = getListingPurpose(listing)
           const purposeLabel = getListingPurposeLabel(listing)
           const propertyType = getListingPropertyType(listing)
@@ -324,7 +334,7 @@ export function ListingShowcase({
   )
 }
 
-export function ListingDetailPage({ listing, onView, onContactClick, isFavorite, favoriteBusy, favoriteMessage, onToggleFavorite }) {
+export function ListingDetailPage({ listing, origin, onView, onContactClick, isFavorite, favoriteBusy, favoriteMessage, onToggleFavorite }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -366,6 +376,14 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(listing.title)}`
+  const originProfileUrl = origin ? (() => {
+    const returnParams = new URLSearchParams()
+    if (origin.editing) returnParams.set('edit', '1')
+    if (origin.preview) returnParams.set('preview', '1')
+    if (origin.tab && origin.tab !== 'showcase') returnParams.set('aba', origin.tab)
+    const returnQuery = returnParams.toString()
+    return `${import.meta.env.BASE_URL}imobiliaria/${encodeURIComponent(origin.slug)}${returnQuery ? `?${returnQuery}` : ''}`
+  })() : ''
 
   useEffect(() => {
     if (!listing.user_id || recordedListingIdRef.current === listing.id) return
@@ -523,14 +541,20 @@ export function ListingDetailPage({ listing, onView, onContactClick, isFavorite,
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="listing-detail-header">
         <nav className="listing-detail-breadcrumb" aria-label="Navegação estrutural">
-          <a href={import.meta.env.BASE_URL}>Início</a><span>›</span><a href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>Imóveis</a><span>›</span><span aria-current="page">{listing.title}</span>
+          <a href={import.meta.env.BASE_URL}>Início</a><span>›</span>
+          {origin
+            ? <><a href={originProfileUrl}>{origin.name}</a><span>›</span></>
+            : <><a href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>Imóveis</a><span>›</span></>}
+          <span aria-current="page">{listing.title}</span>
         </nav>
         <div className="listing-detail-titlebar">
           <div>
             <h1>{listing.title}</h1>
             <div className="listing-detail-address-line"><LocationPinIcon /><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
           </div>
-          <a className="listing-back-link" href={`${import.meta.env.BASE_URL}#imoveis-disponiveis`}>← Voltar aos imóveis</a>
+          <a className="listing-back-link" href={origin ? originProfileUrl : `${import.meta.env.BASE_URL}#imoveis-disponiveis`}>
+            {origin ? `← Voltar para ${origin.name}` : '← Voltar aos imóveis'}
+          </a>
         </div>
       </header>
       <article className="listing-detail-layout">

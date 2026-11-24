@@ -750,8 +750,11 @@ function App() {
   const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
   const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
   const [companyPublicEditMode, setCompanyPublicEditMode] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1')
-  const [companyPublicPreviewMode, setCompanyPublicPreviewMode] = useState(false)
-  const [companyPublicTab, setCompanyPublicTab] = useState('showcase')
+  const [companyPublicPreviewMode, setCompanyPublicPreviewMode] = useState(() => new URLSearchParams(window.location.search).get('preview') === '1')
+  const [companyPublicTab, setCompanyPublicTab] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('aba')
+    return ['showcase', 'about', 'contacts'].includes(tab) ? tab : 'showcase'
+  })
   const [companyPublicDraft, setCompanyPublicDraft] = useState({})
   const [companyPublicLogoFile, setCompanyPublicLogoFile] = useState(null)
   const [companyPublicCoverFile, setCompanyPublicCoverFile] = useState(null)
@@ -836,6 +839,9 @@ function App() {
     const updateCurrentPath = () => {
       setCurrentPath(window.location.pathname)
       setCompanyPublicEditMode(new URLSearchParams(window.location.search).get('edit') === '1')
+      setCompanyPublicPreviewMode(new URLSearchParams(window.location.search).get('preview') === '1')
+      const tab = new URLSearchParams(window.location.search).get('aba')
+      setCompanyPublicTab(['showcase', 'about', 'contacts'].includes(tab) ? tab : 'showcase')
       const section = getAccountSectionFromPath(window.location.pathname)
       if (section) setAccountSection(section)
     }
@@ -846,6 +852,11 @@ function App() {
   const navigateToPath = (path) => {
     window.history.pushState({}, '', path)
     setCurrentPath(window.location.pathname)
+    const searchParams = new URLSearchParams(window.location.search)
+    setCompanyPublicEditMode(searchParams.get('edit') === '1')
+    setCompanyPublicPreviewMode(searchParams.get('preview') === '1')
+    const tab = searchParams.get('aba')
+    setCompanyPublicTab(['showcase', 'about', 'contacts'].includes(tab) ? tab : 'showcase')
     const section = getAccountSectionFromPath(window.location.pathname)
     if (section) setAccountSection(section)
   }
@@ -2826,13 +2837,28 @@ function App() {
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
-    const routeListingId = new URLSearchParams(window.location.search).get('id')
+    const detailSearchParams = new URLSearchParams(window.location.search)
+    const routeListingId = detailSearchParams.get('id')
+    const originSlug = detailSearchParams.get('origem') === 'imobiliaria'
+      ? detailSearchParams.get('slug') || ''
+      : ''
+    const originTab = detailSearchParams.get('aba')
+    const detailOrigin = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(originSlug)
+      ? {
+        slug: originSlug,
+        name: detailSearchParams.get('nome')?.trim() || 'Imobiliária',
+        editing: detailSearchParams.get('edit') === '1',
+        preview: detailSearchParams.get('preview') === '1',
+        tab: ['showcase', 'about', 'contacts'].includes(originTab) ? originTab : 'showcase',
+      }
+      : null
     const routeListing = routeListingId
       ? listings.find((item) => String(item.id) === routeListingId && getListingSlug(item) === routeSlug)
       : listings.find((item) => getListingSlug(item) === routeSlug)
     if (routeListing) return (
       <ListingDetailPage
         listing={routeListing}
+        origin={detailOrigin}
         onView={recordListingView}
         onContactClick={recordWhatsAppClick}
         isFavorite={favoriteListingIds.some((id) => String(id) === String(routeListing.id))}
@@ -2878,6 +2904,13 @@ function App() {
       cover_url: companyPublicDraft.cover_url ?? company.cover_url,
     } : null
     const visibleCompanyName = companyPublicDisplay?.company_name?.trim() || company?.company_name || 'Imobiliária'
+    const companyListingOrigin = {
+      slug: companyPublicRouteSlug,
+      name: visibleCompanyName,
+      editing: isCompanyPublicEditSession,
+      preview: companyPublicPreviewMode,
+      tab: companyPublicTab,
+    }
     const companyInitials = String(visibleCompanyName).split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toLocaleUpperCase('pt-BR')
     const hasCompanyPublicChanges = isCompanyPublicEditSession && (
       Boolean(companyPublicLogoFile || companyPublicCoverFile)
@@ -3121,6 +3154,7 @@ function App() {
               </section>
               <ListingShowcase
                 listings={filteredCompanyPublicListings}
+                companyOrigin={companyListingOrigin}
                 heading="Todos os imóveis disponíveis"
                 headingId="company-public-listings-title"
                 emptyMessage="Esta imobiliária ainda não possui imóveis publicados."
