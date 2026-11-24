@@ -2790,10 +2790,11 @@ function App() {
                   {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
                   {isCompanyAccount && visibleAccountSection === 'statistics' && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
                   </div>
-                  <div className="my-area-topbar-actions">
-                  {isCompanyDashboard && <button type="button" className="company-public-link" onClick={() => accountProfile.publicSlug ? navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug)) : openMyArea('public-profile')}>Ver perfil público <ExternalLink size={17} aria-hidden="true" /></button>}
-                  {(visibleAccountSection === 'overview' || isCompanyDashboard || (isStandardAccount && visibleAccountSection === 'listings')) && <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>}
-                  </div>
+                  {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && (
+                    <div className="my-area-topbar-actions">
+                      <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>
+                    </div>
+                  )}
                 </header>
                 {isCompanyAccount && (isCompanyDashboard || visibleAccountSection === 'statistics') && (
                   <section className="company-period-filter" aria-label="Filtro de período das métricas">
