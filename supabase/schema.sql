@@ -755,7 +755,8 @@ create table if not exists public.listing_metric_events (
   id bigint generated always as identity primary key,
   listing_id bigint not null references public.listings(id) on delete cascade,
   metric_type text not null check (metric_type in ('view', 'whatsapp_click', 'favorite')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  event_origin text not null default 'live' check (event_origin in ('live', 'demo'))
 );
 
 create index if not exists listing_metric_events_listing_created_idx

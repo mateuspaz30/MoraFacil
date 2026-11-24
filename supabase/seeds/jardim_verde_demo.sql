@@ -340,9 +340,7 @@ set
   advertiser = 'Jardim Verde (DEMONSTRACAO)',
   phone = company.phone,
   latitude = demo.latitude,
-  longitude = demo.longitude,
-  visualizacoes = demo.visualizacoes,
-  whatsapp_clicks = demo.whatsapp_clicks
+  longitude = demo.longitude
 from jardim_verde_demo_listings as demo
 cross join jardim_verde_demo_company as company
 join public.neighborhoods as neighborhood
@@ -407,6 +405,48 @@ join public.listings as listing
 join jardim_verde_demo_visitors as visitor
   on visitor.position <= demo.favorite_count
 on conflict (user_id, listing_id) do nothing;
+
+delete from public.listing_metric_events as event
+using public.listings as listing,
+  jardim_verde_demo_listings as demo,
+  jardim_verde_demo_company as company
+where event.listing_id = listing.id
+  and listing.user_id = company.user_id
+  and listing.advertiser = 'Jardim Verde (DEMONSTRACAO)'
+  and listing.title = demo.title
+  and event.event_origin = 'demo';
+
+insert into public.listing_metric_events (
+  listing_id,
+  metric_type,
+  created_at,
+  event_origin
+)
+select
+  listing.id,
+  metric.metric_type,
+  (
+    (
+      (now() at time zone 'America/Sao_Paulo')::date
+      - floor(
+        (generated.event_number - 1) * 90.0 / nullif(metric.event_count, 0)
+      )::integer
+    ) + time '12:00'
+  ) at time zone 'America/Sao_Paulo',
+  'demo'
+from jardim_verde_demo_listings as demo
+cross join jardim_verde_demo_company as company
+join public.listings as listing
+  on listing.user_id = company.user_id
+  and listing.advertiser = 'Jardim Verde (DEMONSTRACAO)'
+  and listing.title = demo.title
+cross join lateral (
+  values
+    ('view', demo.visualizacoes),
+    ('whatsapp_click', demo.whatsapp_clicks),
+    ('favorite', demo.favorite_count)
+) as metric(metric_type, event_count)
+cross join lateral generate_series(1, metric.event_count) as generated(event_number);
 
 end;
 $seed$;
