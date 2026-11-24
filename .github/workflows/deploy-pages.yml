@@ -39,6 +39,27 @@ jobs:
       - name: SPA fallback for deep links
         run: cp dist/index.html dist/404.html
 
+      - name: Add account route entry points
+        run: |
+          for route in \
+            "" \
+            "dashboard" \
+            "meus-imoveis" \
+            "imoveis" \
+            "favoritos" \
+            "minha-conta" \
+            "conta" \
+            "administração" \
+            "admin" \
+            "estatisticas" \
+            "perfil-publico" \
+            "visualizacao-imobiliaria/dashboard" \
+            "visualizacao-imobiliaria/estatisticas" \
+            "visualizacao-imobiliaria/perfil-publico"; do
+            mkdir -p "dist/minha-area/$route"
+            cp dist/index.html "dist/minha-area/$route/index.html"
+          done
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
