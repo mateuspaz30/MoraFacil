@@ -6815,166 +6815,6 @@ dl.my-area-profile-grid > div {
   gap: 16px;
 }
 
-.admin-company-preview-banner {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 18px;
-  border: 1px solid #e8c66a;
-  border-radius: 12px;
-  background: #fff8df;
-  padding: 14px 16px;
-  color: #654d13;
-}
-
-.admin-company-preview-banner-copy {
-  display: grid;
-  gap: 5px;
-}
-
-.admin-company-preview-banner-copy strong {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #62480c;
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.admin-company-preview-banner-copy > span {
-  color: #755f2c;
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.admin-company-preview-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.admin-company-preview-tabs button {
-  min-height: 34px;
-  border: 1px solid #e2d6ae;
-  border-radius: 8px;
-  background: #fffdf6;
-  color: #62480c;
-  padding: 0 11px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 750;
-}
-
-.admin-company-preview-tabs button.active {
-  border-color: #765900;
-  background: #765900;
-  color: #fff;
-}
-
-.admin-company-preview-content {
-  margin-top: 0;
-}
-
-.admin-company-preview-public-profile {
-  display: grid;
-  gap: 20px;
-}
-
-.admin-company-preview-public-profile .company-public-identity {
-  margin-bottom: 0;
-}
-
-.admin-company-preview-public-profile .company-public-copy h2 {
-  margin: 4px 0;
-  color: #12345a;
-  font-size: clamp(1.7rem, 3.5vw, 2.3rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-}
-
-.admin-company-preview-public-profile .company-public-actions button:disabled,
-.company-preview-property-card button:disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-
-.company-preview-properties {
-  display: grid;
-  gap: 14px;
-}
-
-.company-preview-properties > h2 {
-  margin: 0;
-  color: #12345a;
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-.company-preview-property-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.company-preview-property-card {
-  overflow: hidden;
-  border: 1px solid #e1e9f1;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
-}
-
-.company-preview-property-card > img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1.65;
-  object-fit: cover;
-}
-
-.company-preview-property-card > div {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-}
-
-.company-preview-property-card h3 {
-  margin: 0;
-  color: #12345a;
-  font-size: 0.98rem;
-  font-weight: 800;
-}
-
-.company-preview-property-card span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #647b92;
-  font-size: 0.75rem;
-}
-
-.company-preview-property-card > div > strong {
-  color: #078c35;
-  font-size: 1.08rem;
-  font-weight: 800;
-}
-
-.company-preview-property-card > div > p {
-  margin: 0;
-  color: #647b92;
-  font-size: 0.76rem;
-}
-
-.company-preview-property-card button {
-  min-height: 36px;
-  border: 0;
-  border-radius: 8px;
-  background: #078c35;
-  color: #fff;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
 .company-dashboard-stats.company-statistics-stats {
   margin-top: 0;
 }
@@ -7684,9 +7524,6 @@ dl.my-area-profile-grid > div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .company-preview-property-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 700px) {
@@ -7820,22 +7657,6 @@ dl.my-area-profile-grid > div {
     grid-column: auto;
   }
 
-  .admin-company-preview-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-
-  .admin-company-preview-tabs button {
-    flex: 0 0 auto;
-  }
-
-  .admin-company-preview-public-profile .company-public-identity {
-    align-items: flex-start;
-  }
-
-  .company-preview-property-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .my-area-guest-home {

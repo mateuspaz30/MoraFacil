@@ -52,10 +52,7 @@ jobs:
             "administração" \
             "admin" \
             "estatisticas" \
-            "perfil-publico" \
-            "visualizacao-imobiliaria/dashboard" \
-            "visualizacao-imobiliaria/estatisticas" \
-            "visualizacao-imobiliaria/perfil-publico"; do
+            "perfil-publico"; do
             mkdir -p "dist/minha-area/$route"
             cp dist/index.html "dist/minha-area/$route/index.html"
           done
