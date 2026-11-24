@@ -7574,11 +7574,11 @@ dl.my-area-profile-grid > div {
 
 .company-public-cover {
   position: relative;
-  height: clamp(150px, 24vw, 260px);
+  height: clamp(260px, 25vw, 300px);
   overflow: hidden;
   margin: 0 0 16px;
   border: 1px solid #e1e9f1;
-  border-radius: 16px;
+  border-radius: 18px;
   background: linear-gradient(120deg, #dcefe1, #eef5f7 55%, #cfe3d5);
 }
 
@@ -7594,6 +7594,8 @@ dl.my-area-profile-grid > div {
 }
 
 .company-public-cover > img {
+  position: relative;
+  z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -7620,32 +7622,21 @@ dl.my-area-profile-grid > div {
 }
 
 .company-public-identity.with-cover {
-  margin-top: -82px;
-  padding: 22px 24px;
+  z-index: 2;
+  width: calc(100% - 56px);
+  margin: -90px auto 18px;
+  border-radius: 18px;
+  padding: 24px 28px;
 }
 
 .company-public-profile-stats {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   align-items: center;
-  gap: 17px 0;
+  gap: 0;
   min-width: 0;
   border-left: 1px solid #dce4eb;
-  padding: 0 0 0 24px;
-}
-
-.company-public-verified {
-  display: inline-flex;
-  grid-column: 1 / -1;
-  justify-self: end;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  background: #e9f7ed;
-  color: #176637;
-  padding: 5px 10px;
-  font-size: 0.73rem;
-  font-weight: 800;
+  padding: 0 0 0 22px;
 }
 
 .company-public-profile-stat {
@@ -7658,7 +7649,7 @@ dl.my-area-profile-grid > div {
 
 .company-public-profile-stat + .company-public-profile-stat {
   border-left: 1px solid #dce4eb;
-  padding-left: 18px;
+  padding-left: 16px;
 }
 
 .company-public-profile-stat > span {
@@ -7732,8 +7723,10 @@ dl.my-area-profile-grid > div {
 
 .company-public-image-trigger.cover-trigger {
   position: absolute;
+  z-index: 2;
+  top: 14px;
   right: 14px;
-  bottom: 14px;
+  bottom: auto;
   padding: 9px 12px;
 }
 
@@ -7916,14 +7909,18 @@ dl.my-area-profile-grid > div {
 
 .company-public-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  gap: 8px;
   margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .company-public-whatsapp,
 .company-public-share {
   display: inline-flex;
+  flex: 0 0 auto;
   min-height: 42px;
   align-items: center;
   justify-content: center;
@@ -7932,9 +7929,9 @@ dl.my-area-profile-grid > div {
   border-radius: 9px;
   background: #078c35;
   color: #fff;
-  padding: 0 15px;
+  padding: 0 11px;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -8341,22 +8338,23 @@ dl.my-area-profile-grid > div {
     grid-template-columns: 80px minmax(0, 1fr);
   }
 
+  .company-public-identity.with-cover {
+    width: calc(100% - 40px);
+    margin-top: -76px;
+    padding: 20px 22px;
+  }
+
   .company-public-profile-stats {
     grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 0.8fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     border-top: 1px solid #dce4eb;
     border-left: 0;
     padding: 14px 0 0;
   }
 
-  .company-public-verified {
-    grid-column: 1 / -1;
-    justify-self: start;
-  }
-
   .company-public-profile-stat + .company-public-profile-stat {
     border-left: 1px solid #dce4eb;
-    padding-left: 16px;
+    padding-left: 18px;
   }
 
   .company-public-logo,
@@ -8523,7 +8521,7 @@ dl.my-area-profile-grid > div {
   }
 
   .company-public-cover {
-    height: 150px;
+    height: 200px;
     border-radius: 12px;
   }
 
@@ -8535,13 +8533,14 @@ dl.my-area-profile-grid > div {
   }
 
   .company-public-identity.with-cover {
-    margin-top: -46px;
+    width: calc(100% - 24px);
+    margin-top: -58px;
     padding: 14px 12px;
   }
 
   .company-public-profile-stats {
     grid-template-columns: 1fr 1fr;
-    gap: 12px 0;
+    gap: 0;
     padding-top: 12px;
   }
 
@@ -8562,7 +8561,7 @@ dl.my-area-profile-grid > div {
     font-size: 0.69rem;
   }
 
-  .company-public-profile-stat:last-child {
+  .company-public-profile-stat + .company-public-profile-stat {
     border-left: 1px solid #dce4eb;
     padding-left: 10px;
   }
@@ -8605,15 +8604,34 @@ dl.my-area-profile-grid > div {
   }
 
   .company-public-actions {
-    gap: 7px;
+    gap: 5px;
     margin-top: 12px;
   }
 
   .company-public-whatsapp,
   .company-public-share {
-    min-height: 38px;
-    padding: 0 10px;
-    font-size: 0.74rem;
+    min-height: 36px;
+    gap: 5px;
+    padding: 0 7px;
+    font-size: 0.66rem;
+  }
+
+  .company-public-actions svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .company-public-profile-stat {
+    gap: 5px;
+  }
+
+  .company-public-profile-stat svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .company-public-profile-stat + .company-public-profile-stat {
+    padding-left: 7px;
   }
 
   .company-public-about-content > p {

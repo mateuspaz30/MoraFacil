@@ -3055,7 +3055,6 @@ function App() {
                   {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
                 </div>
                 <div className="company-public-profile-stats">
-                  <span className="company-public-verified"><Globe2 size={16} aria-hidden="true" /> Perfil Público</span>
                   <div className="company-public-profile-stat">
                     <House size={27} aria-hidden="true" />
                     <span><strong>{companyPublicListings.length} imóveis</strong><small>disponíveis</small></span>
