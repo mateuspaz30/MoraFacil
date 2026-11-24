@@ -2790,7 +2790,7 @@ function App() {
                   {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
                   {isCompanyAccount && visibleAccountSection === 'statistics' && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
                   </div>
-                  {(visibleAccountSection === 'overview' || (isStandardAccount && visibleAccountSection === 'listings')) && (
+                  {visibleAccountSection === 'overview' && (
                     <div className="my-area-topbar-actions">
                       <button type="button" className="my-area-create-listing" onClick={() => openAnnouncementForm()}><Plus size={isStandardAccount ? 24 : 28} strokeWidth={2.2} aria-hidden="true" /> Cadastrar Imóvel</button>
                     </div>
