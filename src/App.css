@@ -6979,6 +6979,82 @@ dl.my-area-profile-grid > div {
   margin-top: 0;
 }
 
+.company-period-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0 0 18px;
+  border: 1px solid #e1e9f1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.04);
+}
+
+.company-period-select,
+.company-period-custom label {
+  display: grid;
+  gap: 6px;
+}
+
+.company-period-select > span,
+.company-period-custom label > span {
+  color: #536b84;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.company-period-select select,
+.company-period-custom input {
+  min-width: 190px;
+  min-height: 40px;
+  border: 1px solid #d5e0eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #183553;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.company-period-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.company-period-custom input {
+  min-width: 155px;
+}
+
+.company-period-custom button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #078c35;
+  color: #fff;
+  padding: 0 16px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.company-period-note,
+.company-period-feedback {
+  flex: 1 0 100%;
+  margin: 0;
+  color: #71849a;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.company-period-feedback.error {
+  color: #a12626;
+}
+
 .company-statistics-table-card,
 .company-statistics-highlight,
 .company-statistics-summary {
@@ -7665,6 +7741,18 @@ dl.my-area-profile-grid > div {
 
   .company-dashboard-stats .my-area-stat-card strong {
     font-size: 1.55rem;
+  }
+
+  .company-period-filter,
+  .company-period-custom {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .company-period-select select,
+  .company-period-custom input,
+  .company-period-custom button {
+    width: 100%;
   }
 
   .company-dashboard-highlights {

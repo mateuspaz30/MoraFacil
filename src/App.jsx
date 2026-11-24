@@ -159,6 +159,45 @@ const sampleListings = [
   },
 ]
 
+const companyPeriodOptions = [
+  ['today', 'Hoje'],
+  ['last7', 'Últimos 7 dias'],
+  ['last30', 'Últimos 30 dias'],
+  ['thisMonth', 'Este mês'],
+  ['lastMonth', 'Mês passado'],
+  ['thisYear', 'Este ano'],
+  ['custom', 'Personalizado'],
+]
+
+const formatLocalDateInput = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getCompanyPeriodRange = (period, now = new Date()) => {
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const start = new Date(end)
+
+  if (period === 'today') {
+    return { start: formatLocalDateInput(start), end: formatLocalDateInput(end) }
+  }
+  if (period === 'last7') start.setDate(start.getDate() - 6)
+  if (period === 'last30') start.setDate(start.getDate() - 29)
+  if (period === 'thisMonth') start.setDate(1)
+  if (period === 'lastMonth') {
+    start.setDate(1)
+    start.setMonth(start.getMonth() - 1)
+    end.setDate(0)
+  }
+  if (period === 'thisYear') {
+    start.setMonth(0, 1)
+  }
+
+  return { start: formatLocalDateInput(start), end: formatLocalDateInput(end) }
+}
+
 const propertyTypeIcons = {
   casa: Home,
   apartamento: Building2,
@@ -726,8 +765,16 @@ function App() {
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
   const [receivedFavoriteCount, setReceivedFavoriteCount] = useState(null)
   const [receivedFavoriteCountError, setReceivedFavoriteCountError] = useState('')
-  const [listingFavoriteCounts, setListingFavoriteCounts] = useState({ userId: null, counts: {}, status: 'idle' })
-  const [listingFavoriteCountsError, setListingFavoriteCountsError] = useState('')
+  const [companyPeriodPreset, setCompanyPeriodPreset] = useState('last30')
+  const [companyPeriodStart, setCompanyPeriodStart] = useState(() => getCompanyPeriodRange('last30').start)
+  const [companyPeriodEnd, setCompanyPeriodEnd] = useState(() => getCompanyPeriodRange('last30').end)
+  const [appliedCompanyPeriod, setAppliedCompanyPeriod] = useState(() => ({
+    preset: 'last30',
+    ...getCompanyPeriodRange('last30'),
+  }))
+  const [companyPeriodMetrics, setCompanyPeriodMetrics] = useState({ userId: null, range: '', counts: {}, status: 'idle' })
+  const [companyPeriodMetricsError, setCompanyPeriodMetricsError] = useState('')
+  const [companyPeriodValidationError, setCompanyPeriodValidationError] = useState('')
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
   const pendingFavoriteListingRef = useRef(null)
@@ -1226,37 +1273,46 @@ function App() {
   }, [authUser])
 
   useEffect(() => {
-    const userType = authUser && userProfile?.user_id === authUser.id
+    const userType = userProfile?.user_id === authUser?.id
       ? userProfile.tipo_usuario
       : authUser?.user_metadata?.tipo_usuario
     if (!authUser || !supabase || userType !== 'imobiliaria') return undefined
 
     let mounted = true
-    const loadListingFavoriteCounts = async () => {
-      setListingFavoriteCounts({ userId: authUser.id, counts: {}, status: 'loading' })
-      setListingFavoriteCountsError('')
+    const rangeKey = `${appliedCompanyPeriod.start}:${appliedCompanyPeriod.end}`
+    const loadCompanyPeriodMetrics = async () => {
+      setCompanyPeriodMetrics({ userId: authUser.id, range: rangeKey, counts: {}, status: 'loading' })
+      setCompanyPeriodMetricsError('')
       try {
-        const { data, error } = await supabase.rpc('count_my_listing_favorites_by_listing')
+        const { data, error } = await supabase.rpc('get_company_listing_metrics_by_period', {
+          period_start: appliedCompanyPeriod.start,
+          period_end: appliedCompanyPeriod.end,
+        })
         if (error) throw error
         if (mounted) {
-          setListingFavoriteCounts({
+          setCompanyPeriodMetrics({
             userId: authUser.id,
-            counts: Object.fromEntries((data || []).map((item) => [String(item.listing_id), Number(item.favorite_count) || 0])),
+            range: rangeKey,
+            counts: Object.fromEntries((data || []).map((item) => [String(item.listing_id), {
+              visualizacoes: Number(item.visualizacoes) || 0,
+              whatsapp_clicks: Number(item.whatsapp_clicks) || 0,
+              favoritos: Number(item.favoritos) || 0,
+            }])),
             status: 'loaded',
           })
         }
       } catch (error) {
-        console.error('Falha ao carregar os favoritos por imóvel:', error)
+        console.error('Falha ao carregar as métricas por período da imobiliária:', error)
         if (mounted) {
-          setListingFavoriteCounts({ userId: authUser.id, counts: {}, status: 'error' })
-          setListingFavoriteCountsError(`Não foi possível carregar os favoritos por imóvel. Execute supabase/migrations/20261121_company_listing_statistics.sql no Supabase. ${error.message}`)
+          setCompanyPeriodMetrics({ userId: authUser.id, range: rangeKey, counts: {}, status: 'error' })
+          setCompanyPeriodMetricsError(`Não foi possível carregar as métricas do período. Execute supabase/migrations/20261124_company_metric_history.sql no Supabase. ${error.message}`)
         }
       }
     }
 
-    loadListingFavoriteCounts()
+    loadCompanyPeriodMetrics()
     return () => { mounted = false }
-  }, [authUser, userProfile])
+  }, [authUser, userProfile, appliedCompanyPeriod])
 
   const selectedCity = appliedFilters.search.trim()
   const selectedCityKey = selectedCity.toLocaleLowerCase('pt-BR').replace(/-sp$/i, '')
@@ -2320,16 +2376,30 @@ function App() {
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
   const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
-  const mostViewedListing = [...userListings]
+  const companyPeriodRangeKey = `${appliedCompanyPeriod.start}:${appliedCompanyPeriod.end}`
+  const companyPeriodMetricsReady = companyPeriodMetrics.userId === authUser?.id
+    && companyPeriodMetrics.range === companyPeriodRangeKey
+    && companyPeriodMetrics.status === 'loaded'
+  const companyPeriodListings = userListings.map((item) => {
+    const counts = companyPeriodMetricsReady ? companyPeriodMetrics.counts[String(item.id)] : null
+    return {
+      ...item,
+      visualizacoes: counts?.visualizacoes ?? 0,
+      whatsapp_clicks: counts?.whatsapp_clicks ?? 0,
+      favoritos: counts?.favoritos ?? 0,
+    }
+  })
+  const companyPeriodTotalViews = companyPeriodListings.reduce((total, item) => total + item.visualizacoes, 0)
+  const companyPeriodTotalWhatsAppClicks = companyPeriodListings.reduce((total, item) => total + item.whatsapp_clicks, 0)
+  const companyPeriodTotalFavorites = companyPeriodListings.reduce((total, item) => total + item.favoritos, 0)
+  const mostViewedListing = [...companyPeriodListings]
     .sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))[0] || null
-  const mostWhatsAppClickedListing = [...userListings]
+  const mostWhatsAppClickedListing = [...companyPeriodListings]
     .sort((first, second) => (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0))[0] || null
-  const listingsWithoutInteractionsCount = userListings.filter((item) => (
+  const listingsWithoutInteractionsCount = companyPeriodListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   )).length
-  const listingFavoriteCountById = listingFavoriteCounts.userId === authUser?.id ? listingFavoriteCounts.counts : {}
-  const listingFavoriteCountsStatus = listingFavoriteCounts.userId === authUser?.id ? listingFavoriteCounts.status : 'loading'
-  const listingsWithoutPerformance = userListings.filter((item) => (
+  const listingsWithoutPerformance = companyPeriodListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   ))
   const interestRate = (item) => {
@@ -2354,7 +2424,7 @@ function App() {
       ? `${listingsWithoutPerformance.length} ${listingsWithoutPerformance.length === 1 ? 'imóvel ainda não possui interações' : 'imóveis ainda não possuem interações'}.`
       : 'Todos os seus imóveis já possuem visualizações ou cliques no WhatsApp.',
   ]
-  const rankedStatisticsListings = [...userListings]
+  const rankedStatisticsListings = [...companyPeriodListings]
     .sort((first, second) => (
       (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0)
       || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
@@ -2362,14 +2432,15 @@ function App() {
     ))
   const dashboardChartListings = rankedStatisticsListings.slice(0, 6)
   const dashboardChartMaxViews = Math.max(0, ...dashboardChartListings.map((item) => Number(item.visualizacoes) || 0))
-  const dashboardWhatsAppListings = [...userListings]
+  const dashboardWhatsAppListings = [...companyPeriodListings]
     .sort((first, second) => (
       (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
       || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
     ))
     .slice(0, 4)
   const dashboardMaxWhatsAppClicks = Math.max(0, ...dashboardWhatsAppListings.map((item) => Number(item.whatsapp_clicks) || 0))
-  const boroughPerformance = [...activeListings.reduce((boroughs, item) => {
+  const periodActiveListings = companyPeriodListings.filter((item) => getListingStatusKey(item) === 'published')
+  const boroughPerformance = [...periodActiveListings.reduce((boroughs, item) => {
     const name = String(item.neighborhood || '').trim().replace(/\s+/g, ' ') || 'Bairro não informado'
     const key = normalizeNeighborhoodName(name)
     const borough = boroughs.get(key) || {
@@ -2377,12 +2448,12 @@ function App() {
       listingCount: 0,
       visualizacoes: 0,
       whatsapp_clicks: 0,
-      favoritos: listingFavoriteCountsStatus === 'loaded' ? 0 : null,
+      favoritos: companyPeriodMetricsReady ? 0 : null,
     }
     borough.listingCount += 1
     borough.visualizacoes += Number(item.visualizacoes) || 0
     borough.whatsapp_clicks += Number(item.whatsapp_clicks) || 0
-    if (borough.favoritos !== null) borough.favoritos += listingFavoriteCountById[String(item.id)] || 0
+    if (borough.favoritos !== null) borough.favoritos += item.favoritos
     boroughs.set(key, borough)
     return boroughs
   }, new Map()).values()]
@@ -2398,7 +2469,7 @@ function App() {
   const mostContactedBorough = [...boroughPerformance]
     .sort((first, second) => second.whatsapp_clicks - first.whatsapp_clicks || second.visualizacoes - first.visualizacoes)[0] || null
   const averageBoroughListingCount = boroughPerformance.length
-    ? activeListings.length / boroughPerformance.length
+    ? periodActiveListings.length / boroughPerformance.length
     : 0
   const boroughWithCaptureOpportunity = boroughPerformance
     .filter((borough) => borough.visualizacoes > 0 && borough.listingCount < averageBoroughListingCount)
@@ -2443,6 +2514,32 @@ function App() {
       .filter((item) => item.user_id === activePublicCompanyProfile.data.user_id)
       .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
     : []
+  const selectCompanyPeriod = (preset) => {
+    setCompanyPeriodPreset(preset)
+    setCompanyPeriodValidationError('')
+    if (preset === 'custom') return
+
+    const range = getCompanyPeriodRange(preset)
+    setCompanyPeriodStart(range.start)
+    setCompanyPeriodEnd(range.end)
+    setAppliedCompanyPeriod({ preset, ...range })
+  }
+  const applyCustomCompanyPeriod = () => {
+    if (!companyPeriodStart || !companyPeriodEnd) {
+      setCompanyPeriodValidationError('Informe a data inicial e a data final.')
+      return
+    }
+    if (companyPeriodStart > companyPeriodEnd) {
+      setCompanyPeriodValidationError('A data inicial deve ser anterior ou igual à data final.')
+      return
+    }
+    setCompanyPeriodValidationError('')
+    setAppliedCompanyPeriod({
+      preset: 'custom',
+      start: companyPeriodStart,
+      end: companyPeriodEnd,
+    })
+  }
   const shareCompanyPublicProfile = async () => {
     setPublicProfileShareMessage('')
     try {
@@ -2795,6 +2892,40 @@ function App() {
                     </nav>
                   </section>
                 )}
+                {isCompanyAccount && (isCompanyDashboard || visibleAccountSection === 'statistics') && (
+                  <section className="company-period-filter" aria-label="Filtro de período das métricas">
+                    <label className="company-period-select">
+                      <span>Período</span>
+                      <select value={companyPeriodPreset} onChange={(event) => selectCompanyPeriod(event.target.value)}>
+                        {companyPeriodOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
+                    </label>
+                    {companyPeriodPreset === 'custom' && (
+                      <div className="company-period-custom">
+                        <label>
+                          <span>Data inicial</span>
+                          <input type="date" value={companyPeriodStart} onChange={(event) => setCompanyPeriodStart(event.target.value)} />
+                        </label>
+                        <label>
+                          <span>Data final</span>
+                          <input type="date" value={companyPeriodEnd} onChange={(event) => setCompanyPeriodEnd(event.target.value)} />
+                        </label>
+                        <button type="button" onClick={applyCustomCompanyPeriod}>Aplicar</button>
+                      </div>
+                    )}
+                    <p className="company-period-note">
+                      {companyPeriodMetrics.status === 'loading' && companyPeriodMetrics.range === companyPeriodRangeKey
+                        ? 'Carregando métricas do período…'
+                        : 'O histórico começa após a migração; favoritos contam novas marcações. Os totais acumulados anteriores continuam preservados.'}
+                    </p>
+                    <p className="company-period-note">
+                      Totais acumulados: {new Intl.NumberFormat('pt-BR').format(totalListingViews)} visualizações · {new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)} cliques WhatsApp · {receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)} favoritos recebidos.
+                    </p>
+                    {receivedFavoriteCountError && <p className="company-period-feedback error" role="alert">{receivedFavoriteCountError}</p>}
+                    {companyPeriodValidationError && <p className="company-period-feedback error" role="alert">{companyPeriodValidationError}</p>}
+                    {companyPeriodMetricsError && <p className="company-period-feedback error" role="alert">{companyPeriodMetricsError}</p>}
+                  </section>
+                )}
                 {isAdminCompanyPreviewDashboard && (
                   <div className="company-statistics-page admin-company-preview-content">
                     <section className="my-area-stats-grid company-dashboard-stats" aria-label="Indicadores demonstrativos">
@@ -2950,29 +3081,30 @@ function App() {
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
-                          <div><small>Visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(totalListingViews)}</strong></div>
+                          <div><small>Visualizações no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
-                          <div><small>Cliques no WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)}</strong></div>
+                          <div><small>Cliques no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
-                          <div><small>Favoritos recebidos</small><strong>{receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)}</strong></div>
+                          <div><small>Favoritos no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
                         </article>
                       </section>
-                      {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
                       <div className="company-dashboard-overview-grid">
                         <section className="company-dashboard-panel company-dashboard-chart" aria-labelledby="company-dashboard-chart-title">
                           <header className="company-dashboard-panel-heading">
                             <div>
                               <h2 id="company-dashboard-chart-title">Desempenho no período</h2>
-                              <p>Visualizações acumuladas por imóvel</p>
+                              <p>Visualizações por imóvel no período selecionado</p>
                             </div>
                             <span className="company-dashboard-chart-legend"><i aria-hidden="true" /> Visualizações</span>
                           </header>
-                          {dashboardChartListings.length ? (
-                            <div className="company-dashboard-chart-list" role="img" aria-label="Comparação de visualizações acumuladas por imóvel">
+                          {!companyPeriodMetricsReady ? (
+                            <p className="company-dashboard-empty">Aguardando métricas do período.</p>
+                          ) : dashboardChartListings.length ? (
+                            <div className="company-dashboard-chart-list" role="img" aria-label="Comparação de visualizações por imóvel no período selecionado">
                               {dashboardChartListings.map((item) => {
                                 const views = Number(item.visualizacoes) || 0
                                 const height = dashboardChartMaxViews > 0 ? (views / dashboardChartMaxViews) * 100 : 0
@@ -2986,13 +3118,15 @@ function App() {
                               })}
                             </div>
                           ) : <p className="company-dashboard-empty">Cadastre imóveis para acompanhar as visualizações.</p>}
-                          <p className="company-dashboard-chart-note">O sistema exibe totais acumulados; ainda não há histórico por data.</p>
+                          <p className="company-dashboard-chart-note">Exibindo eventos registrados dentro do período selecionado.</p>
                         </section>
                         <section className="company-dashboard-panel company-dashboard-whatsapp-ranking" aria-labelledby="company-dashboard-ranking-title">
                           <header className="company-dashboard-panel-heading">
-                            <div><h2 id="company-dashboard-ranking-title">Mais cliques no WhatsApp</h2><p>Imóveis com mais cliques acumulados</p></div>
+                            <div><h2 id="company-dashboard-ranking-title">Mais cliques no WhatsApp</h2><p>Imóveis com mais cliques no período selecionado</p></div>
                           </header>
-                          {dashboardWhatsAppListings.length ? (
+                          {!companyPeriodMetricsReady ? (
+                            <p className="company-dashboard-empty">Aguardando métricas do período.</p>
+                          ) : dashboardWhatsAppListings.length ? (
                             <ol>
                               {dashboardWhatsAppListings.map((item, index) => {
                                 const clicks = Number(item.whatsapp_clicks) || 0
@@ -3011,7 +3145,7 @@ function App() {
                       <div className="company-dashboard-performance-grid">
                         <section className="company-dashboard-panel company-dashboard-listings-panel" aria-labelledby="company-dashboard-listings-title">
                           <header className="company-dashboard-panel-heading">
-                            <div><h2 id="company-dashboard-listings-title">Desempenho dos imóveis</h2><p>Resumo dos anúncios com mais visualizações</p></div>
+                            <div><h2 id="company-dashboard-listings-title">Desempenho dos imóveis</h2><p>Resumo dos anúncios no período selecionado</p></div>
                             <button type="button" onClick={() => openMyArea('listings')}>Ver todos <ExternalLink size={15} aria-hidden="true" /></button>
                           </header>
                           <div className="company-dashboard-table-scroll">
@@ -3027,9 +3161,9 @@ function App() {
                                       </div>
                                     </td>
                                     <td><span className={`company-dashboard-status ${getListingStatusKey(item)}`}>{getListingStatusLabel(item)}</span></td>
-                                    <td>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)}</td>
-                                    <td>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)}</td>
-                                    <td>{formatInterestRate(item)}</td>
+                                    <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0) : '—'}</td>
+                                    <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0) : '—'}</td>
+                                    <td>{companyPeriodMetricsReady ? formatInterestRate(item) : '—'}</td>
                                     <td><button className="company-dashboard-edit-button" type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar ${item.title}`}><Pencil size={16} aria-hidden="true" /> Editar</button></td>
                                   </tr>
                                 ))}
@@ -3044,7 +3178,9 @@ function App() {
                               <div><h2 id="company-dashboard-attention-title">Pontos de atenção</h2><p>Imóveis sem visualizações e sem cliques</p></div>
                               <ChartNoAxesColumn size={20} aria-hidden="true" />
                             </header>
-                            {listingsWithoutPerformance.length ? (
+                            {!companyPeriodMetricsReady ? (
+                              <p className="company-dashboard-empty">Aguardando métricas do período.</p>
+                            ) : listingsWithoutPerformance.length ? (
                               <>
                                 <strong className="company-dashboard-attention-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
                                 <ul>{listingsWithoutPerformance.slice(0, 3).map((item) => <li key={item.id}>{item.title}</li>)}</ul>
@@ -3054,7 +3190,9 @@ function App() {
                           </section>
                           <section className="company-dashboard-panel company-dashboard-most-viewed" aria-labelledby="company-dashboard-most-viewed-title">
                             <header className="company-dashboard-panel-heading"><div><h2 id="company-dashboard-most-viewed-title">Mais visualizado</h2></div><Eye size={20} aria-hidden="true" /></header>
-                            {mostViewedListing ? (
+                            {!companyPeriodMetricsReady ? (
+                              <p className="company-dashboard-empty">Aguardando métricas do período.</p>
+                            ) : mostViewedListing ? (
                               <div className="company-dashboard-most-viewed-property">
                                 {mostViewedListing.image ? <img src={mostViewedListing.image} alt="" loading="lazy" /> : <span><House size={23} aria-hidden="true" /></span>}
                                 <div><strong>{mostViewedListing.title}</strong><small>{mostViewedListing.location || getListingLocation(mostViewedListing)}</small><b>{new Intl.NumberFormat('pt-BR').format(Number(mostViewedListing.visualizacoes) || 0)} visualizações</b></div>
@@ -3156,26 +3294,24 @@ function App() {
                     <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores de desempenho">
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
-                        <div><small>Total de visualizações</small><strong>{new Intl.NumberFormat('pt-BR').format(totalListingViews)}</strong></div>
+                        <div><small>Visualizações no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span>
-                        <div><small>Total de cliques WhatsApp</small><strong>{new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)}</strong></div>
+                        <div><small>Cliques WhatsApp no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
-                        <div><small>Total de favoritos</small><strong>{receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)}</strong></div>
+                        <div><small>Favoritos no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
                         <div><small>Imóveis ativos</small><strong>{new Intl.NumberFormat('pt-BR').format(activeListings.length)}</strong></div>
                       </article>
                     </section>
-                    {receivedFavoriteCountError && <p className="my-area-feedback error" role="alert">{receivedFavoriteCountError}</p>}
-                    {listingFavoriteCountsError && <p className="my-area-feedback error" role="alert">{listingFavoriteCountsError}</p>}
                     <section className="company-statistics-table-card" aria-labelledby="company-statistics-table-title">
                       <header>
-                        <div><h2 id="company-statistics-table-title">Desempenho dos imóveis</h2><p>Indicadores acumulados de cada anúncio.</p></div>
+                        <div><h2 id="company-statistics-table-title">Desempenho dos imóveis</h2><p>Indicadores registrados no período selecionado.</p></div>
                       </header>
                       {rankedStatisticsListings.length ? (
                         <div className="company-statistics-table-scroll">
@@ -3192,14 +3328,10 @@ function App() {
                                       <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)}</small></div>
                                     </div>
                                   </td>
-                                  <td>{new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0)}</td>
-                                  <td>{new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0)}</td>
-                                  <td>{listingFavoriteCountsError
-                                    ? '—'
-                                    : listingFavoriteCounts.userId === authUser.id
-                                      ? new Intl.NumberFormat('pt-BR').format(listingFavoriteCountById[String(item.id)] ?? 0)
-                                      : '…'}</td>
-                                  <td>{formatInterestRate(item)}</td>
+                                  <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.visualizacoes) || 0) : '—'}</td>
+                                  <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.whatsapp_clicks) || 0) : '—'}</td>
+                                  <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.favoritos) || 0) : '—'}</td>
+                                  <td>{companyPeriodMetricsReady ? formatInterestRate(item) : '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -3213,11 +3345,13 @@ function App() {
                           <span className="company-borough-heading-icon" aria-hidden="true"><MapPin size={22} /></span>
                           <div>
                             <h2 id="company-borough-title">Bairros mais procurados</h2>
-                            <p>Demanda acumulada nos imóveis ativos.</p>
+                            <p>Demanda registrada no período selecionado; imóveis ativos são o total atual.</p>
                           </div>
                         </div>
                       </header>
-                      {topBoroughs.length ? (
+                      {!companyPeriodMetricsReady ? (
+                        <p className="company-statistics-empty company-borough-empty">Aguardando métricas do período.</p>
+                      ) : topBoroughs.length ? (
                         <>
                           <div className="company-borough-cards">
                             {topBoroughs.map((borough, index) => (
@@ -3230,8 +3364,8 @@ function App() {
                                 <div className="company-borough-card-metrics">
                                   <span><WhatsAppIcon size={17} />{new Intl.NumberFormat('pt-BR').format(borough.whatsapp_clicks)} cliques WhatsApp</span>
                                   <span><Building2 size={17} aria-hidden="true" />{new Intl.NumberFormat('pt-BR').format(borough.listingCount)} {borough.listingCount === 1 ? 'imóvel' : 'imóveis'}</span>
-                                  <span><Heart size={17} aria-hidden="true" />{borough.favoritos === null
-                                    ? listingFavoriteCountsStatus === 'loading' ? 'Carregando favoritos' : 'Favoritos indisponíveis'
+                                  <span><Heart size={17} aria-hidden="true" />                                                                    {borough.favoritos === null
+                                    ? companyPeriodMetrics.status === 'loading' ? 'Carregando favoritos' : 'Favoritos indisponíveis'
                                     : `${new Intl.NumberFormat('pt-BR').format(borough.favoritos)} favoritos`}</span>
                                 </div>
                               </article>
@@ -3254,7 +3388,7 @@ function App() {
                                       <td>{new Intl.NumberFormat('pt-BR').format(borough.visualizacoes)}</td>
                                       <td>{new Intl.NumberFormat('pt-BR').format(borough.whatsapp_clicks)}</td>
                                       <td>{borough.favoritos === null
-                                        ? listingFavoriteCountsStatus === 'loading' ? '…' : '—'
+                                        ? companyPeriodMetrics.status === 'loading' ? '…' : '—'
                                         : new Intl.NumberFormat('pt-BR').format(borough.favoritos)}</td>
                                     </tr>
                                   ))}
@@ -3271,7 +3405,7 @@ function App() {
                         <p className="company-statistics-empty company-borough-empty">Não há imóveis ativos para apresentar dados por bairro.</p>
                       )}
                     </section>
-                    <section className="company-statistics-highlights" aria-label="Destaques de desempenho">
+                    {companyPeriodMetricsReady ? <section className="company-statistics-highlights" aria-label="Destaques de desempenho">
                       <article className="company-statistics-highlight">
                         <h2><span aria-hidden="true">🏆</span> Mais visualizado</h2>
                         <p>{statisticsSummaries[0]}</p>
@@ -3290,10 +3424,11 @@ function App() {
                         ) : <p>Todos os imóveis já possuem visualizações ou cliques no WhatsApp.</p>}
                       </article>
                     </section>
-                    <section className="company-statistics-summary" aria-labelledby="company-statistics-summary-title">
+                      : <p className="company-statistics-empty">Aguardando métricas para montar os destaques.</p>}
+                    {companyPeriodMetricsReady && <section className="company-statistics-summary" aria-labelledby="company-statistics-summary-title">
                       <h2 id="company-statistics-summary-title">Resumo automático</h2>
                       <ul>{statisticsSummaries.map((summary) => <li key={summary}>{summary}</li>)}</ul>
-                    </section>
+                    </section>}
                   </div>
                 )}
                 {visibleAccountSection === 'public-profile' && isCompanyAccount && (
