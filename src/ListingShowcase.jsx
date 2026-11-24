@@ -52,6 +52,19 @@ export const getListingDetailUrl = (listing, companyOrigin = null) => {
   return `${import.meta.env.BASE_URL}imovel/${encodeURIComponent(getListingSlug(listing))}/?${search.toString()}`
 }
 
+export function ListingSortSelect({ value, onChange, className = '' }) {
+  return (
+    <label className={`listing-sort-control ${className}`.trim()}>
+      <span>Ordenar por:</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Ordenar imóveis">
+        <option value="recent">Mais recentes</option>
+        <option value="price-asc">Menor preço</option>
+        <option value="price-desc">Maior preço</option>
+      </select>
+    </label>
+  )
+}
+
 export const getListingLocation = (listing) => {
   const city = getCityLabel(listing.city)
   const cityName = city.replace(/-SP$/i, '')
@@ -266,6 +279,9 @@ export function ListingShowcase({
   favoriteActionId = null,
   favoriteMessage = '',
   onToggleFavorite,
+  showSortControl = false,
+  sortValue = 'recent',
+  onSortChange,
 }) {
   const heading = customHeading || (city ? `Imóveis disponíveis em ${city}` : 'Imóveis disponíveis')
 
@@ -277,6 +293,7 @@ export function ListingShowcase({
     >
       {showHeading && <div className="property-showcase-heading">
         <h2 id={headingId}>{heading}</h2>
+        {showSortControl && <ListingSortSelect value={sortValue} onChange={onSortChange} />}
       </div>}
       {favoriteMessage && <p className="favorite-feedback" role="alert">{favoriteMessage}</p>}
       {listings.length === 0

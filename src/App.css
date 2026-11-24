@@ -8274,6 +8274,58 @@ dl.my-area-profile-grid > div {
   background: #06752e;
 }
 
+.company-public-quick-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  margin: 0 0 14px;
+}
+
+.company-public-quick-filters {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 7px;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+.company-public-quick-filters button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid #d5e0ea;
+  border-radius: 999px;
+  background: #fff;
+  color: #35516c;
+  padding: 0 14px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.company-public-quick-filters button:hover {
+  border-color: #078c59;
+  color: #087c45;
+}
+
+.company-public-quick-filters button.active {
+  border-color: #078c59;
+  background: #078c59;
+  color: #fff;
+}
+
+.company-public-quick-filters button:focus-visible {
+  outline: 3px solid rgba(8, 140, 89, 0.22);
+  outline-offset: 2px;
+}
+
 .company-public-search .sr-only {
   position: absolute;
   width: 1px;
@@ -8719,6 +8771,20 @@ dl.my-area-profile-grid > div {
 
   .company-public-search-form button {
     width: 100%;
+  }
+
+  .company-public-quick-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .company-public-quick-filters {
+    width: 100%;
+  }
+
+  .company-public-quick-toolbar > .listing-sort-control {
+    align-self: flex-end;
   }
 
   .company-public-contact-cta {
