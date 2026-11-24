@@ -12,6 +12,14 @@ create table if not exists public.user_profiles (
   public_city text,
   public_description text,
   public_logo_url text,
+  public_display_name text,
+  public_slogan text,
+  public_phone text,
+  public_whatsapp text,
+  public_instagram text,
+  public_facebook text,
+  public_website text,
+  public_business_hours text,
   created_at timestamptz not null default now()
 );
 
@@ -111,7 +119,21 @@ revoke update (
   nome_responsavel
 )
 on public.user_profiles from public, anon, authenticated;
-grant update (nome_completo, telefone, nome_responsavel, public_city, public_description)
+grant update (
+  nome_completo,
+  telefone,
+  nome_responsavel,
+  public_city,
+  public_description,
+  public_display_name,
+  public_slogan,
+  public_phone,
+  public_whatsapp,
+  public_instagram,
+  public_facebook,
+  public_website,
+  public_business_hours
+)
   on public.user_profiles to authenticated;
 
 drop policy if exists "Users can view their own profile" on public.user_profiles;
@@ -334,6 +356,7 @@ $$;
 
 revoke all on function public.create_user_profile() from public, anon, authenticated;
 
+drop function if exists public.get_public_company_profile(text);
 create or replace function public.get_public_company_profile(target_slug text)
 returns table (
   user_id uuid,
@@ -342,7 +365,13 @@ returns table (
   city text,
   description text,
   logo_url text,
-  phone text
+  phone text,
+  whatsapp text,
+  slogan text,
+  instagram text,
+  facebook text,
+  website text,
+  business_hours text
 )
 language sql
 stable
@@ -352,11 +381,17 @@ as $$
   select
     profile.user_id,
     profile.public_slug,
-    profile.nome_imobiliaria,
+    coalesce(nullif(btrim(profile.public_display_name), ''), profile.nome_imobiliaria),
     profile.public_city,
     profile.public_description,
     profile.public_logo_url,
-    profile.telefone
+    coalesce(nullif(profile.public_phone, ''), profile.telefone),
+    coalesce(nullif(profile.public_whatsapp, ''), nullif(profile.public_phone, ''), profile.telefone),
+    profile.public_slogan,
+    profile.public_instagram,
+    profile.public_facebook,
+    profile.public_website,
+    profile.public_business_hours
   from public.user_profiles as profile
   where profile.tipo_usuario = 'imobiliaria'
     and profile.public_slug = target_slug;

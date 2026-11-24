@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronDown, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -307,6 +307,16 @@ const formatPhone = (value) => {
   return digits.replace(/^(\d{2})(\d{5})(\d{0,4})$/, (_, area, first, last) => (
     `(${area}) ${first}${last ? `-${last}` : ''}`
   ))
+}
+const getSafeExternalUrl = (value) => {
+  const link = String(value || '').trim()
+  if (!link) return ''
+  try {
+    const url = new URL(/^https?:\/\//i.test(link) ? link : `https://${link}`)
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : ''
+  } catch {
+    return ''
+  }
 }
 const hasValidCpf = (value) => {
   const cpf = onlyDigits(value)
@@ -652,16 +662,16 @@ const MenuArrowIcon = () => (
   </svg>
 )
 
-const InstagramIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+const InstagramIcon = ({ className }) => (
+  <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" />
     <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
   </svg>
 )
 
-const FacebookIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+const FacebookIcon = ({ className }) => (
+  <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M14 8h3V4.2c-.52-.08-1.7-.2-3.2-.2-3.17 0-5.34 1.93-5.34 5.48V12H5v4h3.46v8h4.24v-8h3.53l.56-4H12.7V9.92c0-1.16.31-1.92 1.3-1.92Z" />
   </svg>
 )
@@ -912,14 +922,14 @@ function App() {
       try {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url')
+          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
           .eq('user_id', authUser.id)
           .maybeSingle()
         if (error) throw error
         if (mounted) setUserProfile(data)
       } catch (error) {
         console.error('Falha ao carregar os dados da conta:', error)
-        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil e, para imobiliárias, supabase/migrations/20261121_company_public_profiles.sql. ${error.message}`)
+        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil e, para imobiliárias, execute supabase/migrations/20261124_company_public_profile_details.sql. ${error.message}`)
       }
     }
     loadUserProfile()
@@ -952,7 +962,7 @@ function App() {
             slug,
             status: 'error',
             data: null,
-            error: `Não foi possível carregar este perfil público. Execute supabase/migrations/20261121_company_public_profiles.sql no Supabase. ${error.message}`,
+            error: `Não foi possível carregar este perfil público. Execute as migrations supabase/migrations/20261121_company_public_profiles.sql e supabase/migrations/20261124_company_public_profile_details.sql no Supabase. ${error.message}`,
           })
         }
       }
@@ -1825,6 +1835,14 @@ function App() {
       updates.nome_responsavel = profileEditForm.responsibleName.trim()
       updates.public_city = profileEditForm.publicCity.trim() || null
       updates.public_description = profileEditForm.publicDescription.trim() || null
+      updates.public_display_name = profileEditForm.publicDisplayName.trim() || null
+      updates.public_slogan = profileEditForm.publicSlogan.trim() || null
+      updates.public_phone = onlyDigits(profileEditForm.publicPhone || '') || null
+      updates.public_whatsapp = onlyDigits(profileEditForm.publicWhatsapp || '') || null
+      updates.public_instagram = profileEditForm.publicInstagram.trim() || null
+      updates.public_facebook = profileEditForm.publicFacebook.trim() || null
+      updates.public_website = profileEditForm.publicWebsite.trim() || null
+      updates.public_business_hours = profileEditForm.publicBusinessHours.trim() || null
     }
 
     setProfileSaving(true)
@@ -1834,7 +1852,7 @@ function App() {
         .from('user_profiles')
         .update(updates)
         .eq('user_id', authUser.id)
-        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url')
+        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
         .maybeSingle()
       if (error) throw error
       if (!data) {
@@ -1846,7 +1864,9 @@ function App() {
     } catch (error) {
       console.error('Falha ao atualizar os dados da conta:', error)
       const message = String(error.message || '').toLowerCase()
-      setProfileMessage(message.includes('cpf') || message.includes('user_profiles_cpf')
+      setProfileMessage(message.includes('public_')
+        ? `Execute supabase/migrations/20261124_company_public_profile_details.sql no Supabase. ${error.message}`
+        : message.includes('cpf') || message.includes('user_profiles_cpf')
         ? 'Este CPF já possui uma conta cadastrada.'
         : message.includes('cnpj') || message.includes('user_profiles_cnpj')
           ? 'Este CNPJ já possui uma conta cadastrada.'
@@ -1865,6 +1885,14 @@ function App() {
       responsibleName: accountProfile.responsibleName,
       publicCity: accountProfile.publicCity,
       publicDescription: accountProfile.publicDescription,
+      publicDisplayName: accountProfile.publicDisplayName || accountProfile.companyName,
+      publicSlogan: accountProfile.publicSlogan,
+      publicPhone: formatPhone(accountProfile.publicPhone),
+      publicWhatsapp: formatPhone(accountProfile.publicWhatsapp),
+      publicInstagram: accountProfile.publicInstagram,
+      publicFacebook: accountProfile.publicFacebook,
+      publicWebsite: accountProfile.publicWebsite,
+      publicBusinessHours: accountProfile.publicBusinessHours,
     })
     setProfileEditing(true)
     setProfileMessage('')
@@ -2263,6 +2291,14 @@ function App() {
     publicCity: accountUserProfile?.public_city || '',
     publicDescription: accountUserProfile?.public_description || '',
     publicLogoUrl: accountUserProfile?.public_logo_url || '',
+    publicDisplayName: accountUserProfile?.public_display_name || '',
+    publicSlogan: accountUserProfile?.public_slogan || '',
+    publicPhone: accountUserProfile?.public_phone || '',
+    publicWhatsapp: accountUserProfile?.public_whatsapp || '',
+    publicInstagram: accountUserProfile?.public_instagram || '',
+    publicFacebook: accountUserProfile?.public_facebook || '',
+    publicWebsite: accountUserProfile?.public_website || '',
+    publicBusinessHours: accountUserProfile?.public_business_hours || '',
     cnpj: accountUserProfile?.cnpj || authUser?.user_metadata?.cnpj || '',
     responsibleName: accountUserProfile?.nome_responsavel || authUser?.user_metadata?.nome_responsavel || '',
     email: authUser?.email || '',
@@ -2456,10 +2492,6 @@ function App() {
   })).entries()]
     .sort((first, second) => first[1].localeCompare(second[1], 'pt-BR'))
   const companyPublicPurposes = new Set(companyPublicListings.map(getListingPurpose))
-  const companyFeaturedListings = (companyPublicListings.some((item) => Number(item.visualizacoes) > 0)
-    ? [...companyPublicListings].sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))
-    : companyPublicListings
-  ).slice(0, 3)
   const filteredCompanyPublicListings = companyPublicListings.filter((item) => {
     const query = normalizeNeighborhoodName(appliedCompanyListingFilters.search)
     const searchableText = normalizeNeighborhoodName([
@@ -2657,22 +2689,19 @@ function App() {
   if (companyPublicRouteSlug) {
     const company = activePublicCompanyProfile.data
     const phoneDigits = String(company?.phone || '').replace(/\D/g, '')
-    const whatsappNumber = phoneDigits
+    const whatsappDigits = String(company?.whatsapp || '').replace(/\D/g, '')
+    const phoneContactNumber = phoneDigits
       ? phoneDigits.startsWith('55') ? phoneDigits : `55${phoneDigits}`
       : ''
+    const whatsappContactNumber = whatsappDigits
+      ? whatsappDigits.startsWith('55') ? whatsappDigits : `55${whatsappDigits}`
+      : ''
+    const instagramUrl = getSafeExternalUrl(company?.instagram)
+    const facebookUrl = getSafeExternalUrl(company?.facebook)
+    const websiteUrl = getSafeExternalUrl(company?.website)
     const companyCity = company?.city
       || companyPublicListings[0]?.city
       || 'Cidade não informada'
-    const companyPurposeSummary = companyPublicPurposes.size === 2
-      ? 'Venda e aluguel'
-      : companyPublicPurposes.has('venda')
-        ? 'Venda'
-        : companyPublicPurposes.has('aluguel')
-          ? 'Aluguel'
-          : 'Consulte nossas opções'
-    const companyRegionsSummary = companyPublicNeighborhoods.length > 2
-      ? `${companyPublicNeighborhoods.slice(0, 2).join(', ')} +${companyPublicNeighborhoods.length - 2}`
-      : companyPublicNeighborhoods.join(', ') || companyCity
 
     return (
       <div className="company-public-page">
@@ -2694,9 +2723,6 @@ function App() {
             <p className="company-public-feedback" role="status">Este perfil público não foi encontrado ou ainda não está disponível.</p>
           ) : company && (
             <>
-              <div className="company-public-cover">
-                <img src={companyPublicListings[0]?.image || heroIllustration} alt="" />
-              </div>
               <section className="company-public-identity" aria-labelledby="company-public-name">
                 {company.logo_url ? (
                   <img className="company-public-logo" src={company.logo_url} alt={`Logo de ${company.company_name}`} />
@@ -2709,44 +2735,15 @@ function App() {
                   <span className="company-public-eyebrow">Imobiliária</span>
                   <h1 id="company-public-name">{company.company_name}</h1>
                   <p className="company-public-city"><MapPin size={17} aria-hidden="true" />Imobiliária em {companyCity}</p>
-                  <p className="company-public-slogan">Seu próximo imóvel está aqui.</p>
+                  {company.slogan && <p className="company-public-slogan">{company.slogan}</p>}
                   <div className="company-public-actions">
-                    {whatsappNumber ? (
-                      <a className="company-public-whatsapp" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">
-                        <WhatsAppIcon size={20} /> Conversar no WhatsApp
-                      </a>
-                    ) : (
-                      <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
-                    )}
                     <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
                       <Share2 size={18} aria-hidden="true" /> Compartilhar perfil
                     </button>
                   </div>
                   {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
                 </div>
-                <div className="company-public-quick-stats" aria-label="Informações da imobiliária">
-                  <article><House size={21} aria-hidden="true" /><div><strong>{companyPublicListings.length} {companyPublicListings.length === 1 ? 'imóvel' : 'imóveis'}</strong><span>disponíveis</span></div></article>
-                  <article><MapPin size={21} aria-hidden="true" /><div><strong>Regiões atendidas</strong><span title={companyPublicNeighborhoods.join(', ')}>{companyRegionsSummary}</span></div></article>
-                  <article><Tag size={21} aria-hidden="true" /><div><strong>{companyPurposeSummary}</strong><span>modalidades</span></div></article>
-                </div>
               </section>
-              <section className="company-public-about" aria-labelledby="company-public-about-title">
-                <div>
-                  <span className="company-public-section-eyebrow">Conheça a equipe</span>
-                  <h2 id="company-public-about-title">Sobre a Imobiliária</h2>
-                </div>
-                <p>{company.description || 'Adicione uma descrição da imobiliária.'}</p>
-              </section>
-              <ListingShowcase
-                listings={companyFeaturedListings}
-                heading="Imóveis em destaque"
-                headingId="company-public-featured-title"
-                emptyMessage="Os imóveis em destaque serão exibidos aqui."
-                favoriteListingIds={favoriteListingIds}
-                favoriteActionId={favoriteActionId}
-                favoriteMessage={favoriteMessage}
-                onToggleFavorite={handleToggleFavorite}
-              />
               <section className="company-public-search" aria-labelledby="company-public-search-title">
                 <div className="company-public-section-heading">
                   <span className="company-public-section-eyebrow">Encontre o que procura</span>
@@ -2801,14 +2798,56 @@ function App() {
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
+              <details className="company-public-about">
+                <summary>
+                  <Building2 size={20} aria-hidden="true" />
+                  <span>Sobre {company.company_name}</span>
+                  <ChevronDown size={20} aria-hidden="true" />
+                </summary>
+                <div className="company-public-about-content">
+                  {company.description && <p>{company.description}</p>}
+                  <div className="company-public-contact-details">
+                    {phoneContactNumber && (
+                      <a href={`tel:+${phoneContactNumber}`}>
+                        <Phone size={18} aria-hidden="true" /><span><strong>Telefone</strong>{formatPhone(company.phone)}</span>
+                      </a>
+                    )}
+                    {whatsappContactNumber && (
+                      <a href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
+                        <WhatsAppIcon size={18} /><span><strong>WhatsApp</strong>{formatPhone(company.whatsapp)}</span>
+                      </a>
+                    )}
+                    {instagramUrl && (
+                      <a href={instagramUrl} target="_blank" rel="noreferrer">
+                        <InstagramIcon className="public-social-icon" /><span><strong>Instagram</strong>{company.instagram}</span>
+                      </a>
+                    )}
+                    {facebookUrl && (
+                      <a href={facebookUrl} target="_blank" rel="noreferrer">
+                        <FacebookIcon className="public-social-icon" /><span><strong>Facebook</strong>{company.facebook}</span>
+                      </a>
+                    )}
+                    {websiteUrl && (
+                      <a href={websiteUrl} target="_blank" rel="noreferrer">
+                        <Globe2 size={18} aria-hidden="true" /><span><strong>Site</strong>{company.website}</span>
+                      </a>
+                    )}
+                    {company.business_hours && (
+                      <div>
+                        <Clock3 size={18} aria-hidden="true" /><span><strong>Horário de atendimento</strong>{company.business_hours}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </details>
               <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
                 <div className="company-public-contact-icon"><House size={24} aria-hidden="true" /></div>
                 <div>
                   <h2>Não encontrou o imóvel ideal?</h2>
                   <p>Converse com a equipe da {company.company_name} para encontrar o imóvel que procura.</p>
                 </div>
-                {whatsappNumber ? (
-                  <a className="company-public-whatsapp" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">
+                {whatsappContactNumber ? (
+                  <a className="company-public-whatsapp" href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
                     <WhatsAppIcon size={20} /> Conversar com a Imobiliária
                   </a>
                 ) : (
@@ -3313,11 +3352,11 @@ function App() {
                       <div><h2 id="company-profile-settings-title">Seu perfil público</h2><p>Veja como sua imobiliária aparece para os visitantes.</p></div>
                     </div>
                     <div className="company-profile-preview">
-                      <span className="company-profile-logo-placeholder" aria-hidden="true">{accountProfile.companyName.slice(0, 2).toLocaleUpperCase('pt-BR') || 'MF'}</span>
+                      <span className="company-profile-logo-placeholder" aria-hidden="true">{(accountProfile.publicDisplayName || accountProfile.companyName).slice(0, 2).toLocaleUpperCase('pt-BR') || 'MF'}</span>
                       <div>
-                        <strong>{accountProfile.companyName || 'Nome da imobiliária'}</strong>
+                        <strong>{accountProfile.publicDisplayName || accountProfile.companyName || 'Nome da imobiliária'}</strong>
                         <span>{accountProfile.publicCity || 'Cidade não informada'}</span>
-                        <p>{accountProfile.publicDescription || 'Adicione uma descrição para apresentar sua imobiliária aos visitantes.'}</p>
+                        <p>{accountProfile.publicSlogan || accountProfile.publicDescription || 'Configure as informações exibidas no Perfil Público dentro de Minha Conta.'}</p>
                       </div>
                     </div>
                     {accountProfile.publicSlug ? (
@@ -3325,7 +3364,7 @@ function App() {
                         Abrir perfil público <ExternalLink size={17} aria-hidden="true" />
                       </button>
                     ) : (
-                      <p className="my-area-feedback error" role="alert">O link público ainda não está disponível. Execute a migration supabase/migrations/20261121_company_public_profiles.sql no Supabase.</p>
+                      <p className="my-area-feedback error" role="alert">O link público ainda não está disponível. Execute as migrations supabase/migrations/20261121_company_public_profiles.sql e supabase/migrations/20261124_company_public_profile_details.sql no Supabase.</p>
                     )}
                   </section>
                 )}
@@ -3397,8 +3436,22 @@ function App() {
                             <label className="form-group my-area-readonly-field">Nome da Imobiliária 🔒<input value={accountProfile.companyName} readOnly aria-readonly="true" /></label>
                             <label className="form-group my-area-readonly-field">CNPJ 🔒<input value={formatCnpj(accountProfile.cnpj)} readOnly aria-readonly="true" /></label>
                             <label className="form-group">Responsável<input value={profileEditForm.responsibleName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, responsibleName: event.target.value }))} required /></label>
-                            <label className="form-group">Cidade do perfil público<input value={profileEditForm.publicCity || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicCity: event.target.value }))} placeholder="Ex.: Ipuã-SP" maxLength="100" /></label>
-                            <label className="form-group company-profile-description-field">Descrição pública<textarea value={profileEditForm.publicDescription || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDescription: event.target.value }))} placeholder="Apresente sua imobiliária aos visitantes." maxLength="500" rows="4" /></label>
+                            <fieldset className="company-public-edit-section">
+                              <legend>Perfil Público</legend>
+                              <p>Essas informações são exibidas aos visitantes da vitrine da imobiliária.</p>
+                              <div className="company-public-edit-grid">
+                                <label className="form-group">Nome público<input value={profileEditForm.publicDisplayName || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDisplayName: event.target.value }))} placeholder={accountProfile.companyName || 'Nome da imobiliária'} maxLength="120" /></label>
+                                <label className="form-group">Slogan<input value={profileEditForm.publicSlogan || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicSlogan: event.target.value }))} placeholder="Uma frase curta sobre sua imobiliária" maxLength="160" /></label>
+                                <label className="form-group">Cidade<input value={profileEditForm.publicCity || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicCity: event.target.value }))} placeholder="Ex.: Ipuã-SP" maxLength="100" /></label>
+                                <label className="form-group">Telefone Comercial<input type="tel" inputMode="tel" value={profileEditForm.publicPhone || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicPhone: formatPhone(event.target.value) }))} placeholder="(00) 00000-0000" maxLength="15" /></label>
+                                <label className="form-group">WhatsApp Comercial<input type="tel" inputMode="tel" value={profileEditForm.publicWhatsapp || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicWhatsapp: formatPhone(event.target.value) }))} placeholder="(00) 00000-0000" maxLength="15" /></label>
+                                <label className="form-group">Instagram<input type="url" value={profileEditForm.publicInstagram || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicInstagram: event.target.value }))} placeholder="https://instagram.com/suaimobiliaria" maxLength="300" /></label>
+                                <label className="form-group">Facebook<input type="url" value={profileEditForm.publicFacebook || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicFacebook: event.target.value }))} placeholder="https://facebook.com/suaimobiliaria" maxLength="300" /></label>
+                                <label className="form-group">Site<input type="url" value={profileEditForm.publicWebsite || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicWebsite: event.target.value }))} placeholder="https://www.suaimobiliaria.com.br" maxLength="300" /></label>
+                                <label className="form-group company-public-edit-wide">Quem Somos<textarea value={profileEditForm.publicDescription || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicDescription: event.target.value }))} placeholder="Conte brevemente sobre sua imobiliária." maxLength="1000" rows="4" /></label>
+                                <label className="form-group company-public-edit-wide">Horário de Atendimento<textarea value={profileEditForm.publicBusinessHours || ''} onChange={(event) => setProfileEditForm((current) => ({ ...current, publicBusinessHours: event.target.value }))} placeholder="Ex.: Segunda a sexta, das 8h às 18h." maxLength="300" rows="2" /></label>
+                              </div>
+                            </fieldset>
                           </>
                         ) : (
                           <>
@@ -3421,8 +3474,6 @@ function App() {
                             <div><dt>Nome da Imobiliária</dt><dd>{accountProfile.companyName || 'Não informado'}</dd></div>
                             <div><dt>CNPJ 🔒</dt><dd>{formatCnpj(accountProfile.cnpj) || 'Não informado'}</dd></div>
                             <div><dt>Responsável</dt><dd>{accountProfile.responsibleName || 'Não informado'}</dd></div>
-                            <div><dt>Cidade do perfil público</dt><dd>{accountProfile.publicCity || 'Não informada'}</dd></div>
-                            <div><dt>Descrição pública</dt><dd>{accountProfile.publicDescription || 'Não informada'}</dd></div>
                           </>
                         ) : (
                           <>
@@ -3435,6 +3486,23 @@ function App() {
                         <div><dt>Tipo de Conta</dt><dd>{getAccountTypeLabel(accountUserType)}</dd></div>
                         <div><dt>E-mail 🔒</dt><dd>{accountProfile.email}</dd></div>
                       </dl>
+                    )}
+                    {!profileEditing && accountUserType === 'imobiliaria' && (
+                      <section className="company-profile-account-summary" aria-labelledby="company-public-account-summary-title">
+                        <h3 id="company-public-account-summary-title">Perfil Público</h3>
+                        <dl className="my-area-profile-grid">
+                          <div><dt>Nome público</dt><dd>{accountProfile.publicDisplayName || accountProfile.companyName || 'Não informado'}</dd></div>
+                          <div><dt>Slogan</dt><dd>{accountProfile.publicSlogan || 'Não informado'}</dd></div>
+                          <div><dt>Quem Somos</dt><dd>{accountProfile.publicDescription || 'Não informado'}</dd></div>
+                          <div><dt>Cidade</dt><dd>{accountProfile.publicCity || 'Não informada'}</dd></div>
+                          <div><dt>Telefone Comercial</dt><dd>{formatPhone(accountProfile.publicPhone) || 'Não informado'}</dd></div>
+                          <div><dt>WhatsApp Comercial</dt><dd>{formatPhone(accountProfile.publicWhatsapp) || 'Não informado'}</dd></div>
+                          <div><dt>Instagram</dt><dd>{accountProfile.publicInstagram || 'Não informado'}</dd></div>
+                          <div><dt>Facebook</dt><dd>{accountProfile.publicFacebook || 'Não informado'}</dd></div>
+                          <div><dt>Site</dt><dd>{accountProfile.publicWebsite || 'Não informado'}</dd></div>
+                          <div><dt>Horário de Atendimento</dt><dd>{accountProfile.publicBusinessHours || 'Não informado'}</dd></div>
+                        </dl>
+                      </section>
                     )}
                   </section>
                   <section className="my-area-panel account-security-panel" aria-labelledby="account-security-title">
