@@ -7405,6 +7405,24 @@ dl.my-area-profile-grid > div {
   font-family: 'Inter', sans-serif;
 }
 
+.company-public-signature {
+  padding: 0 16px 24px;
+  color: #8a98a6;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.company-public-signature a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #c3ccd4;
+  text-underline-offset: 2px;
+}
+
+.company-public-signature a:hover {
+  color: #536b84;
+}
+
 .company-public-header {
   display: flex;
   min-height: 76px;

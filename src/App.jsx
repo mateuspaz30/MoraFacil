@@ -3258,7 +3258,9 @@ function App() {
             </>
           )}
         </main>
-        <SiteFooter />
+        <footer className="company-public-signature">
+          Anúncios verificados na plataforma <a href={getAppBasePath()}>Mora Fácil</a> • © 2026
+        </footer>
       </div>
     )
   }
