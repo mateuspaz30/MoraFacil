@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -739,6 +739,8 @@ function App() {
   const [passwordMessage, setPasswordMessage] = useState({ text: '', error: false })
   const [publicCompanyProfile, setPublicCompanyProfile] = useState({ slug: '', status: 'idle', data: null, error: '' })
   const [publicProfileShareMessage, setPublicProfileShareMessage] = useState('')
+  const [companyListingFilters, setCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
+  const [appliedCompanyListingFilters, setAppliedCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [accountSection, setAccountSection] = useState(() => getAccountSectionFromPath(window.location.pathname) || 'overview')
@@ -2444,6 +2446,34 @@ function App() {
       .filter((item) => item.user_id === activePublicCompanyProfile.data.user_id)
       .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
     : []
+  const companyPublicNeighborhoods = [...new Set(companyPublicListings
+    .map((item) => String(item.neighborhood || '').trim())
+    .filter(Boolean))]
+    .sort((first, second) => first.localeCompare(second, 'pt-BR'))
+  const companyPublicCategories = [...new Map(companyPublicListings.map((item) => {
+    const category = getListingPropertyType(item)
+    return [category.key, category.label]
+  })).entries()]
+    .sort((first, second) => first[1].localeCompare(second[1], 'pt-BR'))
+  const companyPublicPurposes = new Set(companyPublicListings.map(getListingPurpose))
+  const companyFeaturedListings = (companyPublicListings.some((item) => Number(item.visualizacoes) > 0)
+    ? [...companyPublicListings].sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))
+    : companyPublicListings
+  ).slice(0, 3)
+  const filteredCompanyPublicListings = companyPublicListings.filter((item) => {
+    const query = normalizeNeighborhoodName(appliedCompanyListingFilters.search)
+    const searchableText = normalizeNeighborhoodName([
+      item.title,
+      item.neighborhood,
+      item.city,
+      item.address,
+      item.description,
+    ].filter(Boolean).join(' '))
+    return (!query || searchableText.includes(query))
+      && (appliedCompanyListingFilters.purpose === 'all' || getListingPurpose(item) === appliedCompanyListingFilters.purpose)
+      && (appliedCompanyListingFilters.category === 'all' || getListingPropertyType(item).key === appliedCompanyListingFilters.category)
+      && (appliedCompanyListingFilters.neighborhood === 'all' || item.neighborhood === appliedCompanyListingFilters.neighborhood)
+  })
   const selectCompanyPeriod = (preset) => {
     setCompanyPeriodPreset(preset)
     setCompanyPeriodValidationError('')
@@ -2633,6 +2663,16 @@ function App() {
     const companyCity = company?.city
       || companyPublicListings[0]?.city
       || 'Cidade não informada'
+    const companyPurposeSummary = companyPublicPurposes.size === 2
+      ? 'Venda e aluguel'
+      : companyPublicPurposes.has('venda')
+        ? 'Venda'
+        : companyPublicPurposes.has('aluguel')
+          ? 'Aluguel'
+          : 'Consulte nossas opções'
+    const companyRegionsSummary = companyPublicNeighborhoods.length > 2
+      ? `${companyPublicNeighborhoods.slice(0, 2).join(', ')} +${companyPublicNeighborhoods.length - 2}`
+      : companyPublicNeighborhoods.join(', ') || companyCity
 
     return (
       <div className="company-public-page">
@@ -2654,6 +2694,9 @@ function App() {
             <p className="company-public-feedback" role="status">Este perfil público não foi encontrado ou ainda não está disponível.</p>
           ) : company && (
             <>
+              <div className="company-public-cover">
+                <img src={companyPublicListings[0]?.image || heroIllustration} alt="" />
+              </div>
               <section className="company-public-identity" aria-labelledby="company-public-name">
                 {company.logo_url ? (
                   <img className="company-public-logo" src={company.logo_url} alt={`Logo de ${company.company_name}`} />
@@ -2663,34 +2706,115 @@ function App() {
                   </span>
                 )}
                 <div className="company-public-copy">
-                  <span className="company-public-eyebrow">Perfil da imobiliária</span>
+                  <span className="company-public-eyebrow">Imobiliária</span>
                   <h1 id="company-public-name">{company.company_name}</h1>
-                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{companyCity}</p>
-                  <p className="company-public-description">{company.description || 'Esta imobiliária ainda não adicionou uma descrição.'}</p>
+                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />Imobiliária em {companyCity}</p>
+                  <p className="company-public-slogan">Seu próximo imóvel está aqui.</p>
                   <div className="company-public-actions">
                     {whatsappNumber ? (
                       <a className="company-public-whatsapp" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">
-                        <WhatsAppIcon size={20} /> WhatsApp
+                        <WhatsAppIcon size={20} /> Conversar no WhatsApp
                       </a>
                     ) : (
                       <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
                     )}
                     <button type="button" className="company-public-share" onClick={shareCompanyPublicProfile}>
-                      <Share2 size={18} aria-hidden="true" /> Compartilhar
+                      <Share2 size={18} aria-hidden="true" /> Compartilhar perfil
                     </button>
                   </div>
                   {publicProfileShareMessage && <span className="company-public-share-feedback" role="status">{publicProfileShareMessage}</span>}
                 </div>
+                <div className="company-public-quick-stats" aria-label="Informações da imobiliária">
+                  <article><House size={21} aria-hidden="true" /><div><strong>{companyPublicListings.length} {companyPublicListings.length === 1 ? 'imóvel' : 'imóveis'}</strong><span>disponíveis</span></div></article>
+                  <article><MapPin size={21} aria-hidden="true" /><div><strong>Regiões atendidas</strong><span title={companyPublicNeighborhoods.join(', ')}>{companyRegionsSummary}</span></div></article>
+                  <article><Tag size={21} aria-hidden="true" /><div><strong>{companyPurposeSummary}</strong><span>modalidades</span></div></article>
+                </div>
+              </section>
+              <section className="company-public-about" aria-labelledby="company-public-about-title">
+                <div>
+                  <span className="company-public-section-eyebrow">Conheça a equipe</span>
+                  <h2 id="company-public-about-title">Sobre a Imobiliária</h2>
+                </div>
+                <p>{company.description || 'Adicione uma descrição da imobiliária.'}</p>
               </section>
               <ListingShowcase
-                listings={companyPublicListings}
-                heading={`Imóveis de ${company.company_name}`}
+                listings={companyFeaturedListings}
+                heading="Imóveis em destaque"
+                headingId="company-public-featured-title"
+                emptyMessage="Os imóveis em destaque serão exibidos aqui."
+                favoriteListingIds={favoriteListingIds}
+                favoriteActionId={favoriteActionId}
+                favoriteMessage={favoriteMessage}
+                onToggleFavorite={handleToggleFavorite}
+              />
+              <section className="company-public-search" aria-labelledby="company-public-search-title">
+                <div className="company-public-section-heading">
+                  <span className="company-public-section-eyebrow">Encontre o que procura</span>
+                  <h2 id="company-public-search-title">Encontre seu imóvel</h2>
+                </div>
+                <form className="company-public-search-form" onSubmit={(event) => {
+                  event.preventDefault()
+                  setAppliedCompanyListingFilters(companyListingFilters)
+                }}>
+                  <label className="company-public-search-query">
+                    <span className="sr-only">Buscar por título, bairro ou endereço</span>
+                    <Search size={19} aria-hidden="true" />
+                    <input
+                      type="search"
+                      value={companyListingFilters.search}
+                      placeholder="Buscar por título ou bairro"
+                      onChange={(event) => setCompanyListingFilters((filters) => ({ ...filters, search: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    <span className="sr-only">Finalidade</span>
+                    <select value={companyListingFilters.purpose} onChange={(event) => setCompanyListingFilters((filters) => ({ ...filters, purpose: event.target.value }))}>
+                      <option value="all">Venda e aluguel</option>
+                      {companyPublicPurposes.has('venda') && <option value="venda">Venda</option>}
+                      {companyPublicPurposes.has('aluguel') && <option value="aluguel">Aluguel</option>}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Tipo de imóvel</span>
+                    <select value={companyListingFilters.category} onChange={(event) => setCompanyListingFilters((filters) => ({ ...filters, category: event.target.value }))}>
+                      <option value="all">Tipo de imóvel</option>
+                      {companyPublicCategories.map(([key, label]) => <option value={key} key={key}>{label}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Bairro</span>
+                    <select value={companyListingFilters.neighborhood} onChange={(event) => setCompanyListingFilters((filters) => ({ ...filters, neighborhood: event.target.value }))}>
+                      <option value="all">Todos os bairros</option>
+                      {companyPublicNeighborhoods.map((neighborhood) => <option value={neighborhood} key={neighborhood}>{neighborhood}</option>)}
+                    </select>
+                  </label>
+                  <button type="submit"><Search size={18} aria-hidden="true" /> Buscar</button>
+                </form>
+              </section>
+              <ListingShowcase
+                listings={filteredCompanyPublicListings}
+                heading="Todos os imóveis disponíveis"
+                headingId="company-public-listings-title"
                 emptyMessage="Esta imobiliária ainda não possui imóveis publicados."
                 favoriteListingIds={favoriteListingIds}
                 favoriteActionId={favoriteActionId}
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
+              <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
+                <div className="company-public-contact-icon"><House size={24} aria-hidden="true" /></div>
+                <div>
+                  <h2>Não encontrou o imóvel ideal?</h2>
+                  <p>Converse com a equipe da {company.company_name} para encontrar o imóvel que procura.</p>
+                </div>
+                {whatsappNumber ? (
+                  <a className="company-public-whatsapp" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">
+                    <WhatsAppIcon size={20} /> Conversar com a Imobiliária
+                  </a>
+                ) : (
+                  <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
+                )}
+              </section>
             </>
           )}
         </main>

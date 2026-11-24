@@ -249,6 +249,7 @@ export function ListingShowcase({
   listings,
   city,
   heading: customHeading,
+  headingId = 'property-showcase-title',
   showHeading = true,
   emptyMessage,
   favoriteListingIds = [],
@@ -261,11 +262,11 @@ export function ListingShowcase({
   return (
     <section
       className="property-showcase"
-      aria-labelledby={showHeading ? 'property-showcase-title' : undefined}
+      aria-labelledby={showHeading ? headingId : undefined}
       aria-label={showHeading ? undefined : heading}
     >
       {showHeading && <div className="property-showcase-heading">
-        <h2 id="property-showcase-title">{heading}</h2>
+        <h2 id={headingId}>{heading}</h2>
       </div>}
       {favoriteMessage && <p className="favorite-feedback" role="alert">{favoriteMessage}</p>}
       {listings.length === 0
