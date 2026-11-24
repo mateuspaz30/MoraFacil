@@ -2836,7 +2836,7 @@ function App() {
                         </article>
                         <article className="my-area-stat-card">
                           <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
-                          <div><small>Cliques no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
+                          <div><small>Cliques WhatsApp no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
