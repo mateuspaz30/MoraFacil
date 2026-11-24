@@ -2306,7 +2306,6 @@ function App() {
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
   const totalWhatsAppClicks = userListings.reduce((total, item) => total + (Number(item.whatsapp_clicks) || 0), 0)
-  const hasDemoMetricEvents = userListings.some((item) => item.advertiser === 'Jardim Verde (DEMONSTRACAO)')
   const companyPeriodRangeKey = `${appliedCompanyPeriod.start}:${appliedCompanyPeriod.end}`
   const companyPeriodMetricsReady = companyPeriodMetrics.userId === authUser?.id
     && companyPeriodMetrics.range === companyPeriodRangeKey
@@ -2817,15 +2816,6 @@ function App() {
                         <button type="button" onClick={applyCustomCompanyPeriod}>Aplicar</button>
                       </div>
                     )}
-                    <p className="company-period-note">
-                      {companyPeriodMetrics.status === 'loading' && companyPeriodMetrics.range === companyPeriodRangeKey
-                        ? 'Carregando métricas do período…'
-                        : 'O histórico começa após a migração; favoritos contam novas marcações. Os totais acumulados anteriores continuam preservados.'}
-                    </p>
-                    <p className="company-period-note">
-                      Totais acumulados: {new Intl.NumberFormat('pt-BR').format(totalListingViews)} visualizações · {new Intl.NumberFormat('pt-BR').format(totalWhatsAppClicks)} cliques WhatsApp · {receivedFavoriteCount === null ? '—' : new Intl.NumberFormat('pt-BR').format(receivedFavoriteCount)} favoritos recebidos.
-                    </p>
-                    {hasDemoMetricEvents && <p className="company-period-note">Esta conta contém eventos históricos fictícios identificados como demonstração.</p>}
                     {receivedFavoriteCountError && <p className="company-period-feedback error" role="alert">{receivedFavoriteCountError}</p>}
                     {companyPeriodValidationError && <p className="company-period-feedback error" role="alert">{companyPeriodValidationError}</p>}
                     {companyPeriodMetricsError && <p className="company-period-feedback error" role="alert">{companyPeriodMetricsError}</p>}
