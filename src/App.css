@@ -7455,46 +7455,100 @@ dl.my-area-profile-grid > div {
   padding: 34px 0 56px;
 }
 
-.company-public-main.edit-mode {
-  padding-bottom: 110px;
-}
-
-.company-public-edit-notice {
+.company-public-edit-toolbar {
+  position: sticky;
+  z-index: 20;
+  top: 8px;
   display: flex;
+  min-height: 52px;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   margin: 0 0 16px;
   border: 1px solid #d5e8d8;
   border-radius: 10px;
-  background: #f3faf4;
-  padding: 12px 16px;
+  background: rgba(245, 251, 246, 0.97);
+  padding: 8px 14px;
+  box-shadow: 0 5px 16px rgba(14, 47, 76, 0.08);
+  backdrop-filter: blur(12px);
 }
 
-.company-public-edit-notice > div {
-  display: grid;
-  gap: 3px;
+.company-public-edit-toolbar-title,
+.company-public-edit-about-button,
+.company-public-edit-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.company-public-edit-notice strong {
-  color: #145a32;
-  font-size: 0.88rem;
+.company-public-edit-toolbar-title {
+  color: #173a5d;
+  white-space: nowrap;
 }
 
-.company-public-edit-notice span {
-  color: #536b84;
+.company-public-edit-toolbar-title svg {
+  color: #078c35;
+}
+
+.company-public-edit-toolbar-title strong {
+  font-size: 0.87rem;
+}
+
+.company-public-edit-status {
+  flex: 1 1 auto;
+  border-left: 1px solid #d5e0e8;
+  padding-left: 16px;
+  color: #667b8f;
   font-size: 0.78rem;
+  white-space: nowrap;
 }
 
-.company-public-edit-notice button {
-  border: 0;
-  background: transparent;
-  color: #536b84;
+.company-public-edit-status.pending {
+  color: #9a5b00;
+  font-weight: 700;
+}
+
+.company-public-edit-about-button,
+.company-public-edit-toolbar-actions button {
+  min-height: 36px;
+  justify-content: center;
+  border: 1px solid #cbd9e7;
+  border-radius: 8px;
+  background: #fff;
+  color: #183553;
+  padding: 0 12px;
   cursor: pointer;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 750;
   white-space: nowrap;
+}
+
+.company-public-edit-about-button {
+  border: 0;
+  background: transparent;
+  color: #145a32;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.company-public-edit-toolbar-actions button:last-child {
+  border-color: #078c35;
+  background: #078c35;
+  color: #fff;
+}
+
+.company-public-edit-toolbar-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.company-public-toolbar-feedback {
+  flex: 1 1 100%;
+  width: 100%;
+  margin: 0;
+  padding: 6px 9px;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
 }
 
 .company-public-cover {
@@ -7531,6 +7585,11 @@ dl.my-area-profile-grid > div {
   background: #fff;
   padding: 16px 18px;
   box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
+}
+
+.company-public-identity.with-cover {
+  margin-top: -82px;
+  padding: 22px 24px;
 }
 
 .company-public-logo-wrap {
@@ -7579,9 +7638,11 @@ dl.my-area-profile-grid > div {
 
 .company-public-image-trigger.logo-trigger {
   position: absolute;
-  right: -9px;
-  bottom: -8px;
-  padding: 6px 8px;
+  right: -7px;
+  bottom: -7px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
 }
 
 .company-public-image-trigger.cover-trigger {
@@ -7729,25 +7790,6 @@ dl.my-area-profile-grid > div {
   background: #edf8ef;
 }
 
-.company-public-edit-contact-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.company-public-edit-contact-grid > .company-public-inline-editor {
-  min-width: 0;
-  align-content: start;
-  border: 1px solid #e5ecf2;
-  border-radius: 9px;
-  background: #f8fbfd;
-  padding: 11px 12px;
-}
-
-.company-public-edit-contact-grid input {
-  width: 100%;
-}
-
 .company-public-save-error,
 .company-public-save-message {
   width: min(1180px, calc(100% - 44px));
@@ -7765,54 +7807,6 @@ dl.my-area-profile-grid > div {
 .company-public-save-message {
   background: #eff9f0;
   color: #176637;
-}
-
-.company-public-save-bar {
-  position: fixed;
-  z-index: 50;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  min-height: 70px;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  border-top: 1px solid #dbe5ed;
-  background: rgba(255, 255, 255, 0.97);
-  padding: 12px max(22px, calc((100% - 1180px) / 2));
-  box-shadow: 0 -7px 24px rgba(14, 47, 76, 0.1);
-}
-
-.company-public-save-bar > span {
-  margin-right: auto;
-  color: #536b84;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.company-public-save-bar button {
-  min-height: 42px;
-  border: 1px solid #cbd9e7;
-  border-radius: 8px;
-  background: #fff;
-  color: #536b84;
-  padding: 0 14px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.83rem;
-  font-weight: 800;
-}
-
-.company-public-save-bar button:last-child {
-  border-color: #078c35;
-  background: #078c35;
-  color: #fff;
-}
-
-.company-public-save-bar button:disabled {
-  cursor: wait;
-  opacity: 0.65;
 }
 
 .company-public-actions {
@@ -7954,7 +7948,8 @@ dl.my-area-profile-grid > div {
 }
 
 .company-public-contact-details > a > span,
-.company-public-contact-details > div > span {
+.company-public-contact-details > div > span,
+.company-public-contact-value {
   display: grid;
   min-width: 0;
   gap: 3px;
@@ -7967,6 +7962,15 @@ dl.my-area-profile-grid > div {
 .company-public-contact-details strong {
   color: #183553;
   font-size: 0.76rem;
+}
+
+.company-public-contact-value > .company-public-inline-editor {
+  margin-top: 2px;
+  font-size: 0.82rem;
+}
+
+.company-public-contact-value .company-public-edit-trigger {
+  padding: 2px;
 }
 
 .company-public-contact-details .public-social-icon {
@@ -8251,15 +8255,37 @@ dl.my-area-profile-grid > div {
     padding: 20px 0 40px;
   }
 
-  .company-public-main.edit-mode {
-    padding-bottom: 122px;
+  .company-public-edit-toolbar {
+    position: relative;
+    top: auto;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 10px;
   }
 
-  .company-public-edit-notice {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-    padding: 11px 12px;
+  .company-public-edit-toolbar-title {
+    flex: 1 1 100%;
+  }
+
+  .company-public-edit-status {
+    flex: 1 1 auto;
+    border-left: 0;
+    padding-left: 0;
+    white-space: normal;
+  }
+
+  .company-public-edit-about-button {
+    padding: 0 4px;
+  }
+
+  .company-public-edit-toolbar-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+
+  .company-public-edit-toolbar-actions button {
+    flex: 1 1 0;
   }
 
   .company-public-cover {
@@ -8271,6 +8297,11 @@ dl.my-area-profile-grid > div {
     grid-template-columns: 70px minmax(0, 1fr);
     gap: 12px;
     margin: 0 0 16px;
+    padding: 14px 12px;
+  }
+
+  .company-public-identity.with-cover {
+    margin-top: -46px;
     padding: 14px 12px;
   }
 
@@ -8326,29 +8357,9 @@ dl.my-area-profile-grid > div {
     grid-template-columns: 1fr;
   }
 
-  .company-public-edit-contact-grid {
-    grid-template-columns: 1fr;
-  }
-
   .company-public-save-error,
   .company-public-save-message {
     width: calc(100% - 28px);
-  }
-
-  .company-public-save-bar {
-    min-height: 76px;
-    gap: 7px;
-    padding: 9px 14px;
-  }
-
-  .company-public-save-bar > span {
-    display: none;
-  }
-
-  .company-public-save-bar button {
-    min-height: 40px;
-    padding: 0 10px;
-    font-size: 0.75rem;
   }
 
   .company-public-edit-grid {

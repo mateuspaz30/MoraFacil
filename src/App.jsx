@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Car, ChartNoAxesColumn, Check, ChevronDown, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronDown, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -2859,10 +2859,22 @@ function App() {
       logo_url: company?.logo_url || '',
       cover_url: company?.cover_url || '',
     }
+    const visibleCompanyName = companyPublicDraft.display_name?.trim() || company?.company_name || 'Imobiliária'
     const hasCompanyPublicChanges = isCompanyPublicEditing && (
       Boolean(companyPublicLogoFile || companyPublicCoverFile)
       || Object.entries(companyPublicOriginalDraft).some(([field, value]) => (companyPublicDraft[field] ?? '') !== value)
     )
+    const cancelCompanyPublicEditing = () => {
+      setCompanyPublicDraft(companyPublicOriginalDraft)
+      setCompanyPublicLogoFile(null)
+      setCompanyPublicCoverFile(null)
+      clearCompanyPublicImagePreviews()
+      setCompanyPublicActiveField('')
+      setCompanyPublicSaveError('')
+      setCompanyPublicSaveMessage('')
+      setCompanyPublicEditMode(false)
+      navigateToPath(getCompanyPublicProfilePath(companyPublicRouteSlug))
+    }
     const renderCompanyPublicField = (field, label, options = {}) => {
       const { multiline = false, type = 'text', placeholder = `Adicionar ${label.toLocaleLowerCase('pt-BR')}`, maxLength = 300, className = '', id } = options
       return (
@@ -2897,8 +2909,14 @@ function App() {
           ) : (
             <span>{field === 'phone' || field === 'whatsapp' ? formatPhone(companyPublicDraft[field] || '') : companyPublicDraft[field] || placeholder}</span>
           )}
-          <button type="button" className="company-public-edit-trigger" onClick={() => setCompanyPublicActiveField((active) => active === field ? '' : field)}>
-            <Pencil size={14} aria-hidden="true" /> {companyPublicActiveField === field ? 'Concluir' : `Editar ${label}`}
+          <button
+            type="button"
+            className="company-public-edit-trigger"
+            aria-label={companyPublicActiveField === field ? `Concluir edição: ${label}` : `Editar ${label}`}
+            title={companyPublicActiveField === field ? 'Concluir edição' : `Editar ${label}`}
+            onClick={() => setCompanyPublicActiveField((active) => active === field ? '' : field)}
+          >
+            <Pencil size={14} aria-hidden="true" />
           </button>
         </div>
       )
@@ -2931,14 +2949,28 @@ function App() {
         </header>
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
           {isCompanyPublicEditing && (
-            <div className="company-public-edit-notice">
-              <div><strong>Modo de edição do Perfil Público</strong><span>Você está visualizando sua página como os visitantes a enxergam.</span></div>
-              <button type="button" onClick={() => {
-                setCompanyPublicEditMode(false)
-                setCompanyPublicSaveError('')
-                setCompanyPublicSaveMessage('')
-                navigateToPath(getCompanyPublicProfilePath(companyPublicRouteSlug))
-              }}>Sair da edição</button>
+            <div className="company-public-edit-toolbar">
+              <div className="company-public-edit-toolbar-title">
+                <Pencil size={18} aria-hidden="true" />
+                <strong>Editando perfil público</strong>
+              </div>
+              <span className={`company-public-edit-status${hasCompanyPublicChanges ? ' pending' : ''}`}>
+                {hasCompanyPublicChanges ? 'Alterações ainda não publicadas' : 'Todas as alterações salvas'}
+              </span>
+              <button type="button" className="company-public-edit-about-button" onClick={() => {
+                setCompanyPublicAboutOpen(true)
+                window.setTimeout(() => document.getElementById('company-public-about')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
+              }}>
+                <Pencil size={15} aria-hidden="true" /> Editar Quem Somos
+              </button>
+              <div className="company-public-edit-toolbar-actions">
+                <button type="button" disabled={companyPublicSaving} onClick={cancelCompanyPublicEditing}>Cancelar</button>
+                <button type="button" disabled={companyPublicSaving || !hasCompanyPublicChanges} onClick={saveCompanyPublicProfile}>
+                  {companyPublicSaving ? 'Salvando…' : 'Salvar alterações'}
+                </button>
+              </div>
+              {(companyPublicImageError || companyPublicSaveError) && <p className="company-public-save-error company-public-toolbar-feedback" role="alert">{companyPublicImageError || companyPublicSaveError}</p>}
+              {companyPublicSaveMessage && <p className="company-public-save-message company-public-toolbar-feedback" role="status">{companyPublicSaveMessage}</p>}
             </div>
           )}
           {activePublicCompanyProfile.status === 'loading' ? (
@@ -2950,28 +2982,28 @@ function App() {
           ) : company && (
             <>
               {(company.cover_url || isCompanyPublicEditing) && (
-                <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Imagem de capa da imobiliária">
+                <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Capa institucional da imobiliária">
                   {(companyPublicCoverPreview || company.cover_url) && <img src={companyPublicCoverPreview || company.cover_url} alt="" />}
                   {isCompanyPublicEditing && (
                     <label className="company-public-image-trigger cover-trigger">
-                      <span><Pencil size={16} aria-hidden="true" /> Alterar capa</span>
+                      <span><Camera size={16} aria-hidden="true" /> Alterar capa</span>
                       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCompanyPublicImage(event, 'cover')} />
                     </label>
                   )}
                 </section>
               )}
-              <section className="company-public-identity" aria-labelledby="company-public-name">
+              <section className={`company-public-identity${company.cover_url || isCompanyPublicEditing ? ' with-cover' : ''}`} aria-labelledby="company-public-name">
                 <div className="company-public-logo-wrap">
                   {(companyPublicLogoPreview || company.logo_url) ? (
-                    <img className="company-public-logo" src={companyPublicLogoPreview || company.logo_url} alt={`Logo de ${company.company_name}`} />
+                    <img className="company-public-logo" src={companyPublicLogoPreview || company.logo_url} alt={`Logo de ${visibleCompanyName}`} />
                   ) : (
                     <span className="company-public-logo-placeholder" aria-hidden="true">
-                      {String(company.company_name || 'Imobiliária').slice(0, 2).toLocaleUpperCase('pt-BR')}
+                      {String(visibleCompanyName).slice(0, 2).toLocaleUpperCase('pt-BR')}
                     </span>
                   )}
                   {isCompanyPublicEditing && (
-                    <label className="company-public-image-trigger logo-trigger">
-                      <span><Pencil size={14} aria-hidden="true" /> Alterar logo</span>
+                    <label className="company-public-image-trigger logo-trigger" aria-label="Alterar logo" title="Alterar logo">
+                      <span><Camera size={16} aria-hidden="true" /></span>
                       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCompanyPublicImage(event, 'logo')} />
                     </label>
                   )}
@@ -3045,66 +3077,79 @@ function App() {
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
-              <details className="company-public-about" open={companyPublicAboutOpen || isCompanyPublicEditing} onToggle={(event) => {
-                if (!isCompanyPublicEditing) setCompanyPublicAboutOpen(event.currentTarget.open)
-              }}>
+              <details id="company-public-about" className="company-public-about" open={companyPublicAboutOpen} onToggle={(event) => setCompanyPublicAboutOpen(event.currentTarget.open)}>
                 <summary>
                   <Building2 size={20} aria-hidden="true" />
-                  <span>Sobre {company.company_name}</span>
+                  <span>Sobre {visibleCompanyName}</span>
                   <ChevronDown size={20} aria-hidden="true" />
                 </summary>
                 <div className="company-public-about-content">
                   {isCompanyPublicEditing
                     ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000 })
                     : company.description && <p>{company.description}</p>}
-                  {isCompanyPublicEditing ? (
-                    <div className="company-public-edit-contact-grid">
-                      {renderCompanyPublicField('phone', 'telefone comercial', { type: 'tel', placeholder: 'Telefone comercial', maxLength: 18 })}
-                      {renderCompanyPublicField('whatsapp', 'WhatsApp comercial', { type: 'tel', placeholder: 'WhatsApp comercial', maxLength: 18 })}
-                      {renderCompanyPublicField('instagram', 'Instagram', { placeholder: 'https://instagram.com/suaimobiliaria' })}
-                      {renderCompanyPublicField('facebook', 'Facebook', { placeholder: 'https://facebook.com/suaimobiliaria' })}
-                      {renderCompanyPublicField('website', 'site', { placeholder: 'https://www.suaimobiliaria.com.br' })}
-                      {renderCompanyPublicField('business_hours', 'horário de atendimento', { placeholder: 'Ex.: Segunda a sexta, das 8h às 18h.' })}
-                    </div>
-                  ) : <div className="company-public-contact-details">
-                    {phoneContactNumber && (
+                  <div className={`company-public-contact-details${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
+                    {(phoneContactNumber || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Phone size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Telefone</strong>{renderCompanyPublicField('phone', 'telefone', { type: 'tel', placeholder: 'Adicionar telefone', maxLength: 18 })}</div></div>
+                        : (
                       <a href={`tel:+${phoneContactNumber}`}>
                         <Phone size={18} aria-hidden="true" /><span><strong>Telefone</strong>{formatPhone(company.phone)}</span>
                       </a>
+                        )
                     )}
-                    {whatsappContactNumber && (
+                    {(whatsappContactNumber || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><WhatsAppIcon size={18} /><div className="company-public-contact-value"><strong>WhatsApp</strong>{renderCompanyPublicField('whatsapp', 'WhatsApp', { type: 'tel', placeholder: 'Adicionar WhatsApp', maxLength: 18 })}</div></div>
+                        : (
                       <a href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
                         <WhatsAppIcon size={18} /><span><strong>WhatsApp</strong>{formatPhone(company.whatsapp)}</span>
                       </a>
+                        )
                     )}
-                    {instagramUrl && (
+                    {(instagramUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><InstagramIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Instagram</strong>{renderCompanyPublicField('instagram', 'Instagram', { placeholder: 'Adicionar Instagram' })}</div></div>
+                        : (
                       <a href={instagramUrl} target="_blank" rel="noreferrer">
                         <InstagramIcon className="public-social-icon" /><span><strong>Instagram</strong>{company.instagram}</span>
                       </a>
+                        )
                     )}
-                    {facebookUrl && (
+                    {(facebookUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><FacebookIcon className="public-social-icon" /><div className="company-public-contact-value"><strong>Facebook</strong>{renderCompanyPublicField('facebook', 'Facebook', { placeholder: 'Adicionar Facebook' })}</div></div>
+                        : (
                       <a href={facebookUrl} target="_blank" rel="noreferrer">
                         <FacebookIcon className="public-social-icon" /><span><strong>Facebook</strong>{company.facebook}</span>
                       </a>
+                        )
                     )}
-                    {websiteUrl && (
+                    {(websiteUrl || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Globe2 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Site</strong>{renderCompanyPublicField('website', 'site', { placeholder: 'Adicionar site' })}</div></div>
+                        : (
                       <a href={websiteUrl} target="_blank" rel="noreferrer">
                         <Globe2 size={18} aria-hidden="true" /><span><strong>Site</strong>{company.website}</span>
                       </a>
+                        )
                     )}
-                    {company.business_hours && (
+                    {(company.business_hours || isCompanyPublicEditing) && (
+                      isCompanyPublicEditing
+                        ? <div><Clock3 size={18} aria-hidden="true" /><div className="company-public-contact-value"><strong>Horário de atendimento</strong>{renderCompanyPublicField('business_hours', 'horário de atendimento', { placeholder: 'Adicionar horário de atendimento' })}</div></div>
+                        : (
                       <div>
                         <Clock3 size={18} aria-hidden="true" /><span><strong>Horário de atendimento</strong>{company.business_hours}</span>
                       </div>
+                        )
                     )}
-                  </div>}
+                  </div>
                 </div>
               </details>
               <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
                 <div className="company-public-contact-icon"><House size={24} aria-hidden="true" /></div>
                 <div>
                   <h2>Não encontrou o imóvel ideal?</h2>
-                  <p>Converse com a equipe da {company.company_name} para encontrar o imóvel que procura.</p>
+                  <p>Converse com a equipe da {visibleCompanyName} para encontrar o imóvel que procura.</p>
                 </div>
                 {whatsappContactNumber ? (
                   <a className="company-public-whatsapp" href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
@@ -3117,28 +3162,6 @@ function App() {
             </>
           )}
         </main>
-        {isCompanyPublicEditing && (
-          <>
-            {(companyPublicImageError || companyPublicSaveError) && <p className="company-public-save-error" role="alert">{companyPublicImageError || companyPublicSaveError}</p>}
-            {companyPublicSaveMessage && <p className="company-public-save-message" role="status">{companyPublicSaveMessage}</p>}
-            {hasCompanyPublicChanges && (
-              <div className="company-public-save-bar">
-                <span>Há alterações não salvas</span>
-                <button type="button" disabled={companyPublicSaving} onClick={() => {
-                  setCompanyPublicLogoFile(null)
-                  setCompanyPublicCoverFile(null)
-                  clearCompanyPublicImagePreviews()
-                  setCompanyPublicDraft(companyPublicOriginalDraft)
-                  setCompanyPublicSaveError('')
-                  setCompanyPublicSaveMessage('')
-                }}>Descartar</button>
-                <button type="button" disabled={companyPublicSaving} onClick={saveCompanyPublicProfile}>
-                  {companyPublicSaving ? 'Salvando…' : 'Salvar Alterações'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
         <SiteFooter />
       </div>
     )
