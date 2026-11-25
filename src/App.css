@@ -6371,6 +6371,12 @@ dl.my-area-profile-grid > div {
   }
 }
 
+@media (max-width: 480px) {
+  .company-dashboard-stats.company-statistics-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .standard-account-dashboard .my-area-listings-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6515,10 +6521,26 @@ dl.my-area-profile-grid > div {
 }
 
 .company-statistics-stats .company-statistics-kpi-note {
-  margin-top: 4px;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin: 0;
+  border: 1px solid #d9eee0;
+  border-radius: 999px;
+  background: #f1faf3;
   color: #078c35;
-  font-size: 0.68rem;
+  padding: 4px 7px;
+  font-size: 0.64rem;
   font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.company-statistics-stats .company-statistics-kpi-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .company-dashboard-highlights {
@@ -8722,7 +8744,13 @@ dl.my-area-profile-grid > div {
   }
 
   .company-statistics-stats .company-statistics-kpi-note {
-    font-size: 0.6rem;
+    padding: 3px 5px;
+    font-size: 0.58rem;
+  }
+
+  .company-statistics-stats .company-statistics-kpi-value {
+    flex-wrap: nowrap;
+    gap: 5px;
   }
 
   .company-statistics-opportunity-group li {

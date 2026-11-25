@@ -3694,8 +3694,12 @@ function App() {
                         <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span>
                         <div>
                           <small>Cliques WhatsApp no período</small>
-                          <strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong>
-                          <small className="company-statistics-kpi-note">{!companyPeriodMetricsReady ? 'Taxa média indisponível' : companyPeriodTotalViews > 0 ? `${formatPercentage(companyAverageInterestRate)} conversão média` : 'Sem dados para conversão'}</small>
+                          <strong className="company-statistics-kpi-value">
+                            <span>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</span>
+                            <small className="company-statistics-kpi-note">
+                              {companyPeriodMetricsReady && companyPeriodTotalViews > 0 ? `${formatPercentage(companyAverageInterestRate)} conv.` : '— conv.'}
+                            </small>
+                          </strong>
                         </div>
                       </article>
                       <article className="my-area-stat-card">
