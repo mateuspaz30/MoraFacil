@@ -10237,14 +10237,16 @@ dl.my-area-profile-grid > div {
 }
 
 .company-dashboard-chart-column > small {
-  display: block;
+  display: -webkit-box;
   width: 100%;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: #71849a;
   font-size: 0.64rem;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .company-dashboard-chart-note {

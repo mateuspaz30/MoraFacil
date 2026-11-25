@@ -3515,7 +3515,7 @@ function App() {
                                   <div className="company-dashboard-chart-column" key={item.id} title={`${item.title}: ${new Intl.NumberFormat('pt-BR').format(views)} visualizações`}>
                                     <strong>{new Intl.NumberFormat('pt-BR').format(views)}</strong>
                                     <div className="company-dashboard-chart-bar-track"><span style={{ height: `${height}%` }} /></div>
-                                    <small>{item.title}</small>
+                                    <small title={item.title}>{item.title}</small>
                                   </div>
                                 )
                               })}
