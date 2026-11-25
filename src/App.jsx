@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, Info, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
@@ -644,25 +644,14 @@ function MapListingCard({ listing, onClose }) {
   )
 }
 
-function MapListingPopup({ listing }) {
-  const map = useMap()
-
-  return (
-    <Popup className="listing-map-popup" closeButton={false} autoPan={false}>
-      <MapListingCard listing={listing} onClose={() => map.closePopup()} />
-    </Popup>
-  )
-}
-
-function MapMobileListingOverlay({ listing, target, onClose }) {
-  const map = useMap()
+function MapListingOverlay({ listing, target, onClose }) {
   useMapEvents({ click: onClose })
 
   if (!listing || !target) return null
 
   return createPortal(
-    <div className="map-mobile-popup-overlay">
-      <MapListingCard key={listing.id} listing={listing} onClose={() => { map.closePopup(); onClose() }} />
+    <div className="map-listing-overlay">
+      <MapListingCard key={listing.id} listing={listing} onClose={onClose} />
     </div>,
     target,
   )
@@ -4823,7 +4812,7 @@ function App() {
         <MapContainer center={mapCenter} zoom={14} maxZoom={18} className="map-box map-box-main" scrollWheelZoom touchZoom dragging>
           <MapResizeObserver fullscreen={mapFullscreenOpen} />
           <MapLayerSelector />
-          <MapMobileListingOverlay
+          <MapListingOverlay
             listing={selectedMapListing}
             target={mapPanelElement}
             onClose={() => setSelectedMapListing(null)}
@@ -4835,9 +4824,7 @@ function App() {
               position={item.coordinates}
               icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}
               eventHandlers={{ click: () => setSelectedMapListing(item) }}
-            >
-              <MapListingPopup listing={item} />
-            </Marker>
+            />
           ))}
         </MapContainer>
       </section>
