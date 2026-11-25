@@ -6518,6 +6518,7 @@ dl.my-area-profile-grid > div {
 .company-dashboard-stats .my-area-stat-card small {
   color: #34445a;
   font-size: 0.74rem;
+  white-space: nowrap;
 }
 
 .company-dashboard-stats .my-area-stat-card strong {

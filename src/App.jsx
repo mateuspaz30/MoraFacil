@@ -3472,12 +3472,12 @@ function App() {
                       <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores básicos dos imóveis">
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
-                          <div><small>Visualizações no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
+                          <div><small>Visualizações</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
                           <div>
-                            <small>Cliques WhatsApp no período</small>
+                            <small>Cliques WhatsApp</small>
                             <strong className="company-statistics-kpi-value">
                               <span>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</span>
                               <small className="company-statistics-kpi-note">
@@ -3488,7 +3488,7 @@ function App() {
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
-                          <div><small>Favoritos no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
+                          <div><small>Favoritos</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
@@ -3717,12 +3717,12 @@ function App() {
                     <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores de desempenho">
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
-                        <div><small>Visualizações no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
+                        <div><small>Visualizações</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span>
                         <div>
-                          <small>Cliques WhatsApp no período</small>
+                          <small>Cliques WhatsApp</small>
                           <strong className="company-statistics-kpi-value">
                             <span>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</span>
                             <small className="company-statistics-kpi-note">
@@ -3733,7 +3733,7 @@ function App() {
                       </article>
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
-                        <div><small>Favoritos no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
+                        <div><small>Favoritos</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
