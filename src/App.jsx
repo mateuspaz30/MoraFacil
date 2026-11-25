@@ -3128,7 +3128,7 @@ function App() {
                   {isCompanyPublicEditSession
                     ? renderCompanyPublicField('display_name', 'nome público', { placeholder: company.company_name, maxLength: 120, className: 'company-public-name-editor', id: 'company-public-name' })
                     : <h1 id="company-public-name">{visibleCompanyName}</h1>}
-                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{isCompanyPublicEditSession ? renderCompanyPublicField('city', 'cidade', { placeholder: companyCityLabel, maxLength: 100 }) : companyCityLabel}</p>
+                  <p className="company-public-city"><MapPin size={17} aria-hidden="true" />{isCompanyPublicEditSession ? renderCompanyPublicField('city', 'cidade', { placeholder: companyCityLabel, maxLength: 100, className: 'company-public-city' }) : companyCityLabel}</p>
                   {isCompanyPublicEditSession
                     ? renderCompanyPublicField('slogan', 'slogan', { placeholder: 'Seu próximo imóvel está aqui.', maxLength: 160, className: 'company-public-slogan-editor', dashed: isCompanyPublicEditing })
                     : companyPublicDisplay.slogan && <p className="company-public-slogan">{companyPublicDisplay.slogan}</p>}
