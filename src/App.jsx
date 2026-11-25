@@ -644,11 +644,11 @@ function MapListingCard({ listing, onClose }) {
   )
 }
 
-function MapListingPopup({ listing, autoPan }) {
+function MapListingPopup({ listing }) {
   const map = useMap()
 
   return (
-    <Popup className="listing-map-popup" closeButton={false} autoPan={autoPan}>
+    <Popup className="listing-map-popup" closeButton={false} autoPan={false}>
       <MapListingCard listing={listing} onClose={() => map.closePopup()} />
     </Popup>
   )
@@ -732,7 +732,6 @@ const sortListingsByOrder = (items, order) => [...items].sort((first, second) =>
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [selectedMapListing, setSelectedMapListing] = useState(null)
-  const [isMobileMap, setIsMobileMap] = useState(() => window.matchMedia('(max-width: 700px)').matches)
   const [mapFullscreenOpen, setMapFullscreenOpen] = useState(false)
   const [announcementMapFullscreenOpen, setAnnouncementMapFullscreenOpen] = useState(false)
   const [mapPanelElement, setMapPanelElement] = useState(null)
@@ -872,13 +871,6 @@ function App() {
     setCompanyPublicLogoPreview('')
     setCompanyPublicCoverPreview('')
   }
-
-  useEffect(() => {
-    const mobileQuery = window.matchMedia('(max-width: 700px)')
-    const updateMobileMap = (event) => setIsMobileMap(event.matches)
-    mobileQuery.addEventListener('change', updateMobileMap)
-    return () => mobileQuery.removeEventListener('change', updateMobileMap)
-  }, [])
 
   useEffect(() => {
     const resetHomePropertyType = (event) => {
@@ -4844,10 +4836,7 @@ function App() {
               icon={createMarkerIcon(purposeColors[getListingPurpose(item)])}
               eventHandlers={{ click: () => setSelectedMapListing(item) }}
             >
-              <MapListingPopup
-                listing={item}
-                autoPan={!isMobileMap}
-              />
+              <MapListingPopup listing={item} />
             </Marker>
           ))}
         </MapContainer>
