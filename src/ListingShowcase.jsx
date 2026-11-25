@@ -78,7 +78,9 @@ export const getListingLocation = (listing) => {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <p className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</p>
+      <div className="site-footer-container">
+        <p className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</p>
+      </div>
     </footer>
   )
 }
