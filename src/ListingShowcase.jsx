@@ -85,7 +85,6 @@ export function SiteFooter() {
             <img src={logo} alt="Logo Mora Fácil" />
             <span>Mora <strong>Fácil</strong></span>
           </div>
-          <p className="site-footer-tagline">Seu próximo imóvel está aqui.</p>
           <div className="site-footer-contacts">
             <a href="mailto:morafacil@gmail.com">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="m4 7 8 6 8-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -97,8 +96,8 @@ export function SiteFooter() {
               (16) 99663-5535
             </a>
           </div>
+          <div className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</div>
         </div>
-        <div className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</div>
       </div>
     </footer>
   )
