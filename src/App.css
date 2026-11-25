@@ -4381,6 +4381,10 @@
     white-space: normal;
   }
 
+  .company-dashboard-table-scroll-hint {
+    display: none;
+  }
+
   .hero-listing-location {
     display: flex;
     align-items: center;
@@ -10232,6 +10236,7 @@ dl.my-area-profile-grid > div {
 .company-dashboard-chart-bar-track > span {
   display: block;
   width: 100%;
+  height: var(--bar-size);
   border-radius: 7px 7px 0 0;
   background: linear-gradient(180deg, #18aa67, #078c59);
 }
@@ -10620,18 +10625,75 @@ dl.my-area-profile-grid > div {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .company-dashboard-overview-grid,
   .company-dashboard-performance-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .company-dashboard-chart-list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: grid;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+    border-bottom: 0;
+    padding: 0;
   }
 
-  .company-dashboard-chart-column:nth-child(n + 5) {
-    display: none;
+  .company-dashboard-chart-column {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 9px;
+    justify-items: stretch;
+    align-items: center;
+    gap: 6px 10px;
+  }
+
+  .company-dashboard-chart-column > small {
+    display: block;
+    grid-column: 1 / -1;
+    width: 100%;
+    overflow: visible;
+    overflow-wrap: break-word;
+    font-size: 0.76rem;
+    text-align: left;
+    white-space: normal;
+    -webkit-line-clamp: unset;
+  }
+
+  .company-dashboard-chart-column > strong {
+    grid-column: 2;
+    grid-row: 2;
+    color: #536b84;
+    font-size: 0.72rem;
+  }
+
+  .company-dashboard-chart-bar-track {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    align-items: stretch;
+    justify-content: flex-start;
+    border-radius: 999px;
+  }
+
+  .company-dashboard-chart-bar-track > span {
+    width: var(--bar-size);
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .company-dashboard-table-scroll-hint {
+    display: block;
+    margin: 0;
+    border-top: 1px solid #edf1f5;
+    color: #71849a;
+    padding: 8px 15px 10px;
+    font-size: 0.7rem;
+    text-align: right;
   }
 
   .company-dashboard-panel {

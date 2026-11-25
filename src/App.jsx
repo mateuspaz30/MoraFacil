@@ -3510,11 +3510,11 @@ function App() {
                             <div className="company-dashboard-chart-list" role="img" aria-label="Comparação de visualizações por imóvel no período selecionado">
                               {dashboardChartListings.map((item) => {
                                 const views = Number(item.visualizacoes) || 0
-                                const height = dashboardChartMaxViews > 0 ? (views / dashboardChartMaxViews) * 100 : 0
+                                const proportion = dashboardChartMaxViews > 0 ? (views / dashboardChartMaxViews) * 100 : 0
                                 return (
                                   <div className="company-dashboard-chart-column" key={item.id} title={`${item.title}: ${new Intl.NumberFormat('pt-BR').format(views)} visualizações`}>
                                     <strong>{new Intl.NumberFormat('pt-BR').format(views)}</strong>
-                                    <div className="company-dashboard-chart-bar-track"><span style={{ height: `${height}%` }} /></div>
+                                    <div className="company-dashboard-chart-bar-track"><span style={{ '--bar-size': `${proportion}%` }} /></div>
                                     <small title={item.title}>{item.title}</small>
                                   </div>
                                 )
@@ -3551,6 +3551,7 @@ function App() {
                             <div><h2 id="company-dashboard-listings-title">Desempenho dos imóveis</h2><p>Resumo dos anúncios no período selecionado</p></div>
                             <button type="button" onClick={() => openMyArea('listings')}>Ver todos <ExternalLink size={15} aria-hidden="true" /></button>
                           </header>
+                          <p className="company-dashboard-table-scroll-hint">Deslize a tabela para ver todas as colunas, incluindo Editar →</p>
                           <div className="company-dashboard-table-scroll">
                             <table className="company-dashboard-table">
                               <thead><tr><th scope="col">Imóvel</th><th scope="col">Status</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Taxa de interesse</th><th scope="col">Ação</th></tr></thead>
