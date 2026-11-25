@@ -8228,14 +8228,17 @@ dl.my-area-profile-grid > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
   gap: 16px;
   margin-top: 18px;
 }
 
 .professional-directory-category-tabs {
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   border: 0;
   border-radius: 0;
@@ -8280,9 +8283,10 @@ dl.my-area-profile-grid > div {
 
 .professional-directory-select {
   display: flex;
-  width: min(238px, 34%);
-  min-height: 38px;
-  flex: 0 0 auto;
+  width: min(280px, 36%);
+  min-width: 0;
+  min-height: 42px;
+  flex: 0 1 280px;
   align-items: center;
   border: 1px solid #cbd6e0;
   border-radius: 10px;
@@ -8300,7 +8304,7 @@ dl.my-area-profile-grid > div {
   color: #263d55;
   cursor: pointer;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 
 .professional-directory-count {
@@ -8489,8 +8493,8 @@ dl.my-area-profile-grid > div {
   display: flex;
   width: min(1008px, calc(100% - 48px));
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  justify-content: flex-start;
+  gap: 12px;
   margin: auto auto 0;
   border-top: 1px solid rgba(140, 158, 176, 0.24);
   padding: 15px 0 22px;
@@ -8498,13 +8502,8 @@ dl.my-area-profile-grid > div {
   font-size: 0.72rem;
 }
 
-.professional-directory-footer > span:first-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .professional-directory-footer strong {
+  flex: 0 0 auto;
   color: #102a43;
   font-size: 0.96rem;
 }
@@ -8514,23 +8513,36 @@ dl.my-area-profile-grid > div {
 }
 
 .professional-directory-footer i {
+  flex: 0 0 auto;
   height: 18px;
   border-left: 1px solid #aebac5;
 }
 
+.professional-directory-footer > span {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .professional-directory-results-controls {
-    align-items: flex-start;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .professional-directory-category-tabs {
-    flex-wrap: wrap;
-    gap: 7px;
+    width: 100%;
+    gap: 8px;
   }
 
   .professional-directory-category-tabs button {
-    padding-right: 12px;
-    padding-left: 12px;
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .professional-directory-select {
+    width: 100%;
+    box-sizing: border-box;
+    flex: 0 0 auto;
   }
 }
 
@@ -8580,16 +8592,18 @@ dl.my-area-profile-grid > div {
   }
 
   .professional-directory-category-tabs {
-    width: 100%;
-    flex-wrap: nowrap;
-    gap: 5px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .professional-directory-category-tabs button {
     min-width: 0;
-    flex: 1 1 0;
-    padding: 7px 6px;
-    font-size: 0.68rem;
+    min-height: 42px;
+    padding: 6px 4px;
+    font-size: 0.7rem;
+    line-height: 1.15;
+    white-space: normal;
   }
 
   .professional-directory-select {
@@ -8607,8 +8621,7 @@ dl.my-area-profile-grid > div {
   }
 
   .professional-directory-footer {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
     padding: 14px 0 18px;
   }

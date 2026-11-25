@@ -3022,10 +3022,10 @@ function App() {
             setProfessionalSearch(professionalSearchInput)
           }}>
             <label className="professional-directory-search">
-              <span className="sr-only">Buscar por nome ou cidade</span>
               <Search size={21} aria-hidden="true" />
               <input
                 type="search"
+                aria-label="Buscar por nome ou cidade"
                 value={professionalSearchInput}
                 onChange={(event) => setProfessionalSearchInput(event.target.value)}
                 placeholder="Buscar por nome ou cidade"
@@ -3080,7 +3080,7 @@ function App() {
                 const profileLogo = getSafeExternalUrl(profile.logo_url)
                 const profileCover = getSafeExternalUrl(profile.cover_url)
                 const profileCity = String(profile.city || '').trim()
-                  .replace(/[-,]\s*SP$/i, ' · SP')
+                  .replace(/[-,]\s*SP$/i, ' · SP') || 'Atendimento regional'
                 const activeListingCount = Number(profile.active_listing_count) || 0
                 return (
                   <article className="professional-directory-card" key={profile.slug}>
@@ -3124,8 +3124,9 @@ function App() {
           )}
         </main>
         <footer className="professional-directory-footer">
-          <span><strong>Mora <b>Fácil</b></strong><i aria-hidden="true" />Encontre imóveis. Conheça profissionais.</span>
-          <span>Proposta visual · Dados ilustrativos</span>
+          <strong>Mora <b>Fácil</b></strong>
+          <i aria-hidden="true" />
+          <span>© 2026 mora facil. Todos os direitos reservados.</span>
         </footer>
       </div>
     )
