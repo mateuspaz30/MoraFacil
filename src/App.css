@@ -9419,8 +9419,11 @@ dl.my-area-profile-grid > div {
 }
 
 .admin-table-scroll {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #dfe7ef;
   border-radius: 12px;
   background: #fff;
@@ -9428,7 +9431,8 @@ dl.my-area-profile-grid > div {
 
 .admin-data-table {
   width: 100%;
-  min-width: 660px;
+  min-width: 760px;
+  table-layout: auto;
   border-collapse: collapse;
   color: #234667;
 }
@@ -9439,6 +9443,7 @@ dl.my-area-profile-grid > div {
   border-bottom: 1px solid #e8eef4;
   text-align: left;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .admin-data-table th {
@@ -9450,6 +9455,22 @@ dl.my-area-profile-grid > div {
 
 .admin-data-table td {
   font-size: 0.82rem;
+}
+
+.admin-recent-listings .admin-data-table th:first-child,
+.admin-recent-listings .admin-data-table td:first-child {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-recent-listings .admin-data-table th:nth-child(2),
+.admin-recent-listings .admin-data-table td:nth-child(2) {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-data-table tbody tr:last-child td {
