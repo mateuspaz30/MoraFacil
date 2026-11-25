@@ -11098,6 +11098,26 @@ dl.my-area-profile-grid > div {
   top: calc(var(--map-fullscreen-header-height) + 12px);
 }
 
+@media (min-width: 701px) {
+  .map-panel:not(.map-panel-fullscreen) {
+    min-height: 460px;
+  }
+
+  .map-panel:not(.map-panel-fullscreen) .map-box-main {
+    height: 460px;
+  }
+
+  .map-listing-overlay {
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .map-panel-fullscreen .map-listing-overlay {
+    max-height: calc(100% - var(--map-fullscreen-header-height) - 24px);
+  }
+}
+
 @media (max-width: 700px) {
   .map-panel:not(.map-panel-fullscreen) .map-detail-card {
     border-radius: 10px;
