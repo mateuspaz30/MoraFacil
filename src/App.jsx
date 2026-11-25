@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, Info, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -3595,7 +3595,7 @@ function App() {
                           </section>
                         </aside>
                       </div>
-                      <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
+                      <p className="my-area-metric-note"><span className="my-area-metric-note-content"><Info size={16} aria-hidden="true" />Cliques no WhatsApp não confirmam conversas iniciadas.</span></p>
                     </>
                   ) : (
                     <>
@@ -3678,7 +3678,7 @@ function App() {
                         <p className="my-area-recent-empty">Você ainda não cadastrou imóveis.</p>
                       )}
                     </section>
-                    <p className="my-area-metric-note"><span aria-hidden="true">ⓘ</span> Cliques no WhatsApp não confirmam conversas iniciadas.</p>
+                    <p className="my-area-metric-note"><span className="my-area-metric-note-content"><Info size={16} aria-hidden="true" />Cliques no WhatsApp não confirmam conversas iniciadas.</span></p>
                       </>
                     )}
                   </>
@@ -3895,6 +3895,7 @@ function App() {
                         </div>
                       )}
                     </section>
+                    <p className="my-area-metric-note"><span className="my-area-metric-note-content"><Info size={16} aria-hidden="true" />Cliques no WhatsApp não confirmam conversas iniciadas.</span></p>
                   </div>
                 )}
                 {visibleAccountSection === 'public-profile' && isCompanyAccount && (

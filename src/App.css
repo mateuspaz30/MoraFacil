@@ -5252,7 +5252,6 @@
 .my-area-metric-note {
   display: flex;
   align-items: center;
-  gap: 9px;
   margin: 16px 0 0;
   border: 1px solid #d7e4f2;
   border-radius: 11px;
@@ -5262,9 +5261,17 @@
   font-size: 0.76rem;
 }
 
-.my-area-metric-note span {
+.my-area-metric-note-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.my-area-metric-note-content svg {
+  display: inline-flex;
+  flex-shrink: 0;
   color: #087cf0;
-  font-size: 1.05rem;
 }
 
 .my-area-panel {
