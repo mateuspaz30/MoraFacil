@@ -207,43 +207,6 @@ const propertyTypeIcons = {
 }
 
 const approvedSampleListings = sampleListings.map((listing) => ({ ...listing, status: 'aprovado' }))
-const localGalleryDemoListing = import.meta.env.DEV ? {
-  id: 'local-demo-gallery-10',
-  title: 'TESTE — Galeria com 10 fotos',
-  type: 'venda',
-  purpose: 'venda',
-  property_category: 'casa',
-  price: 'R$ 385.000',
-  bedrooms: 3,
-  bathrooms: 2,
-  parking_spaces: 2,
-  area: '148 m²',
-  city: 'Ipuã-SP',
-  neighborhood: 'Centro',
-  location: 'Centro, Ipuã-SP',
-  address: 'Localização ilustrativa, Centro, Ipuã-SP',
-  coordinates: [-20.4388, -48.0124],
-  description: 'Demonstração local para testar a galeria de 10 fotos. Este imóvel é fictício e não representa uma oferta real.',
-  advertiser: 'Demonstração local (sem contato)',
-  phone: '',
-  status: 'aprovado',
-  images: [
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=80',
-    'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1400&q=80',
-  ],
-  image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=80',
-  visualizacoes: 0,
-  whatsapp_clicks: 0,
-  local_demo: true,
-} : null
 const defaultNeighborhoods = [...new Set(sampleListings.map((listing) => listing.neighborhood))]
   .sort((first, second) => first.localeCompare(second, 'pt-BR'))
   .map((name) => ({ name, active: true }))
@@ -975,12 +938,9 @@ function App() {
   }, [announcementMapFullscreenOpen, mapFullscreenOpen])
 
   const publicPublishedListings = publishedListings.filter(isApprovedListing)
-  const availableListings = isSupabaseConfigured
+  const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publicPublishedListings : approvedSampleListings)
     : [...approvedSampleListings, ...userListings.filter(isApprovedListing)]
-  const listings = localGalleryDemoListing
-    ? [...availableListings, localGalleryDemoListing]
-    : availableListings
   const activeNeighborhoodNames = neighborhoods
     .filter((neighborhood) => neighborhood.active)
     .map((neighborhood) => neighborhood.name)
