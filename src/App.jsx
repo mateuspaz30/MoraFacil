@@ -762,6 +762,8 @@ function App() {
   const [companyPeriodMetrics, setCompanyPeriodMetrics] = useState({ userId: null, range: '', counts: {}, status: 'idle' })
   const [companyPeriodMetricsError, setCompanyPeriodMetricsError] = useState('')
   const [companyPeriodValidationError, setCompanyPeriodValidationError] = useState('')
+  const [statisticsSearch, setStatisticsSearch] = useState('')
+  const [statisticsSort, setStatisticsSort] = useState({ key: 'visualizacoes', direction: 'desc' })
   const [favoriteActionId, setFavoriteActionId] = useState(null)
   const [favoriteMessage, setFavoriteMessage] = useState('')
   const pendingFavoriteListingRef = useRef(null)
@@ -2564,6 +2566,9 @@ function App() {
   const companyPeriodTotalViews = companyPeriodListings.reduce((total, item) => total + item.visualizacoes, 0)
   const companyPeriodTotalWhatsAppClicks = companyPeriodListings.reduce((total, item) => total + item.whatsapp_clicks, 0)
   const companyPeriodTotalFavorites = companyPeriodListings.reduce((total, item) => total + item.favoritos, 0)
+  const companyAverageInterestRate = companyPeriodTotalViews > 0
+    ? (companyPeriodTotalWhatsAppClicks / companyPeriodTotalViews) * 100
+    : 0
   const mostViewedListing = [...companyPeriodListings]
     .sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))[0] || null
   const mostWhatsAppClickedListing = [...companyPeriodListings]
@@ -2574,34 +2579,55 @@ function App() {
   const listingsWithoutPerformance = companyPeriodListings.filter((item) => (
     (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
   ))
-  const interestRate = (item) => {
-    const views = Number(item?.visualizacoes) || 0
-    const clicks = Number(item?.whatsapp_clicks) || 0
+  const calculateInterestRate = (viewsValue, clicksValue) => {
+    const views = Number(viewsValue) || 0
+    const clicks = Number(clicksValue) || 0
     return views > 0 ? (clicks / views) * 100 : 0
   }
-  const formatInterestRate = (item) => `${new Intl.NumberFormat('pt-BR', {
+  const interestRate = (item) => calculateInterestRate(item?.visualizacoes, item?.whatsapp_clicks)
+  const formatPercentage = (rate) => `${new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(interestRate(item))}%`
-  const mostPerformedViewListing = mostViewedListing
-  const mostContactedListing = mostWhatsAppClickedListing
-  const statisticsSummaries = [
-    mostPerformedViewListing && Number(mostPerformedViewListing.visualizacoes) > 0
-      ? `${mostPerformedViewListing.title} é o imóvel mais visualizado da sua carteira.`
-      : 'Sua carteira ainda não possui visualizações registradas.',
-    mostContactedListing && Number(mostContactedListing.whatsapp_clicks) > 0
-      ? `${mostContactedListing.title} recebeu mais contatos via WhatsApp.`
-      : 'Sua carteira ainda não possui cliques no WhatsApp registrados.',
-    listingsWithoutPerformance.length > 0
-      ? `${listingsWithoutPerformance.length} ${listingsWithoutPerformance.length === 1 ? 'imóvel ainda não possui interações' : 'imóveis ainda não possuem interações'}.`
-      : 'Todos os seus imóveis já possuem visualizações ou cliques no WhatsApp.',
-  ]
+  }).format(rate)}%`
+  const formatInterestRate = (item) => formatPercentage(interestRate(item))
+  const highestInterestListing = [...companyPeriodListings]
+    .filter((item) => (Number(item.visualizacoes) || 0) > 0)
+    .sort((first, second) => (
+      interestRate(second) - interestRate(first)
+      || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
+      || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
+    ))[0] || null
   const rankedStatisticsListings = [...companyPeriodListings]
     .sort((first, second) => (
       (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0)
       || (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0)
       || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
     ))
+  const statisticsSearchTerm = statisticsSearch.trim().toLocaleLowerCase('pt-BR')
+  const filteredStatisticsListings = rankedStatisticsListings.filter((item) => (
+    !statisticsSearchTerm
+    || String(item.title || '').toLocaleLowerCase('pt-BR').includes(statisticsSearchTerm)
+    || String(item.neighborhood || getListingLocation(item) || '').toLocaleLowerCase('pt-BR').includes(statisticsSearchTerm)
+  ))
+  const statisticsListings = [...filteredStatisticsListings].sort((first, second) => {
+    const firstValue = statisticsSort.key === 'taxa'
+      ? interestRate(first)
+      : Number(first[statisticsSort.key]) || 0
+    const secondValue = statisticsSort.key === 'taxa'
+      ? interestRate(second)
+      : Number(second[statisticsSort.key]) || 0
+    const comparison = firstValue - secondValue
+    return (statisticsSort.direction === 'desc' ? -comparison : comparison)
+      || String(first.title || '').localeCompare(String(second.title || ''), 'pt-BR')
+  })
+  const toggleStatisticsSort = (key) => setStatisticsSort((current) => ({
+    key,
+    direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+  }))
+  const highViewsNoClicksListings = companyPeriodListings.filter((item) => (
+    (Number(item.visualizacoes) || 0) >= 50 && (Number(item.whatsapp_clicks) || 0) === 0
+  ))
+  const zeroViewListings = companyPeriodListings.filter((item) => (Number(item.visualizacoes) || 0) === 0)
   const dashboardChartListings = rankedStatisticsListings.slice(0, 6)
   const dashboardChartMaxViews = Math.max(0, ...dashboardChartListings.map((item) => Number(item.visualizacoes) || 0))
   const dashboardWhatsAppListings = [...companyPeriodListings]
@@ -2636,34 +2662,15 @@ function App() {
       || first.name.localeCompare(second.name, 'pt-BR')
     ))
   const topBoroughs = boroughPerformance.slice(0, 5)
-  const boroughTotalViews = boroughPerformance.reduce((total, borough) => total + borough.visualizacoes, 0)
-  const leadingBorough = boroughPerformance[0] || null
-  const mostContactedBorough = [...boroughPerformance]
-    .sort((first, second) => second.whatsapp_clicks - first.whatsapp_clicks || second.visualizacoes - first.visualizacoes)[0] || null
-  const averageBoroughListingCount = boroughPerformance.length
-    ? periodActiveListings.length / boroughPerformance.length
-    : 0
-  const boroughWithCaptureOpportunity = boroughPerformance
-    .filter((borough) => borough.visualizacoes > 0 && borough.listingCount < averageBoroughListingCount)
+  const highestVolumeBorough = boroughPerformance.find((borough) => borough.visualizacoes > 0) || null
+  const highestInterestBorough = [...boroughPerformance]
+    .filter((borough) => borough.visualizacoes > 0)
     .sort((first, second) => (
-      second.visualizacoes / second.listingCount - first.visualizacoes / first.listingCount
-      || second.visualizacoes - first.visualizacoes
+      calculateInterestRate(second.visualizacoes, second.whatsapp_clicks)
+      - calculateInterestRate(first.visualizacoes, first.whatsapp_clicks)
+      || second.whatsapp_clicks - first.whatsapp_clicks
+      || first.name.localeCompare(second.name, 'pt-BR')
     ))[0] || null
-  const boroughInsights = boroughPerformance.length === 0
-    ? ['Não há imóveis ativos para analisar por bairro.']
-    : [
-      leadingBorough.visualizacoes > 0
-        ? (leadingBorough.visualizacoes >= boroughTotalViews / 2
-          ? `O bairro ${leadingBorough.name} concentra a maior parte da demanda atual.`
-          : `O bairro ${leadingBorough.name} lidera em visualizações na sua carteira.`)
-        : 'Ainda não há visualizações registradas nos imóveis ativos por bairro.',
-      mostContactedBorough.whatsapp_clicks > 0
-        ? `${mostContactedBorough.name} possui o maior volume de contatos via WhatsApp.`
-        : 'Ainda não há cliques no WhatsApp registrados nos imóveis ativos por bairro.',
-      boroughWithCaptureOpportunity
-        ? `Existem oportunidades para captar mais imóveis na região ${boroughWithCaptureOpportunity.name}.`
-        : 'Ainda não há dados suficientes para apontar uma oportunidade de captação por bairro.',
-    ]
   const latestUserListings = [...userListings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
   const visibleRecentListings = recentListingsExpanded ? latestUserListings : latestUserListings.slice(0, 3)
@@ -3685,7 +3692,11 @@ function App() {
                       </article>
                       <article className="my-area-stat-card">
                         <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={28} /></span>
-                        <div><small>Cliques WhatsApp no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
+                        <div>
+                          <small>Cliques WhatsApp no período</small>
+                          <strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong>
+                          <small className="company-statistics-kpi-note">{!companyPeriodMetricsReady ? 'Taxa média indisponível' : companyPeriodTotalViews > 0 ? `${formatPercentage(companyAverageInterestRate)} conversão média` : 'Sem dados para conversão'}</small>
+                        </div>
                       </article>
                       <article className="my-area-stat-card">
                         <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
@@ -3699,15 +3710,39 @@ function App() {
                     <section className="company-statistics-table-card" aria-labelledby="company-statistics-table-title">
                       <header>
                         <div><h2 id="company-statistics-table-title">Desempenho dos imóveis</h2><p>Indicadores registrados no período selecionado.</p></div>
+                        <label className="company-statistics-search">
+                          <Search size={16} aria-hidden="true" />
+                          <input
+                            type="search"
+                            aria-label="Buscar por título ou bairro"
+                            value={statisticsSearch}
+                            onChange={(event) => setStatisticsSearch(event.target.value)}
+                            placeholder="Buscar título ou bairro"
+                          />
+                        </label>
                       </header>
                       {rankedStatisticsListings.length ? (
                         <div className="company-statistics-table-scroll">
                           <table className="company-statistics-table">
                             <thead>
-                              <tr><th scope="col">Imóvel</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th><th scope="col">Taxa de Interesse</th></tr>
+                              <tr>
+                                <th scope="col">Imóvel</th>
+                                <th scope="col" aria-sort={statisticsSort.key === 'visualizacoes' ? (statisticsSort.direction === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                  <button type="button" className="company-statistics-sort-button" onClick={() => toggleStatisticsSort('visualizacoes')}>Visualizações{statisticsSort.key === 'visualizacoes' && <span aria-hidden="true">{statisticsSort.direction === 'asc' ? ' ▲' : ' ▼'}</span>}</button>
+                                </th>
+                                <th scope="col" aria-sort={statisticsSort.key === 'whatsapp_clicks' ? (statisticsSort.direction === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                  <button type="button" className="company-statistics-sort-button" onClick={() => toggleStatisticsSort('whatsapp_clicks')}>WhatsApp{statisticsSort.key === 'whatsapp_clicks' && <span aria-hidden="true">{statisticsSort.direction === 'asc' ? ' ▲' : ' ▼'}</span>}</button>
+                                </th>
+                                <th scope="col" aria-sort={statisticsSort.key === 'favoritos' ? (statisticsSort.direction === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                  <button type="button" className="company-statistics-sort-button" onClick={() => toggleStatisticsSort('favoritos')}>Favoritos{statisticsSort.key === 'favoritos' && <span aria-hidden="true">{statisticsSort.direction === 'asc' ? ' ▲' : ' ▼'}</span>}</button>
+                                </th>
+                                <th scope="col" aria-sort={statisticsSort.key === 'taxa' ? (statisticsSort.direction === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                  <button type="button" className="company-statistics-sort-button" onClick={() => toggleStatisticsSort('taxa')}>Taxa de Interesse{statisticsSort.key === 'taxa' && <span aria-hidden="true">{statisticsSort.direction === 'asc' ? ' ▲' : ' ▼'}</span>}</button>
+                                </th>
+                              </tr>
                             </thead>
                             <tbody>
-                              {rankedStatisticsListings.map((item) => (
+                              {statisticsListings.length ? statisticsListings.map((item) => (
                                 <tr key={item.id}>
                                   <td>
                                     <div className="company-statistics-property">
@@ -3720,7 +3755,7 @@ function App() {
                                   <td>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(Number(item.favoritos) || 0) : '—'}</td>
                                   <td>{companyPeriodMetricsReady ? formatInterestRate(item) : '—'}</td>
                                 </tr>
-                              ))}
+                              )) : <tr><td className="company-statistics-no-results" colSpan="5">Nenhum imóvel corresponde à busca.</td></tr>}
                             </tbody>
                           </table>
                         </div>
@@ -3765,11 +3800,14 @@ function App() {
                             <div className="company-statistics-table-scroll">
                               <table className="company-statistics-table company-borough-table">
                                 <thead>
-                                  <tr><th scope="col">Bairro</th><th scope="col">Imóveis</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th></tr>
+                                  <tr><th scope="col">Bairro</th><th scope="col">Imóveis</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Favoritos</th><th scope="col">Taxa de Interesse</th></tr>
                                 </thead>
                                 <tbody>
                                   {boroughPerformance.map((borough) => (
-                                    <tr key={normalizeNeighborhoodName(borough.name)}>
+                                    <tr
+                                      key={normalizeNeighborhoodName(borough.name)}
+                                      className={highestInterestBorough?.name === borough.name ? 'company-borough-best-conversion' : ''}
+                                    >
                                       <td><strong className="company-borough-table-name"><MapPin size={16} aria-hidden="true" />{borough.name}</strong></td>
                                       <td>{new Intl.NumberFormat('pt-BR').format(borough.listingCount)}</td>
                                       <td>{new Intl.NumberFormat('pt-BR').format(borough.visualizacoes)}</td>
@@ -3777,45 +3815,86 @@ function App() {
                                       <td>{borough.favoritos === null
                                         ? companyPeriodMetrics.status === 'loading' ? '…' : '—'
                                         : new Intl.NumberFormat('pt-BR').format(borough.favoritos)}</td>
+                                      <td>{formatPercentage(calculateInterestRate(borough.visualizacoes, borough.whatsapp_clicks))}{highestInterestBorough?.name === borough.name && <span className="company-borough-best-label">Maior conversão</span>}</td>
                                     </tr>
                                   ))}
                                 </tbody>
                               </table>
                             </div>
                           </section>
-                          <section className="company-statistics-summary company-borough-insights" aria-labelledby="company-borough-insights-title">
-                            <h2 id="company-borough-insights-title">Insights de demanda</h2>
-                            <ul>{boroughInsights.map((insight) => <li key={insight}>{insight}</li>)}</ul>
-                          </section>
                         </>
                       ) : (
                         <p className="company-statistics-empty company-borough-empty">Não há imóveis ativos para apresentar dados por bairro.</p>
                       )}
                     </section>
-                    {companyPeriodMetricsReady ? <section className="company-statistics-highlights" aria-label="Destaques de desempenho">
-                      <article className="company-statistics-highlight">
-                        <h2><span aria-hidden="true">🏆</span> Mais visualizado</h2>
-                        <p>{statisticsSummaries[0]}</p>
-                      </article>
-                      <article className="company-statistics-highlight">
-                        <h2><span aria-hidden="true">💬</span> Mais interesse</h2>
-                        <p>{statisticsSummaries[1]}</p>
-                      </article>
-                      <article className="company-statistics-highlight no-performance">
-                        <h2><span aria-hidden="true">⚠️</span> Sem desempenho</h2>
-                        {listingsWithoutPerformance.length ? (
-                          <>
-                            <p>{statisticsSummaries[2]}</p>
-                            <ul>{listingsWithoutPerformance.map((item) => <li key={item.id}>{item.title}</li>)}</ul>
-                          </>
-                        ) : <p>Todos os imóveis já possuem visualizações ou cliques no WhatsApp.</p>}
-                      </article>
+                    <section className="company-statistics-actions" aria-labelledby="company-statistics-actions-title">
+                      <header className="company-statistics-actions-heading">
+                        <div><h2 id="company-statistics-actions-title">Alertas e ações recomendadas</h2><p>Leitura rápida dos resultados e próximos passos para seus anúncios.</p></div>
+                      </header>
+                      {!companyPeriodMetricsReady ? (
+                        <p className="company-statistics-empty">Aguardando métricas do período.</p>
+                      ) : (
+                        <div className="company-statistics-actions-grid">
+                          <article className="company-statistics-action-card">
+                            <h3><Eye size={19} aria-hidden="true" />Destaques do período</h3>
+                            <div className="company-statistics-highlights-list">
+                              <div>
+                                <span>Imóvel líder em visualizações</span>
+                                <strong>{mostViewedListing && Number(mostViewedListing.visualizacoes) > 0 ? mostViewedListing.title : 'Sem visualizações no período'}</strong>
+                                <small>{mostViewedListing && Number(mostViewedListing.visualizacoes) > 0 ? `${new Intl.NumberFormat('pt-BR').format(mostViewedListing.visualizacoes)} visualizações` : 'Os anúncios ainda não receberam acessos.'}</small>
+                              </div>
+                              <div>
+                                <span>Imóvel líder em contatos WhatsApp</span>
+                                <strong>{mostWhatsAppClickedListing && Number(mostWhatsAppClickedListing.whatsapp_clicks) > 0 ? mostWhatsAppClickedListing.title : 'Sem cliques no WhatsApp'}</strong>
+                                <small>{mostWhatsAppClickedListing && Number(mostWhatsAppClickedListing.whatsapp_clicks) > 0 ? `${new Intl.NumberFormat('pt-BR').format(mostWhatsAppClickedListing.whatsapp_clicks)} cliques` : 'Nenhum clique foi registrado neste período.'}</small>
+                              </div>
+                              <div>
+                                <span>Maior Taxa de Interesse</span>
+                                <strong>{highestInterestListing ? highestInterestListing.title : 'Sem base para calcular'}</strong>
+                                <small>{highestInterestListing ? `${formatInterestRate(highestInterestListing)} · ${new Intl.NumberFormat('pt-BR').format(highestInterestListing.visualizacoes)} visualizações` : 'A taxa depende de ao menos uma visualização.'}</small>
+                              </div>
+                              <div>
+                                <span>Bairro com mais visualizações</span>
+                                <strong>{highestVolumeBorough?.name || 'Sem dados por bairro'}</strong>
+                                <small>{highestVolumeBorough ? `${new Intl.NumberFormat('pt-BR').format(highestVolumeBorough.visualizacoes)} visualizações` : 'Nenhuma visualização nos imóveis ativos.'}</small>
+                              </div>
+                              <div>
+                                <span>Bairro com melhor conversão</span>
+                                <strong>{highestInterestBorough?.name || 'Sem base para calcular'}</strong>
+                                <small>{highestInterestBorough ? `${formatPercentage(calculateInterestRate(highestInterestBorough.visualizacoes, highestInterestBorough.whatsapp_clicks))} de interesse` : 'A taxa depende de ao menos uma visualização.'}</small>
+                              </div>
+                            </div>
+                          </article>
+                          <article className="company-statistics-action-card opportunities">
+                            <h3><Lightbulb size={19} aria-hidden="true" />Oportunidades de melhoria</h3>
+                            <section className="company-statistics-opportunity-group">
+                              <h4>Boa visibilidade, nenhum contato</h4>
+                              <p>Imóveis com 50 ou mais visualizações e nenhum clique no WhatsApp. Considere revisar preço, fotos e descrição.</p>
+                              {highViewsNoClicksListings.length ? (
+                                <ul>{highViewsNoClicksListings.map((item) => (
+                                  <li key={item.id}>
+                                    <div><strong>{item.title}</strong><small>{new Intl.NumberFormat('pt-BR').format(item.visualizacoes)} visualizações · 0 cliques</small></div>
+                                    <button type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar anúncio: ${item.title}`}><Pencil size={14} aria-hidden="true" />Editar anúncio</button>
+                                  </li>
+                                ))}</ul>
+                              ) : <p className="company-statistics-opportunity-empty">Nenhum imóvel atingiu esse critério no período.</p>}
+                            </section>
+                            <section className="company-statistics-opportunity-group">
+                              <h4>Sem visualizações no período</h4>
+                              <p>Revise a apresentação ou divulgue estes anúncios para ampliar o alcance.</p>
+                              {zeroViewListings.length ? (
+                                <ul>{zeroViewListings.map((item) => (
+                                  <li key={item.id}>
+                                    <div><strong>{item.title}</strong><small>{item.location || getListingLocation(item)}</small></div>
+                                    <button type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar anúncio: ${item.title}`}><Pencil size={14} aria-hidden="true" />Editar anúncio</button>
+                                  </li>
+                                ))}</ul>
+                              ) : <p className="company-statistics-opportunity-empty">Todos os imóveis tiveram ao menos uma visualização.</p>}
+                            </section>
+                          </article>
+                        </div>
+                      )}
                     </section>
-                      : <p className="company-statistics-empty">Aguardando métricas para montar os destaques.</p>}
-                    {companyPeriodMetricsReady && <section className="company-statistics-summary" aria-labelledby="company-statistics-summary-title">
-                      <h2 id="company-statistics-summary-title">Resumo automático</h2>
-                      <ul>{statisticsSummaries.map((summary) => <li key={summary}>{summary}</li>)}</ul>
-                    </section>}
                   </div>
                 )}
                 {visibleAccountSection === 'public-profile' && isCompanyAccount && (

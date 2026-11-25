@@ -6507,6 +6507,13 @@ dl.my-area-profile-grid > div {
   font-size: clamp(1.7rem, 2.4vw, 2.25rem);
 }
 
+.company-statistics-stats .company-statistics-kpi-note {
+  margin-top: 4px;
+  color: #078c35;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .company-dashboard-highlights {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6899,9 +6906,7 @@ dl.my-area-profile-grid > div {
   color: #a12626;
 }
 
-.company-statistics-table-card,
-.company-statistics-highlight,
-.company-statistics-summary {
+.company-statistics-table-card {
   min-width: 0;
   border: 1px solid #e1e9f1;
   border-radius: 15px;
@@ -6922,8 +6927,7 @@ dl.my-area-profile-grid > div {
   margin: 0;
 }
 
-.company-statistics-table-card > header h2,
-.company-statistics-summary h2 {
+.company-statistics-table-card > header h2 {
   color: #12345a;
   font-size: 1.15rem;
   font-weight: 800;
@@ -6934,6 +6938,62 @@ dl.my-area-profile-grid > div {
   margin-top: 4px;
   color: #71849a;
   font-size: 0.8rem;
+}
+
+.company-statistics-search {
+  display: flex;
+  flex: 0 1 260px;
+  min-width: 190px;
+  height: 38px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d5e0eb;
+  border-radius: 9px;
+  background: #fff;
+  color: #71849a;
+  padding: 0 10px;
+}
+
+.company-statistics-search:focus-within {
+  border-color: #078c35;
+  box-shadow: 0 0 0 3px rgba(7, 140, 53, 0.1);
+}
+
+.company-statistics-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #183553;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.company-statistics-search input::placeholder {
+  color: #8793a0;
+}
+
+.company-statistics-sort-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+.company-statistics-sort-button:hover,
+.company-statistics-sort-button:focus-visible {
+  color: #078c35;
+}
+
+.company-statistics-sort-button:focus-visible {
+  outline: 2px solid #078c35;
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .company-statistics-table-scroll {
@@ -7028,73 +7088,185 @@ dl.my-area-profile-grid > div {
   font-size: 0.85rem;
 }
 
-.company-statistics-highlights {
+.company-statistics-no-results {
+  color: #71849a;
+  padding: 20px !important;
+  text-align: center;
+}
+
+.company-statistics-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-.company-statistics-highlight {
-  padding: 16px;
+.company-statistics-actions-heading h2,
+.company-statistics-actions-heading p {
+  margin: 0;
 }
 
-.company-statistics-highlight h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
+.company-statistics-actions-heading h2 {
   color: #12345a;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   font-weight: 800;
 }
 
-.company-statistics-highlight h2 span {
-  font-size: 1.1rem;
-}
-
-.company-statistics-highlight > p {
-  margin: 12px 0 0;
-  color: #536b84;
+.company-statistics-actions-heading p {
+  margin-top: 4px;
+  color: #71849a;
   font-size: 0.8rem;
-  line-height: 1.5;
 }
 
-.company-statistics-highlight.no-performance {
-  border-color: #f0dfc0;
-  background: #fffdf8;
-}
-
-.company-statistics-highlight.no-performance h2 {
-  color: #805c1a;
-}
-
-.company-statistics-highlight ul {
+.company-statistics-actions-grid {
   display: grid;
-  gap: 5px;
-  max-height: 120px;
-  overflow-y: auto;
-  margin: 9px 0 0;
-  padding-left: 18px;
-  color: #805c1a;
-  font-size: 0.76rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
 }
 
-.company-statistics-summary {
-  padding: 18px 20px;
+.company-statistics-action-card {
+  min-width: 0;
+  border: 1px solid #e1e9f1;
+  border-radius: 15px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 8px 26px rgba(14, 47, 76, 0.06);
 }
 
-.company-statistics-summary h2 {
-  margin: 0;
+.company-statistics-action-card > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: #12345a;
+  font-size: 0.98rem;
+  font-weight: 800;
 }
 
-.company-statistics-summary ul {
+.company-statistics-action-card > h3 svg {
+  flex: 0 0 19px;
+  color: #078c35;
+}
+
+.company-statistics-highlights-list {
   display: grid;
-  gap: 9px;
-  margin: 13px 0 0;
-  padding-left: 20px;
-  color: #536b84;
+  gap: 0;
+}
+
+.company-statistics-highlights-list > div {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid #edf1f5;
+  padding: 11px 0;
+}
+
+.company-statistics-highlights-list > div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.company-statistics-highlights-list span {
+  color: #71849a;
+  font-size: 0.73rem;
+}
+
+.company-statistics-highlights-list strong {
+  overflow: hidden;
+  color: #183553;
   font-size: 0.84rem;
-  line-height: 1.5;
+  text-overflow: ellipsis;
+}
+
+.company-statistics-highlights-list small {
+  color: #536b84;
+  font-size: 0.73rem;
+}
+
+.company-statistics-opportunity-group {
+  border-top: 1px solid #edf1f5;
+  padding-top: 13px;
+}
+
+.company-statistics-opportunity-group + .company-statistics-opportunity-group {
+  margin-top: 13px;
+}
+
+.company-statistics-opportunity-group h4 {
+  margin: 0;
+  color: #183553;
+  font-size: 0.82rem;
+}
+
+.company-statistics-opportunity-group > p {
+  margin: 5px 0 9px;
+  color: #71849a;
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+.company-statistics-opportunity-group ul {
+  display: grid;
+  gap: 7px;
+  max-height: 230px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.company-statistics-opportunity-group li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #e8eef4;
+  border-radius: 9px;
+  padding: 9px 10px;
+}
+
+.company-statistics-opportunity-group li > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.company-statistics-opportunity-group li strong {
+  overflow: hidden;
+  color: #183553;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-statistics-opportunity-group li small {
+  color: #71849a;
+  font-size: 0.68rem;
+}
+
+.company-statistics-opportunity-group li button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  border: 1px solid #cfe6d6;
+  border-radius: 7px;
+  background: #f1faf3;
+  color: #087b32;
+  padding: 0 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.company-statistics-opportunity-group li button:hover {
+  background: #e4f5e8;
+}
+
+.company-statistics-opportunity-empty {
+  margin: 0 !important;
+  color: #71849a !important;
 }
 
 .company-borough-section {
@@ -7239,8 +7411,21 @@ dl.my-area-profile-grid > div {
   color: #078c35;
 }
 
-.company-borough-insights {
-  border-left: 4px solid #8bea45;
+.company-borough-best-conversion td {
+  background: #f3fbf5;
+}
+
+.company-borough-best-conversion td:last-child {
+  color: #087b32;
+  font-weight: 800;
+}
+
+.company-borough-best-label {
+  display: block;
+  margin-top: 3px;
+  color: #078c35;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
 .company-borough-empty {
@@ -8395,6 +8580,18 @@ dl.my-area-profile-grid > div {
 }
 
 @media (max-width: 1050px) {
+  .company-statistics-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .company-statistics-table-card > header {
+    flex-wrap: wrap;
+  }
+
+  .company-statistics-search {
+    flex-basis: 100%;
+  }
+
   .company-public-edit-toolbar {
     flex-wrap: wrap;
   }
@@ -8457,10 +8654,6 @@ dl.my-area-profile-grid > div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .company-statistics-highlights {
-    grid-template-columns: 1fr;
-  }
-
   .company-borough-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -8519,6 +8712,15 @@ dl.my-area-profile-grid > div {
 
   .company-dashboard-stats .my-area-stat-card strong {
     font-size: 1.55rem;
+  }
+
+  .company-statistics-stats .company-statistics-kpi-note {
+    font-size: 0.6rem;
+  }
+
+  .company-statistics-opportunity-group li {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .company-period-filter,
