@@ -3124,9 +3124,7 @@ function App() {
           )}
         </main>
         <footer className="professional-directory-footer">
-          <strong>Mora <b>Fácil</b></strong>
-          <i aria-hidden="true" />
-          <span>© 2026 mora facil. Todos os direitos reservados.</span>
+          <span>© 2026 Mora <b>Fácil</b>. Todos os direitos reservados.</span>
         </footer>
       </div>
     )

@@ -8494,28 +8494,15 @@ dl.my-area-profile-grid > div {
   width: min(1008px, calc(100% - 48px));
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
   margin: auto auto 0;
   border-top: 1px solid rgba(140, 158, 176, 0.24);
   padding: 15px 0 22px;
-  color: #6e7d8c;
-  font-size: 0.72rem;
-}
-
-.professional-directory-footer strong {
-  flex: 0 0 auto;
   color: #102a43;
-  font-size: 0.96rem;
+  font-size: 0.78rem;
 }
 
 .professional-directory-footer b {
   color: #078c35;
-}
-
-.professional-directory-footer i {
-  flex: 0 0 auto;
-  height: 18px;
-  border-left: 1px solid #aebac5;
 }
 
 .professional-directory-footer > span {
