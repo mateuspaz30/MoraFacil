@@ -415,6 +415,39 @@ const emptyAnnouncement = {
   phone: '',
 }
 
+const MAX_LISTING_PHOTOS = 10
+
+const compressListingPhoto = async (file) => {
+  const sourceUrl = URL.createObjectURL(file)
+  try {
+    const image = new Image()
+    image.src = sourceUrl
+    await image.decode()
+    const scale = Math.min(1, 1400 / image.naturalWidth)
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('O navegador não conseguiu preparar esta imagem.')
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+    const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, 0.8))
+    let blob = await toBlob('image/webp')
+    if (blob?.type !== 'image/webp') blob = await toBlob('image/jpeg')
+    if (!blob || !['image/webp', 'image/jpeg'].includes(blob.type)) {
+      throw new Error('O navegador não conseguiu comprimir esta imagem.')
+    }
+
+    const extension = blob.type === 'image/webp' ? 'webp' : 'jpg'
+    const name = file.name.replace(/\.[^.]+$/, '') || 'foto-imovel'
+    return new File([blob], `${name}.${extension}`, { type: blob.type, lastModified: file.lastModified })
+  } finally {
+    URL.revokeObjectURL(sourceUrl)
+  }
+}
+
 const createMarkerIcon = (color) => L.divIcon({
   className: 'property-marker-wrapper',
   html: `<span class="property-marker" style="--marker-color: ${color}"><span></span></span>`,
@@ -1499,9 +1532,9 @@ function App() {
     if (!files.length) return
 
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp']
-    const availableSlots = Math.max(0, 5 - announcementPhotos.length)
+    const availableSlots = Math.max(0, MAX_LISTING_PHOTOS - announcementPhotos.length)
     const selectedFiles = files.slice(0, availableSlots)
-    if (files.length > availableSlots) setImageMessage('O limite é de 5 fotos por anúncio.')
+    if (files.length > availableSlots) setImageMessage(`O limite é de ${MAX_LISTING_PHOTOS} fotos por anúncio.`)
     if (!selectedFiles.length) return
 
     const validFiles = selectedFiles.filter((file) => acceptedTypes.includes(file.type) && file.size <= 8 * 1024 * 1024)
@@ -1513,30 +1546,37 @@ function App() {
     setImageLoading(true)
     setImageMessage('Preparando fotos...')
     const uploadedPhotos = []
+    const failedPhotos = []
     for (const file of validFiles) {
-      if (!isSupabaseConfigured || !authUser) {
-        uploadedPhotos.push({ url: URL.createObjectURL(file), name: file.name })
-        continue
+      try {
+        const compressedFile = await compressListingPhoto(file)
+        if (!isSupabaseConfigured || !authUser) {
+          uploadedPhotos.push({ url: URL.createObjectURL(compressedFile), name: file.name })
+          continue
+        }
+        const path = `${authUser.id}/${crypto.randomUUID()}.${compressedFile.name.split('.').pop()}`
+        const { error } = await supabase.storage.from('property-images').upload(path, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: compressedFile.type,
+        })
+        if (error) throw error
+        const { data } = supabase.storage.from('property-images').getPublicUrl(path)
+        uploadedPhotos.push({ url: data.publicUrl, name: file.name })
+      } catch (error) {
+        console.error(`Falha ao preparar ou enviar a foto ${file.name}:`, error)
+        failedPhotos.push({ name: file.name, message: error.message || 'erro desconhecido' })
       }
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`
-      const { error } = await supabase.storage.from('property-images').upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type,
-      })
-      if (error) {
-        setImageMessage(`Não foi possível enviar ${file.name}: ${error.message}`)
-        continue
-      }
-      const { data } = supabase.storage.from('property-images').getPublicUrl(path)
-      uploadedPhotos.push({ url: data.publicUrl, name: file.name })
     }
 
-    const nextPhotos = [...announcementPhotos, ...uploadedPhotos].slice(0, 5)
+    const nextPhotos = [...announcementPhotos, ...uploadedPhotos].slice(0, MAX_LISTING_PHOTOS)
     setAnnouncementPhotos(nextPhotos)
     setAnnouncement((value) => ({ ...value, image: nextPhotos[0]?.url || '' }))
-    setImageMessage(uploadedPhotos.length ? 'Fotos adicionadas. Arraste para ordenar.' : 'Nenhuma foto pôde ser adicionada.')
+    setImageMessage(uploadedPhotos.length
+      ? `${uploadedPhotos.length} foto${uploadedPhotos.length === 1 ? '' : 's'} adicionada${uploadedPhotos.length === 1 ? '' : 's'}.${failedPhotos.length ? ` Não foi possível enviar ${failedPhotos.map((photo) => photo.name).join(', ')}.` : ' Arraste para ordenar.'}`
+      : failedPhotos.length
+        ? `Não foi possível preparar ou enviar as fotos. ${failedPhotos[0].message}`
+        : 'Nenhuma foto pôde ser adicionada.')
     setImageLoading(false)
   }
 
@@ -4952,21 +4992,21 @@ function App() {
                 <div className="announcement-step-heading"><span>5</span><div><h3>Fotos do imóvel</h3><p>Adicione fotos de qualidade para destacar seu anúncio.</p></div></div>
                 <div className="announcement-photo-layout">
                   <label className={`announcement-dropzone${imageLoading ? ' uploading' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleImageChange(event) }}>
-                    <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={handleImageChange} disabled={imageLoading || announcementPhotos.length >= 5} />
+                    <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={handleImageChange} disabled={imageLoading || announcementPhotos.length >= MAX_LISTING_PHOTOS} />
                     <span className="announcement-upload-icon" aria-hidden="true">▣</span><strong>{imageLoading ? 'Enviando fotos...' : 'Arraste as fotos aqui'}</strong><small>ou</small><span className="announcement-select-files">Selecionar imagens</span>
                   </label>
                   <div className="announcement-photo-gallery">
                     {announcementPhotos.map((photo, index) => (
                       <div className="announcement-photo-thumb" key={`${photo.url}-${index}`} draggable onDragStart={(event) => event.dataTransfer.setData('text/plain', String(index))} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); moveAnnouncementPhoto(Number(event.dataTransfer.getData('text/plain')), index) }}>
-                        <img src={photo.url} alt={`Foto ${index + 1} do imóvel`} />
+                        <img src={photo.url} alt={`Foto ${index + 1} do imóvel`} loading="lazy" />
                         <button type="button" className="announcement-photo-remove" aria-label={`Remover foto ${index + 1}`} onClick={() => removeAnnouncementPhoto(index)}>×</button>
                         <div className="announcement-photo-order"><button type="button" aria-label="Mover foto para a esquerda" disabled={index === 0} onClick={() => moveAnnouncementPhoto(index, index - 1)}>‹</button><span>{index === 0 ? 'Principal' : index + 1}</span><button type="button" aria-label="Mover foto para a direita" disabled={index === announcementPhotos.length - 1} onClick={() => moveAnnouncementPhoto(index, index + 1)}>›</button></div>
                       </div>
                     ))}
-                    {announcementPhotos.length < 5 && <label className="announcement-add-photo" htmlFor="image"><span>＋</span>Adicionar<br />mais fotos</label>}
+                    {announcementPhotos.length < MAX_LISTING_PHOTOS && <label className="announcement-add-photo" htmlFor="image"><span>＋</span>Adicionar<br />mais fotos</label>}
                   </div>
                 </div>
-                <small className="announcement-photo-message">{imageLoading ? 'Enviando...' : imageMessage || `${announcementPhotos.length}/5 fotos. JPG, PNG ou WEBP, até 8 MB cada.`}</small>
+                <small className="announcement-photo-message">{imageLoading ? 'Enviando...' : imageMessage || `${announcementPhotos.length}/${MAX_LISTING_PHOTOS} fotos. JPG, PNG ou WEBP, até 8 MB cada.`}</small>
               </section>
 
               {announcementError && <p className="announcement-submit-error" role="alert">{announcementError}</p>}

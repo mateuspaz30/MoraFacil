@@ -347,9 +347,13 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
   const addressQuery = [fullAddress, neighborhood, city, listing.cep].filter(Boolean).join(', ')
   const galleryImages = useMemo(() => getListingImages(listing), [listing])
   const image = galleryImages[activeImageIndex] || ''
-  const thumbnailIndices = galleryImages.length <= 4
-    ? galleryImages.map((_, index) => index)
-    : [...new Set([0, 1, 2, activeImageIndex >= 3 && activeImageIndex < galleryImages.length - 1 ? activeImageIndex : galleryImages.length - 1])]
+  const thumbnailStartIndex = Math.min(
+    Math.max(activeImageIndex - 1, 0),
+    Math.max(galleryImages.length - 4, 0),
+  )
+  const thumbnailIndices = galleryImages
+    .slice(thumbnailStartIndex, thumbnailStartIndex + 4)
+    .map((_, index) => thumbnailStartIndex + index)
   const description = listing.description || 'Descrição não informada.'
   const purpose = getListingPurpose(listing)
   const purposeLabel = getListingPurposeLabel(listing)
@@ -582,7 +586,7 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
                 onClick={() => setGalleryOpen(true)}
               >
                 <Camera size={14} strokeWidth={2.2} aria-hidden="true" />
-                <span>{galleryImages.length ? activeImageIndex + 1 : 0}/{galleryImages.length}</span>
+                <span>{galleryImages.length ? activeImageIndex + 1 : 0} / {galleryImages.length}</span>
                 <span className="listing-gallery-count-hint">Ver fotos</span>
               </button>}
             </div>
@@ -599,7 +603,7 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
                     aria-label={`Exibir foto ${photoIndex + 1} de ${galleryImages.length}`}
                     aria-pressed={activeImageIndex === photoIndex}
                   >
-                    <img src={photo} alt={`Foto ${photoIndex + 1} de ${listing.title}`} />
+                    <img src={photo} alt={`Foto ${photoIndex + 1} de ${listing.title}`} loading="lazy" />
                     {hasPhotoCountBadge && (
                       <span className="listing-thumbnail-count">
                         <ListingPhotoCount
