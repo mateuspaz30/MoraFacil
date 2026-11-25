@@ -1066,13 +1066,15 @@
 .site-footer {
   width: 100%;
   margin: 30px auto 0;
-  padding: 24px 16px;
+  padding: 22px 0 20px;
   box-sizing: border-box;
+  border-top: 1px solid #e5e9ee;
   background: transparent;
   color: #8793a0;
-  text-align: center;
+  text-align: left;
 }
 
+.real-estate-shell > .site-footer { margin-bottom: -28px; }
 .listing-detail-page + .site-footer { width: min(calc(100% - 56px), 1500px); margin: 48px auto 0; }
 .site-footer-copyright { margin: 0; color: inherit; font-size: 0.74rem; font-weight: 400; }
 
@@ -1124,7 +1126,7 @@
 }
 
 @media (max-width: 600px) {
-  .site-footer { margin-top: 24px; padding: 22px 14px; }
+  .site-footer { margin-top: 24px; padding: 20px 0 18px; }
   .listing-detail-page + .site-footer { width: calc(100% - 32px); margin: 34px auto 0; }
   .site-footer-copyright { font-size: 0.68rem; }
 }
