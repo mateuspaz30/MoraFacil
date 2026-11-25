@@ -3023,14 +3023,21 @@ function App() {
                 placeholder="Buscar por nome, imobiliária ou cidade"
               />
             </label>
-            <label className="professional-directory-select">
-              <span className="sr-only">Filtrar por categoria</span>
-              <select value={professionalCategory} onChange={(event) => setProfessionalCategory(event.target.value)}>
-                <option value="all">Todos</option>
-                <option value="imobiliaria">Imobiliárias</option>
-                <option value="corretor">Corretores</option>
-              </select>
-            </label>
+            <div className="professional-directory-category-tabs" role="group" aria-label="Filtrar por categoria">
+              {[
+                ['all', 'Todos'],
+                ['imobiliaria', 'Imobiliárias'],
+                ['corretor', 'Corretores'],
+              ].map(([category, label]) => (
+                <button
+                  type="button"
+                  key={category}
+                  aria-pressed={professionalCategory === category}
+                  className={professionalCategory === category ? 'active' : ''}
+                  onClick={() => setProfessionalCategory(category)}
+                >{label}</button>
+              ))}
+            </div>
             <label className="professional-directory-select">
               <span className="sr-only">Ordenar profissionais</span>
               <select value={professionalSort} onChange={(event) => setProfessionalSort(event.target.value)}>
@@ -3060,6 +3067,7 @@ function App() {
               {sortedProfessionalProfiles.map((profile) => {
                 const profileName = profile.professional_name || (profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor')
                 const profileLogo = getSafeExternalUrl(profile.logo_url)
+                const profileCity = String(profile.city || '').trim() || 'Atendimento regional'
                 return (
                   <article className="professional-directory-card" key={profile.slug}>
                     <div className="professional-directory-card-heading">
@@ -3075,9 +3083,9 @@ function App() {
                         <h2>{profileName}</h2>
                       </div>
                     </div>
-                    {profile.city && <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profile.city}</p>}
+                    <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profileCity}</p>
                     <p className="professional-directory-description">
-                      {profile.description || 'Conheça o perfil público e os imóveis disponíveis deste profissional.'}
+                      {String(profile.description || '').trim() || `Conheça os imóveis e o atendimento de ${profileName}.`}
                     </p>
                     <div className="professional-directory-card-footer">
                       <span><House size={16} aria-hidden="true" />{Number(profile.active_listing_count) || 0} imóveis ativos</span>

@@ -7769,7 +7769,8 @@ dl.my-area-profile-grid > div {
 
 .professional-directory-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px 220px;
+  grid-template-columns: minmax(220px, 1fr) max-content 220px;
+  align-items: center;
   gap: 12px;
   padding: 14px;
   border: 1px solid #e0e8ef;
@@ -7821,6 +7822,47 @@ dl.my-area-profile-grid > div {
   cursor: pointer;
 }
 
+.professional-directory-category-tabs {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #d8e2eb;
+  border-radius: 10px;
+  background: #f5f8fa;
+  padding: 4px;
+}
+
+.professional-directory-category-tabs button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 12px;
+  background: transparent;
+  color: #536b84;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.professional-directory-category-tabs button:hover {
+  background: #e9f1ed;
+  color: #087849;
+}
+
+.professional-directory-category-tabs button.active {
+  background: #078c59;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(7, 140, 89, 0.2);
+}
+
+.professional-directory-category-tabs button:focus-visible {
+  outline: 3px solid rgba(7, 140, 89, 0.3);
+  outline-offset: 2px;
+}
+
 .professional-directory-search:focus-within,
 .professional-directory-select:focus-within {
   border-color: #078c59;
@@ -7838,6 +7880,7 @@ dl.my-area-profile-grid > div {
 .professional-directory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 16px;
 }
 
@@ -7845,7 +7888,7 @@ dl.my-area-profile-grid > div {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid #e0e8ef;
   border-radius: 16px;
   background: #fff;
@@ -7862,12 +7905,24 @@ dl.my-area-profile-grid > div {
 .professional-directory-card-heading > img,
 .professional-directory-avatar {
   display: grid;
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
+  width: 66px;
+  height: 66px;
+  flex: 0 0 66px;
   place-items: center;
+  border-radius: 18px;
+}
+
+.professional-directory-card-heading > img {
+  border-radius: 18px;
+}
+
+.professional-directory-avatar svg {
+  width: 32px;
+  height: 32px;
+}
+
+.professional-directory-card-heading > img {
   border: 1px solid #dce8df;
-  border-radius: 14px;
   background: #eef7f0;
   color: #078c59;
   object-fit: cover;
@@ -7897,7 +7952,7 @@ dl.my-area-profile-grid > div {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   color: #60758a;
   font-size: 0.78rem;
 }
@@ -7909,14 +7964,13 @@ dl.my-area-profile-grid > div {
 
 .professional-directory-description {
   display: -webkit-box;
-  min-height: 3.9em;
   overflow: hidden;
-  margin: 12px 0 16px;
+  margin: 8px 0 12px;
   color: #52677d;
   font-size: 0.82rem;
   line-height: 1.5;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
 .professional-directory-card-footer {
@@ -7924,8 +7978,8 @@ dl.my-area-profile-grid > div {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: auto;
-  padding-top: 12px;
+  margin-top: 0;
+  padding-top: 10px;
   border-top: 1px solid #edf1f4;
 }
 
@@ -7982,6 +8036,14 @@ dl.my-area-profile-grid > div {
     grid-column: 1 / -1;
   }
 
+  .professional-directory-category-tabs {
+    justify-content: center;
+  }
+
+  .professional-directory-category-tabs button {
+    flex: 1 1 auto;
+  }
+
   .professional-directory-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -8012,6 +8074,25 @@ dl.my-area-profile-grid > div {
 
   .professional-directory-card {
     padding: 16px;
+  }
+
+  .professional-directory-category-tabs {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .professional-directory-category-tabs button {
+    min-width: 0;
+    padding-right: 7px;
+    padding-left: 7px;
+    font-size: 0.74rem;
+  }
+
+  .professional-directory-card-heading > img,
+  .professional-directory-avatar {
+    width: 60px;
+    height: 60px;
+    flex-basis: 60px;
   }
 }
 
