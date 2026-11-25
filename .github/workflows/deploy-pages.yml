@@ -56,6 +56,8 @@ jobs:
             mkdir -p "dist/minha-area/$route"
             cp dist/index.html "dist/minha-area/$route/index.html"
           done
+          mkdir -p dist/profissionais
+          cp dist/index.html dist/profissionais/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
