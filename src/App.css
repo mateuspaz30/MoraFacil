@@ -6488,6 +6488,7 @@ dl.my-area-profile-grid > div {
 .company-dashboard-stats .my-area-stat-card {
   min-width: 0;
   min-height: 104px;
+  align-items: center;
   gap: 12px;
   padding: 14px;
 }
@@ -6518,6 +6519,47 @@ dl.my-area-profile-grid > div {
 .company-dashboard-stats .my-area-stat-card strong {
   margin-top: 2px;
   font-size: clamp(1.7rem, 2.4vw, 2.25rem);
+}
+
+.company-dashboard-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.company-dashboard-quick-links button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #dce5ee;
+  border-radius: 9px;
+  background: #fff;
+  color: #35516c;
+  padding: 0 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 750;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.company-dashboard-quick-links button svg {
+  color: #078c35;
+}
+
+.company-dashboard-quick-links button:hover,
+.company-dashboard-quick-links button:focus-visible {
+  border-color: #9dcfad;
+  background: #f3fbf5;
+  color: #087b32;
+}
+
+.company-dashboard-quick-links button:focus-visible {
+  outline: 2px solid #078c35;
+  outline-offset: 2px;
 }
 
 .company-statistics-stats .company-statistics-kpi-note {
@@ -7060,6 +7102,20 @@ dl.my-area-profile-grid > div {
   padding: 11px 12px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.company-statistics-table th:nth-child(n + 2),
+.company-statistics-table td:nth-child(n + 2) {
+  text-align: right;
+}
+
+.company-statistics-table.company-borough-table th:nth-child(n + 3),
+.company-statistics-table.company-borough-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+.company-statistics-table .company-statistics-sort-button {
+  text-align: right;
 }
 
 .company-statistics-table tbody tr:last-child td {
@@ -10289,6 +10345,15 @@ dl.my-area-profile-grid > div {
   font-size: 0.73rem;
 }
 
+.company-dashboard-table th:nth-child(3),
+.company-dashboard-table th:nth-child(4),
+.company-dashboard-table th:nth-child(5),
+.company-dashboard-table td:nth-child(3),
+.company-dashboard-table td:nth-child(4),
+.company-dashboard-table td:nth-child(5) {
+  text-align: right;
+}
+
 .company-dashboard-table-property {
   display: grid;
   min-width: 170px;
@@ -10397,9 +10462,68 @@ dl.my-area-profile-grid > div {
   display: grid;
   gap: 7px;
   margin: 12px 0 14px;
-  padding-left: 17px;
+  padding: 0;
   color: #536b84;
   font-size: 0.72rem;
+  list-style: none;
+}
+
+.company-dashboard-attention-groups {
+  display: grid;
+  gap: 13px;
+  margin-top: 15px;
+}
+
+.company-dashboard-attention-groups > section + section {
+  border-top: 1px solid #edf1f5;
+  padding-top: 12px;
+}
+
+.company-dashboard-attention-groups h3 {
+  margin: 0;
+  color: #536b84;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.company-dashboard-attention-groups li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid #edf1f5;
+  padding: 7px 0;
+}
+
+.company-dashboard-attention-groups li:last-child {
+  border-bottom: 0;
+}
+
+.company-dashboard-attention-groups li > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  overflow: hidden;
+  color: #35516c;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.company-dashboard-attention-groups li small {
+  color: #71849a;
+  font-size: 0.65rem;
+  font-weight: 400;
+}
+
+.company-dashboard-attention-groups li .company-dashboard-edit-button {
+  min-height: 28px;
+  white-space: nowrap;
+}
+
+.company-dashboard-attention-groups .company-dashboard-empty {
+  padding: 8px 0 0;
+  font-size: 0.7rem;
 }
 
 .company-dashboard-attention > button {

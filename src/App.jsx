@@ -2573,12 +2573,6 @@ function App() {
     .sort((first, second) => (Number(second.visualizacoes) || 0) - (Number(first.visualizacoes) || 0))[0] || null
   const mostWhatsAppClickedListing = [...companyPeriodListings]
     .sort((first, second) => (Number(second.whatsapp_clicks) || 0) - (Number(first.whatsapp_clicks) || 0))[0] || null
-  const listingsWithoutInteractionsCount = companyPeriodListings.filter((item) => (
-    (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
-  )).length
-  const listingsWithoutPerformance = companyPeriodListings.filter((item) => (
-    (Number(item.visualizacoes) || 0) === 0 && (Number(item.whatsapp_clicks) || 0) === 0
-  ))
   const calculateInterestRate = (viewsValue, clicksValue) => {
     const views = Number(viewsValue) || 0
     const clicks = Number(clicksValue) || 0
@@ -3438,6 +3432,13 @@ function App() {
                     </div>
                   )}
                 </header>
+                {isCompanyDashboard && (
+                  <nav className="company-dashboard-quick-links" aria-label="Atalhos rápidos do Dashboard">
+                    <button type="button" onClick={() => openMyArea('listings')}><Building2 size={16} aria-hidden="true" />Gerenciar imóveis</button>
+                    <button type="button" onClick={() => openMyArea('public-profile')}><Pencil size={16} aria-hidden="true" />Editar perfil público</button>
+                    <button type="button" onClick={() => openMyArea('statistics')}><ChartNoAxesColumn size={16} aria-hidden="true" />Ver estatísticas completas</button>
+                  </nav>
+                )}
                 {isCompanyAccount && (isCompanyDashboard || visibleAccountSection === 'statistics') && (
                   <section className="company-period-filter" aria-label="Filtro de período das métricas">
                     <label className="company-period-select">
@@ -3468,22 +3469,30 @@ function App() {
                   <>
                   {isCompanyAccount ? (
                     <>
-                      <section className="my-area-stats-grid company-dashboard-stats" aria-label="Indicadores básicos dos imóveis">
-                        <article className="my-area-stat-card">
-                          <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
-                          <div><small>Imóveis ativos</small><strong>{new Intl.NumberFormat('pt-BR').format(activeListings.length)}</strong></div>
-                        </article>
+                      <section className="my-area-stats-grid company-dashboard-stats company-statistics-stats" aria-label="Indicadores básicos dos imóveis">
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon views" aria-hidden="true"><Eye size={28} strokeWidth={2.2} /></span>
                           <div><small>Visualizações no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalViews) : '—'}</strong></div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="whatsapp-icon-card" aria-hidden="true"><WhatsAppIcon size={32} /></span>
-                          <div><small>Cliques WhatsApp no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</strong></div>
+                          <div>
+                            <small>Cliques WhatsApp no período</small>
+                            <strong className="company-statistics-kpi-value">
+                              <span>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalWhatsAppClicks) : '—'}</span>
+                              <small className="company-statistics-kpi-note">
+                                {companyPeriodMetricsReady && companyPeriodTotalViews > 0 ? `${formatPercentage(companyAverageInterestRate)} conv.` : '— conv.'}
+                              </small>
+                            </strong>
+                          </div>
                         </article>
                         <article className="my-area-stat-card">
                           <span className="my-area-stat-icon company-favorites" aria-hidden="true"><Heart size={28} strokeWidth={2.2} /></span>
                           <div><small>Favoritos no período</small><strong>{companyPeriodMetricsReady ? new Intl.NumberFormat('pt-BR').format(companyPeriodTotalFavorites) : '—'}</strong></div>
+                        </article>
+                        <article className="my-area-stat-card">
+                          <span className="my-area-stat-icon company-active" aria-hidden="true"><House size={28} strokeWidth={2.2} /></span>
+                          <div><small>Imóveis ativos</small><strong>{new Intl.NumberFormat('pt-BR').format(activeListings.length)}</strong></div>
                         </article>
                       </section>
                       <div className="company-dashboard-overview-grid">
@@ -3569,18 +3578,37 @@ function App() {
                         <aside className="company-dashboard-aside">
                           <section className="company-dashboard-panel company-dashboard-attention" aria-labelledby="company-dashboard-attention-title">
                             <header className="company-dashboard-panel-heading">
-                              <div><h2 id="company-dashboard-attention-title">Pontos de atenção</h2><p>Imóveis sem visualizações e sem cliques</p></div>
+                              <div><h2 id="company-dashboard-attention-title">Pontos de atenção</h2><p>Anúncios que podem precisar de revisão</p></div>
                               <ChartNoAxesColumn size={20} aria-hidden="true" />
                             </header>
                             {!companyPeriodMetricsReady ? (
                               <p className="company-dashboard-empty">Aguardando métricas do período.</p>
-                            ) : listingsWithoutPerformance.length ? (
-                              <>
-                                <strong className="company-dashboard-attention-count">{new Intl.NumberFormat('pt-BR').format(listingsWithoutInteractionsCount)}</strong>
-                                <ul>{listingsWithoutPerformance.slice(0, 3).map((item) => <li key={item.id}>{item.title}</li>)}</ul>
-                                <button type="button" onClick={() => openMyArea('listings')}>Revisar imóveis</button>
-                              </>
-                            ) : <p className="company-dashboard-empty">Todos os anúncios já têm visualizações ou cliques no WhatsApp.</p>}
+                            ) : (
+                              <div className="company-dashboard-attention-groups">
+                                <section>
+                                  <h3>Sem visualizações</h3>
+                                  {zeroViewListings.length ? (
+                                    <ul>{zeroViewListings.slice(0, 3).map((item) => (
+                                      <li key={item.id}>
+                                        <span>{item.title}</span>
+                                        <button className="company-dashboard-edit-button" type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar anúncio: ${item.title}`}><Pencil size={14} aria-hidden="true" />Editar anúncio</button>
+                                      </li>
+                                    ))}</ul>
+                                  ) : <p className="company-dashboard-empty">Todos os imóveis tiveram visualizações.</p>}
+                                </section>
+                                <section>
+                                  <h3>Muitas visualizações, sem cliques</h3>
+                                  {highViewsNoClicksListings.length ? (
+                                    <ul>{highViewsNoClicksListings.slice(0, 3).map((item) => (
+                                      <li key={item.id}>
+                                        <span>{item.title}<small>{new Intl.NumberFormat('pt-BR').format(item.visualizacoes)} visualizações</small></span>
+                                        <button className="company-dashboard-edit-button" type="button" onClick={() => openAnnouncementForm(item)} aria-label={`Editar anúncio: ${item.title}`}><Pencil size={14} aria-hidden="true" />Editar anúncio</button>
+                                      </li>
+                                    ))}</ul>
+                                  ) : <p className="company-dashboard-empty">Nenhum imóvel com 50 ou mais visualizações e zero cliques.</p>}
+                                </section>
+                              </div>
+                            )}
                           </section>
                           <section className="company-dashboard-panel company-dashboard-most-viewed" aria-labelledby="company-dashboard-most-viewed-title">
                             <header className="company-dashboard-panel-heading"><div><h2 id="company-dashboard-most-viewed-title">Mais visualizado</h2></div><Eye size={20} aria-hidden="true" /></header>
