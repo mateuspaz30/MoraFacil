@@ -260,11 +260,12 @@ const getAccountSectionPath = (section) => {
   const encodedPath = sectionPath?.split('/').map(encodeURIComponent).join('/')
   return `${getAppBasePath()}minha-area${encodedPath ? `/${encodedPath}` : ''}`
 }
-const getCompanyPublicSlugFromPath = (pathname) => {
+const getPublicProfessionalSlugFromPath = (pathname) => {
   const [route, slug] = getRelativeAppPath(pathname).split('/')
-  return route === 'imobiliaria' ? decodeURIComponent(slug || '') : ''
+  return ['imobiliaria', 'profissionais'].includes(route) ? decodeURIComponent(slug || '') : ''
 }
 const getCompanyPublicProfilePath = (slug) => `${getAppBasePath()}imobiliaria/${encodeURIComponent(slug)}`
+const getPublicProfessionalProfilePath = (slug) => `${getAppBasePath()}profissionais/${encodeURIComponent(slug)}`
 const getAccountTypeLabel = (userType) => ({
   pessoa_fisica: 'Pessoa Física',
   corretor: 'Corretor',
@@ -783,6 +784,14 @@ function App() {
   const [favoriteReturnPath, setFavoriteReturnPath] = useState('')
   const [userProfile, setUserProfile] = useState(null)
   const [userProfileError, setUserProfileError] = useState('')
+  const [professionalDirectory, setProfessionalDirectory] = useState({
+    status: supabase ? 'idle' : 'error',
+    profiles: [],
+    error: supabase ? '' : 'A busca de perfis profissionais precisa estar conectada ao Supabase.',
+  })
+  const [professionalSearch, setProfessionalSearch] = useState('')
+  const [professionalCategory, setProfessionalCategory] = useState('all')
+  const [professionalSort, setProfessionalSort] = useState('relevance')
   const [profileEditing, setProfileEditing] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
@@ -818,6 +827,7 @@ function App() {
   const [accountSection, setAccountSection] = useState(() => getAccountSectionFromPath(window.location.pathname) || 'overview')
   const [recentListingsExpanded, setRecentListingsExpanded] = useState(false)
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
+  const previousInternalPathRef = useRef('')
   const [authMode, setAuthMode] = useState('login')
   const [authForm, setAuthForm] = useState(emptyAuthForm)
   const [authSignupStep, setAuthSignupStep] = useState('profile')
@@ -889,6 +899,7 @@ function App() {
   }, [])
 
   const navigateToPath = (path) => {
+    previousInternalPathRef.current = window.location.pathname
     window.history.pushState({}, '', path)
     setCurrentPath(window.location.pathname)
     setCompanySortOrder('recent')
@@ -899,6 +910,13 @@ function App() {
     setCompanyPublicTab(['showcase', 'about', 'contacts'].includes(tab) ? tab : 'showcase')
     const section = getAccountSectionFromPath(window.location.pathname)
     if (section) setAccountSection(section)
+  }
+  const navigateBackToInternalPage = () => {
+    if (previousInternalPathRef.current) {
+      window.history.back()
+      return
+    }
+    navigateToPath(getAppBasePath())
   }
   const openMyArea = (section = 'overview') => navigateToPath(getAccountSectionPath(section))
   const closeAuthModal = () => {
@@ -1013,11 +1031,11 @@ function App() {
   }, [authUser])
 
   useEffect(() => {
-    const slug = getCompanyPublicSlugFromPath(currentPath)
+    const slug = getPublicProfessionalSlugFromPath(currentPath)
     if (!slug || !supabase) return undefined
 
     let active = true
-    const loadPublicCompanyProfile = async () => {
+    const loadPublicProfessionalProfile = async () => {
       try {
         const { data, error } = await supabase.rpc('get_public_company_profile', {
           target_slug: slug,
@@ -1052,19 +1070,45 @@ function App() {
           setCompanyPublicActiveField('')
         }
       } catch (error) {
-        console.error('Falha ao carregar o perfil público da imobiliária:', error)
+        console.error('Falha ao carregar o perfil público profissional:', error)
         if (active) {
           setPublicCompanyProfile({
             slug,
             status: 'error',
             data: null,
-            error: `Não foi possível carregar este perfil público. Confira se as migrations 20261121_company_public_profiles.sql, 20261124_company_public_profile_details.sql e 20261126_company_public_profile_editor.sql foram executadas no Supabase. ${error.message}`,
+            error: `Não foi possível carregar este perfil público. Execute supabase/migrations/20261127_public_professional_directory.sql no Supabase. ${error.message}`,
           })
         }
       }
     }
 
-    loadPublicCompanyProfile()
+    loadPublicProfessionalProfile()
+    return () => { active = false }
+  }, [currentPath])
+
+  useEffect(() => {
+    if (!supabase || getRelativeAppPath(currentPath) !== 'profissionais') return undefined
+
+    let active = true
+    const loadProfessionalDirectory = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_public_professional_directory')
+        if (error) throw error
+        if (!active) return
+        setProfessionalDirectory({ status: 'loaded', profiles: data || [], error: '' })
+      } catch (error) {
+        console.error('Falha ao carregar os perfis públicos profissionais:', error)
+        if (active) {
+          setProfessionalDirectory({
+            status: 'error',
+            profiles: [],
+            error: `Não foi possível carregar os perfis profissionais. Execute supabase/migrations/20261127_public_professional_directory.sql no Supabase. ${error.message}`,
+          })
+        }
+      }
+    }
+
+    loadProfessionalDirectory()
     return () => { active = false }
   }, [currentPath])
 
@@ -2683,15 +2727,48 @@ function App() {
   const favoriteListings = favoriteListingIds
     .map((id) => publicPublishedListings.find((item) => String(item.id) === String(id)))
     .filter(Boolean)
-  const companyPublicRouteSlug = getCompanyPublicSlugFromPath(currentPath)
+  const professionalDirectoryRoute = getRelativeAppPath(currentPath) === 'profissionais'
+  const companyPublicRouteSlug = getPublicProfessionalSlugFromPath(currentPath)
   const activePublicCompanyProfile = publicCompanyProfile.slug === companyPublicRouteSlug
     ? publicCompanyProfile
     : {
       slug: companyPublicRouteSlug,
       status: companyPublicRouteSlug ? (supabase ? 'loading' : 'error') : 'idle',
       data: null,
-      error: 'O perfil público da imobiliária precisa estar conectado ao Supabase.',
+      error: 'O perfil público profissional precisa estar conectado ao Supabase.',
     }
+  const normalizedProfessionalSearch = normalizeNeighborhoodName(professionalSearch)
+  const filteredProfessionalProfiles = professionalDirectory.profiles.filter((profile) => {
+    const categoryMatches = professionalCategory === 'all' || profile.professional_type === professionalCategory
+    const searchableText = normalizeNeighborhoodName([
+      profile.professional_name,
+      profile.city,
+      profile.professional_type === 'imobiliaria' ? 'imobiliaria' : 'corretor',
+    ].filter(Boolean).join(' '))
+    return categoryMatches && (!normalizedProfessionalSearch || searchableText.includes(normalizedProfessionalSearch))
+  })
+  const sortedProfessionalProfiles = [...filteredProfessionalProfiles].sort((first, second) => {
+    if (professionalSort === 'name') {
+      return first.professional_name.localeCompare(second.professional_name, 'pt-BR')
+    }
+    if (professionalSort === 'listings') {
+      return Number(second.active_listing_count) - Number(first.active_listing_count)
+        || first.professional_name.localeCompare(second.professional_name, 'pt-BR')
+    }
+    if (!normalizedProfessionalSearch) {
+      return first.professional_name.localeCompare(second.professional_name, 'pt-BR')
+    }
+    const getRelevance = (profile) => {
+      const name = normalizeNeighborhoodName(profile.professional_name)
+      const city = normalizeNeighborhoodName(profile.city)
+      if (name.startsWith(normalizedProfessionalSearch)) return 0
+      if (name.includes(normalizedProfessionalSearch)) return 1
+      if (city.startsWith(normalizedProfessionalSearch)) return 2
+      return 3
+    }
+    return getRelevance(first) - getRelevance(second)
+      || first.professional_name.localeCompare(second.professional_name, 'pt-BR')
+  })
   const companyPublicListings = activePublicCompanyProfile.data
     ? publicPublishedListings
       .filter((item) => item.user_id === activePublicCompanyProfile.data.user_id)
@@ -2917,9 +2994,115 @@ function App() {
     )
   }
 
+  if (professionalDirectoryRoute) {
+    return (
+      <div className="company-public-page professional-directory-page">
+        <header className="company-public-header">
+          <button type="button" className="company-public-brand" onClick={() => navigateToPath(getAppBasePath())}>
+            <img src={logo} alt="" />
+            <strong>Mora <span>Fácil</span></strong>
+          </button>
+          <button type="button" className="company-public-portal-link" onClick={navigateBackToInternalPage}>
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar
+          </button>
+        </header>
+        <main className="professional-directory-main">
+          <header className="professional-directory-heading">
+            <span>Encontre quem entende de imóveis</span>
+            <h1>Profissionais Parceiros</h1>
+            <p>Conheça imobiliárias e corretores com perfis públicos no Mora Fácil.</p>
+          </header>
+          <section className="professional-directory-controls" aria-label="Buscar profissionais">
+            <label className="professional-directory-search">
+              <span className="sr-only">Buscar por nome, imobiliária ou cidade</span>
+              <Search size={20} aria-hidden="true" />
+              <input
+                type="search"
+                value={professionalSearch}
+                onChange={(event) => setProfessionalSearch(event.target.value)}
+                placeholder="Buscar por nome, imobiliária ou cidade"
+              />
+            </label>
+            <label className="professional-directory-select">
+              <span className="sr-only">Filtrar por categoria</span>
+              <select value={professionalCategory} onChange={(event) => setProfessionalCategory(event.target.value)}>
+                <option value="all">Todos</option>
+                <option value="imobiliaria">Imobiliárias</option>
+                <option value="corretor">Corretores</option>
+              </select>
+            </label>
+            <label className="professional-directory-select">
+              <span className="sr-only">Ordenar profissionais</span>
+              <select value={professionalSort} onChange={(event) => setProfessionalSort(event.target.value)}>
+                <option value="relevance">Ordenar: relevância</option>
+                <option value="name">Nome A–Z</option>
+                <option value="listings">Mais imóveis ativos</option>
+              </select>
+            </label>
+          </section>
+          <p className="professional-directory-count" aria-live="polite">
+            {professionalDirectory.status === 'loaded'
+              ? `${sortedProfessionalProfiles.length} ${sortedProfessionalProfiles.length === 1 ? 'perfil encontrado' : 'perfis encontrados'}`
+              : ' '}
+          </p>
+          {['idle', 'loading'].includes(professionalDirectory.status) ? (
+            <p className="professional-directory-feedback" role="status">Carregando perfis profissionais…</p>
+          ) : professionalDirectory.status === 'error' ? (
+            <p className="professional-directory-feedback error" role="alert">{professionalDirectory.error}</p>
+          ) : sortedProfessionalProfiles.length === 0 ? (
+            <p className="professional-directory-feedback" role="status">
+              {professionalDirectory.profiles.length
+                ? 'Nenhum perfil corresponde à busca. Tente outro nome ou cidade.'
+                : 'Ainda não há perfis públicos de corretores ou imobiliárias disponíveis.'}
+            </p>
+          ) : (
+            <div className="professional-directory-grid">
+              {sortedProfessionalProfiles.map((profile) => {
+                const profileName = profile.professional_name || (profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor')
+                const profileLogo = getSafeExternalUrl(profile.logo_url)
+                return (
+                  <article className="professional-directory-card" key={profile.slug}>
+                    <div className="professional-directory-card-heading">
+                      {profileLogo ? (
+                        <img src={profileLogo} alt="" loading="lazy" />
+                      ) : (
+                        <span className="professional-directory-avatar" aria-hidden="true">
+                          {profile.professional_type === 'imobiliaria' ? <Building2 size={26} /> : <User size={26} />}
+                        </span>
+                      )}
+                      <div>
+                        <span>{profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor'}</span>
+                        <h2>{profileName}</h2>
+                      </div>
+                    </div>
+                    {profile.city && <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profile.city}</p>}
+                    <p className="professional-directory-description">
+                      {profile.description || 'Conheça o perfil público e os imóveis disponíveis deste profissional.'}
+                    </p>
+                    <div className="professional-directory-card-footer">
+                      <span><House size={16} aria-hidden="true" />{Number(profile.active_listing_count) || 0} imóveis ativos</span>
+                      <button type="button" onClick={() => navigateToPath(getPublicProfessionalProfilePath(profile.slug))}>
+                        Ver Perfil <ChevronRight size={17} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </main>
+        <footer className="company-public-signature">
+          Anúncios verificados na plataforma <a href={getAppBasePath()}>Mora Fácil</a> • © 2026
+        </footer>
+      </div>
+    )
+  }
+
   if (companyPublicRouteSlug) {
     const company = activePublicCompanyProfile.data
     const isCompanyPublicOwner = Boolean(authUser && company?.user_id === authUser.id && accountUserType === 'imobiliaria')
+    const publicProfessionalRole = company?.account_type === 'corretor' ? 'Corretor' : 'Imobiliária'
+    const publicProfessionalArticle = publicProfessionalRole === 'Corretor' ? 'o corretor' : 'a imobiliária'
     const isCompanyPublicEditSession = isCompanyPublicOwner && companyPublicEditMode
     const isCompanyPublicEditing = isCompanyPublicEditSession && !companyPublicPreviewMode
     const companyPublicOriginalDraft = {
@@ -2951,7 +3134,9 @@ function App() {
       logo_url: companyPublicDraft.logo_url ?? company.logo_url,
       cover_url: companyPublicDraft.cover_url ?? company.cover_url,
     } : null
-    const visibleCompanyName = companyPublicDisplay?.company_name?.trim() || company?.company_name || 'Imobiliária'
+    const visibleCompanyName = companyPublicDisplay?.company_name?.trim()
+      || company?.company_name
+      || (company?.account_type === 'corretor' ? 'Corretor' : 'Imobiliária')
     const companyListingOrigin = {
       slug: companyPublicRouteSlug,
       name: visibleCompanyName,
@@ -3044,8 +3229,8 @@ function App() {
             <img src={logo} alt="" />
             <strong>Mora <span>Fácil</span></strong>
           </button>
-          <button type="button" className="company-public-portal-link" onClick={() => navigateToPath(isCompanyPublicOwner ? getAccountSectionPath('public-profile') : getAppBasePath())}>
-            <ArrowLeft size={18} aria-hidden="true" /> {isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar ao portal'}
+          <button type="button" className="company-public-portal-link" onClick={() => isCompanyPublicOwner ? navigateToPath(getAccountSectionPath('public-profile')) : navigateBackToInternalPage()}>
+            <ArrowLeft size={18} aria-hidden="true" /> {isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar'}
           </button>
         </header>
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
@@ -3079,7 +3264,7 @@ function App() {
             </div>
           )}
           {activePublicCompanyProfile.status === 'loading' ? (
-            <p className="company-public-feedback" role="status">Carregando perfil da imobiliária…</p>
+            <p className="company-public-feedback" role="status">Carregando perfil profissional…</p>
           ) : activePublicCompanyProfile.status === 'error' ? (
             <p className="company-public-feedback error" role="alert">{activePublicCompanyProfile.error}</p>
           ) : activePublicCompanyProfile.status === 'not-found' ? (
@@ -3118,7 +3303,7 @@ function App() {
                   )}
                 </div>
                 <div className="company-public-copy">
-                  <span className="company-public-eyebrow">Imobiliária</span>
+                  <span className="company-public-eyebrow">{publicProfessionalRole}</span>
                   {isCompanyPublicEditSession
                     ? renderCompanyPublicField('display_name', 'nome público', { placeholder: company.company_name, maxLength: 120, className: 'company-public-name-editor', id: 'company-public-name' })
                     : <h1 id="company-public-name">{visibleCompanyName}</h1>}
@@ -3149,7 +3334,7 @@ function App() {
               <nav className="company-public-tabs" aria-label="Seções do perfil público">
                 {[
                   ['showcase', 'Vitrine e Imóveis'],
-                  ['about', 'Sobre a Imobiliária'],
+                  ['about', 'Sobre'],
                   ['contacts', 'Contatos e Redes'],
                 ].map(([tab, title]) => (
                   <button type="button" key={tab} className={companyPublicTab === tab ? 'active' : ''} aria-current={companyPublicTab === tab ? 'page' : undefined} onClick={() => setCompanyPublicTab(tab)}>{title}</button>
@@ -3214,15 +3399,15 @@ function App() {
                 favoriteMessage={favoriteMessage}
                 onToggleFavorite={handleToggleFavorite}
               />
-              <section className="company-public-contact-cta" aria-label="Fale com a imobiliária">
+              <section className="company-public-contact-cta" aria-label={`Fale com ${publicProfessionalArticle}`}>
                 <div className="company-public-contact-icon"><House size={24} aria-hidden="true" /></div>
                 <div>
                   <h2>Não encontrou o imóvel ideal?</h2>
-                  <p>Converse com a equipe da {visibleCompanyName} para encontrar o imóvel que procura.</p>
+                  <p>Converse com {visibleCompanyName} para encontrar o imóvel que procura.</p>
                 </div>
                 {whatsappContactNumber ? (
                   <a className="company-public-whatsapp" href={`https://wa.me/${whatsappContactNumber}`} target="_blank" rel="noreferrer">
-                    <WhatsAppIcon size={20} /> Conversar com a Imobiliária
+                    <WhatsAppIcon size={20} /> Conversar com {publicProfessionalRole}
                   </a>
                 ) : (
                   <span className="company-public-whatsapp disabled">WhatsApp não informado</span>
@@ -3232,14 +3417,14 @@ function App() {
               {companyPublicTab === 'about' && (
                 <section id="company-public-about" className="company-public-tab-panel" aria-labelledby="company-public-about-title">
                   <div className="company-public-tab-heading">
-                    <div><span>Conheça nossa história</span><h2 id="company-public-about-title">Sobre {visibleCompanyName}</h2></div>
+                    <div><span>Conheça nosso trabalho</span><h2 id="company-public-about-title">Sobre {visibleCompanyName}</h2></div>
                     {isCompanyPublicEditing && <span className="company-public-edit-hint">Clique no texto para editar</span>}
                   </div>
                   {isCompanyPublicEditSession
                     ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000, className: 'company-public-about-editor' })
                     : companyPublicDisplay.description
                       ? <p className="company-public-about-description">{companyPublicDisplay.description}</p>
-                      : <p className="company-public-about-empty">A imobiliária ainda não adicionou uma apresentação.</p>}
+                      : <p className="company-public-about-empty">{publicProfessionalRole === 'Corretor' ? 'Este corretor ainda não adicionou uma apresentação.' : 'A imobiliária ainda não adicionou uma apresentação.'}</p>}
                 </section>
               )}
               {companyPublicTab === 'contacts' && (
@@ -4603,6 +4788,15 @@ function App() {
             >
               <span className="mobile-menu-action-icon"><MenuPlusIcon /></span>
               <span className="mobile-menu-action-label">Anunciar imóvel</span>
+              <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
+            </button>
+            <button
+              type="button"
+              className="mobile-menu-secondary"
+              onClick={() => { setMobileMenuOpen(false); navigateToPath(`${getAppBasePath()}profissionais`) }}
+            >
+              <span className="mobile-menu-action-icon"><Building2 size={20} aria-hidden="true" /></span>
+              <span className="mobile-menu-action-label">🏢 Perfis Profissionais</span>
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
             </button>
             {authUser && <div className="mobile-menu-divider" />}

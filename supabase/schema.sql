@@ -31,11 +31,16 @@ set search_path = pg_catalog, public
 as $$
 declare
   base_slug text;
+  public_name text;
 begin
-  if new.tipo_usuario = 'imobiliaria' then
+  if new.tipo_usuario in ('corretor', 'imobiliaria') then
+    public_name := case
+      when new.tipo_usuario = 'imobiliaria' then coalesce(new.nome_imobiliaria, '')
+      else coalesce(new.nome_completo, '')
+    end;
     base_slug := regexp_replace(
       translate(
-        lower(btrim(coalesce(new.nome_imobiliaria, ''))),
+        lower(btrim(public_name)),
         'áàâãäåéèêëíìîïóòôõöúùûüçñýÿ',
         'aaaaaaeeeeiiiiooooouuuucnyy'
       ),
@@ -45,7 +50,7 @@ begin
     );
     base_slug := trim(both '-' from base_slug);
     if base_slug = '' then
-      base_slug := 'imobiliaria';
+      base_slug := case when new.tipo_usuario = 'imobiliaria' then 'imobiliaria' else 'corretor' end;
     end if;
     new.public_slug := base_slug || '-' || substr(replace(new.user_id::text, '-', ''), 1, 12);
   else
@@ -69,7 +74,7 @@ set public_slug = (
     nullif(
       trim(both '-' from regexp_replace(
         translate(
-          lower(btrim(coalesce(nome_imobiliaria, ''))),
+          lower(btrim(case when tipo_usuario = 'imobiliaria' then coalesce(nome_imobiliaria, '') else coalesce(nome_completo, '') end)),
           'áàâãäåéèêëíìîïóòôõöúùûüçñýÿ',
           'aaaaaaeeeeiiiiooooouuuucnyy'
         ),
@@ -79,16 +84,17 @@ set public_slug = (
       )),
       ''
     ),
-    'imobiliaria'
+    case when tipo_usuario = 'imobiliaria' then 'imobiliaria' else 'corretor' end
   )
   || '-'
   || substr(replace(user_id::text, '-', ''), 1, 12)
 )
-where tipo_usuario = 'imobiliaria';
+where tipo_usuario in ('corretor', 'imobiliaria');
 
+drop index if exists public.user_profiles_public_slug_uidx;
 create unique index if not exists user_profiles_public_slug_uidx
   on public.user_profiles (public_slug)
-  where tipo_usuario = 'imobiliaria';
+  where tipo_usuario in ('corretor', 'imobiliaria');
 
 create unique index if not exists user_profiles_cpf_uidx
   on public.user_profiles (cpf)
@@ -364,6 +370,7 @@ create or replace function public.get_public_company_profile(target_slug text)
 returns table (
   user_id uuid,
   slug text,
+  account_type text,
   company_name text,
   city text,
   description text,
@@ -385,7 +392,11 @@ as $$
   select
     profile.user_id,
     profile.public_slug,
-    coalesce(nullif(btrim(profile.public_display_name), ''), profile.nome_imobiliaria),
+    profile.tipo_usuario,
+    coalesce(
+      nullif(btrim(profile.public_display_name), ''),
+      case when profile.tipo_usuario = 'imobiliaria' then profile.nome_imobiliaria else profile.nome_completo end
+    ),
     profile.public_city,
     profile.public_description,
     profile.public_logo_url,
@@ -398,7 +409,7 @@ as $$
     profile.public_website,
     profile.public_business_hours
   from public.user_profiles as profile
-  where profile.tipo_usuario = 'imobiliaria'
+  where profile.tipo_usuario in ('corretor', 'imobiliaria')
     and profile.public_slug = target_slug;
 $$;
 
@@ -522,6 +533,60 @@ create index if not exists listings_status_created_at_idx
 create index if not exists listings_home_featured_order_idx
   on public.listings (ordem_destaque, id)
   where status = 'aprovado' and destaque_home = true;
+
+create or replace function public.get_public_professional_directory()
+returns table (
+  slug text,
+  professional_type text,
+  professional_name text,
+  city text,
+  description text,
+  logo_url text,
+  active_listing_count bigint
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select
+    profile.public_slug,
+    profile.tipo_usuario,
+    coalesce(
+      nullif(btrim(profile.public_display_name), ''),
+      case when profile.tipo_usuario = 'imobiliaria' then profile.nome_imobiliaria else profile.nome_completo end
+    ),
+    coalesce(
+      nullif(btrim(profile.public_city), ''),
+      (
+        select listing.city
+        from public.listings as listing
+        where listing.user_id = profile.user_id
+          and listing.status = 'aprovado'
+        order by listing.created_at desc
+        limit 1
+      )
+    ),
+    profile.public_description,
+    profile.public_logo_url,
+    (
+      select count(*)::bigint
+      from public.listings as listing
+      where listing.user_id = profile.user_id
+        and listing.status = 'aprovado'
+    )
+  from public.user_profiles as profile
+  where profile.tipo_usuario in ('corretor', 'imobiliaria')
+    and nullif(btrim(profile.public_slug), '') is not null
+    and nullif(btrim(coalesce(
+      nullif(btrim(profile.public_display_name), ''),
+      case when profile.tipo_usuario = 'imobiliaria' then profile.nome_imobiliaria else profile.nome_completo end
+    )), '') is not null
+  order by 3;
+$$;
+
+revoke all on function public.get_public_professional_directory() from public;
+grant execute on function public.get_public_professional_directory() to anon, authenticated;
 
 create or replace function public.increment_listing_views(target_listing_id bigint)
 returns integer
