@@ -11082,9 +11082,10 @@ dl.my-area-profile-grid > div {
 .map-listing-overlay {
   position: absolute;
   top: 14px;
-  left: 14px;
+  left: 50%;
   z-index: 1100;
-  width: min(320px, calc(100% - 28px));
+  width: min(320px, calc(100% - 32px));
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
