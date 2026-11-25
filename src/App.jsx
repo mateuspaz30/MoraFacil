@@ -3555,7 +3555,7 @@ function App() {
                             <table className="company-dashboard-table">
                               <thead><tr><th scope="col">Imóvel</th><th scope="col">Status</th><th scope="col">Visualizações</th><th scope="col">WhatsApp</th><th scope="col">Taxa de interesse</th><th scope="col">Ação</th></tr></thead>
                               <tbody>
-                                {rankedStatisticsListings.slice(0, 5).map((item) => (
+                                {rankedStatisticsListings.slice(0, 7).map((item) => (
                                   <tr key={item.id}>
                                     <td>
                                       <div className="company-dashboard-table-property">
