@@ -542,6 +542,7 @@ returns table (
   city text,
   description text,
   logo_url text,
+  cover_url text,
   active_listing_count bigint
 )
 language sql
@@ -569,6 +570,7 @@ as $$
     ),
     profile.public_description,
     profile.public_logo_url,
+    profile.public_cover_url,
     (
       select count(*)::bigint
       from public.listings as listing

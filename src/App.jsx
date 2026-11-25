@@ -789,9 +789,10 @@ function App() {
     profiles: [],
     error: supabase ? '' : 'A busca de perfis profissionais precisa estar conectada ao Supabase.',
   })
+  const [professionalSearchInput, setProfessionalSearchInput] = useState('')
   const [professionalSearch, setProfessionalSearch] = useState('')
   const [professionalCategory, setProfessionalCategory] = useState('all')
-  const [professionalSort, setProfessionalSort] = useState('relevance')
+  const [professionalSort, setProfessionalSort] = useState('name')
   const [profileEditing, setProfileEditing] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
@@ -2743,10 +2744,14 @@ function App() {
     const searchableText = normalizeNeighborhoodName([
       profile.professional_name,
       profile.city,
-      profile.professional_type === 'imobiliaria' ? 'imobiliaria' : 'corretor',
     ].filter(Boolean).join(' '))
     return categoryMatches && (!normalizedProfessionalSearch || searchableText.includes(normalizedProfessionalSearch))
   })
+  const professionalCategoryCounts = {
+    all: professionalDirectory.profiles.length,
+    imobiliaria: professionalDirectory.profiles.filter((profile) => profile.professional_type === 'imobiliaria').length,
+    corretor: professionalDirectory.profiles.filter((profile) => profile.professional_type === 'corretor').length,
+  }
   const sortedProfessionalProfiles = [...filteredProfessionalProfiles].sort((first, second) => {
     if (professionalSort === 'name') {
       return first.professional_name.localeCompare(second.professional_name, 'pt-BR')
@@ -3002,27 +3007,33 @@ function App() {
             <img src={logo} alt="" />
             <strong>Mora <span>Fácil</span></strong>
           </button>
-          <button type="button" className="company-public-portal-link" onClick={navigateBackToInternalPage}>
-            <ArrowLeft size={18} aria-hidden="true" /> Voltar
+          <button type="button" className="professional-directory-back" onClick={() => navigateToPath(getAppBasePath())}>
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar ao portal
           </button>
         </header>
         <main className="professional-directory-main">
           <header className="professional-directory-heading">
-            <span>Encontre quem entende de imóveis</span>
-            <h1>Profissionais Parceiros</h1>
-            <p>Conheça imobiliárias e corretores com perfis públicos no Mora Fácil.</p>
+            <span>PROFISSIONAIS DO MORA FÁCIL</span>
+            <h1>Encontre seu parceiro imobiliário</h1>
+            <p>Conheça imobiliárias e corretores e explore seus imóveis.</p>
           </header>
-          <section className="professional-directory-controls" aria-label="Buscar profissionais">
+          <form className="professional-directory-search-form" aria-label="Buscar profissionais" onSubmit={(event) => {
+            event.preventDefault()
+            setProfessionalSearch(professionalSearchInput)
+          }}>
             <label className="professional-directory-search">
-              <span className="sr-only">Buscar por nome, imobiliária ou cidade</span>
-              <Search size={20} aria-hidden="true" />
+              <span className="sr-only">Buscar por nome ou cidade</span>
+              <Search size={21} aria-hidden="true" />
               <input
                 type="search"
-                value={professionalSearch}
-                onChange={(event) => setProfessionalSearch(event.target.value)}
-                placeholder="Buscar por nome, imobiliária ou cidade"
+                value={professionalSearchInput}
+                onChange={(event) => setProfessionalSearchInput(event.target.value)}
+                placeholder="Buscar por nome ou cidade"
               />
             </label>
+            <button type="submit" className="professional-directory-search-button">Buscar</button>
+          </form>
+          <section className="professional-directory-results-controls" aria-label="Filtros e ordenação dos profissionais">
             <div className="professional-directory-category-tabs" role="group" aria-label="Filtrar por categoria">
               {[
                 ['all', 'Todos'],
@@ -3035,21 +3046,21 @@ function App() {
                   aria-pressed={professionalCategory === category}
                   className={professionalCategory === category ? 'active' : ''}
                   onClick={() => setProfessionalCategory(category)}
-                >{label}</button>
+                >{label} ({professionalCategoryCounts[category]})</button>
               ))}
             </div>
             <label className="professional-directory-select">
               <span className="sr-only">Ordenar profissionais</span>
               <select value={professionalSort} onChange={(event) => setProfessionalSort(event.target.value)}>
-                <option value="relevance">Ordenar: relevância</option>
-                <option value="name">Nome A–Z</option>
-                <option value="listings">Mais imóveis ativos</option>
+                <option value="name">Ordenar: Nome A–Z</option>
+                <option value="relevance">Ordenar: Relevância</option>
+                <option value="listings">Ordenar: Mais imóveis ativos</option>
               </select>
             </label>
           </section>
           <p className="professional-directory-count" aria-live="polite">
             {professionalDirectory.status === 'loaded'
-              ? `${sortedProfessionalProfiles.length} ${sortedProfessionalProfiles.length === 1 ? 'perfil encontrado' : 'perfis encontrados'}`
+              ? `${sortedProfessionalProfiles.length} ${sortedProfessionalProfiles.length === 1 ? 'profissional encontrado' : 'profissionais encontrados'}`
               : ' '}
           </p>
           {['idle', 'loading'].includes(professionalDirectory.status) ? (
@@ -3067,31 +3078,44 @@ function App() {
               {sortedProfessionalProfiles.map((profile) => {
                 const profileName = profile.professional_name || (profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor')
                 const profileLogo = getSafeExternalUrl(profile.logo_url)
-                const profileCity = String(profile.city || '').trim() || 'Atendimento regional'
+                const profileCover = getSafeExternalUrl(profile.cover_url)
+                const profileCity = String(profile.city || '').trim()
+                  .replace(/[-,]\s*SP$/i, ' · SP')
+                const activeListingCount = Number(profile.active_listing_count) || 0
                 return (
                   <article className="professional-directory-card" key={profile.slug}>
-                    <div className="professional-directory-card-heading">
-                      {profileLogo ? (
-                        <img src={profileLogo} alt="" loading="lazy" />
+                    <div className="professional-directory-cover">
+                      {profileCover ? (
+                        <img src={profileCover} alt="" loading="lazy" />
                       ) : (
-                        <span className="professional-directory-avatar" aria-hidden="true">
-                          {profile.professional_type === 'imobiliaria' ? <Building2 size={26} /> : <User size={26} />}
-                        </span>
+                        <svg className="professional-directory-cover-art" viewBox="0 0 360 112" fill="none" aria-hidden="true">
+                          <path d="M0 94 72 70l67 22 71-32 75 29 75-19v42H0V94Z" fill="#E8F1F8" />
+                          <path d="M34 88V59l32-21 32 21v29M44 88V63h44v25M60 88V71h14v17M122 88V48l41-24 41 24v40M134 88V52h58v36M151 88V65h18v23M226 88V44l43-22 43 22v44M239 88V49h60v39M258 88V65h20v23" stroke="#9BB3C8" strokeWidth="2" strokeLinejoin="round" />
+                          <path d="M20 88c2-13 9-21 18-21s16 8 18 21M297 89c2-13 9-21 18-21s16 8 18 21M300 67c2-13 8-20 15-24 8 5 13 12 15 24" stroke="#A9C3B5" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
                       )}
-                      <div>
-                        <span>{profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor'}</span>
-                        <h2>{profileName}</h2>
-                      </div>
                     </div>
-                    <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profileCity}</p>
-                    <p className="professional-directory-description">
-                      {String(profile.description || '').trim() || `Conheça os imóveis e o atendimento de ${profileName}.`}
-                    </p>
-                    <div className="professional-directory-card-footer">
-                      <span><House size={16} aria-hidden="true" />{Number(profile.active_listing_count) || 0} imóveis ativos</span>
-                      <button type="button" onClick={() => navigateToPath(getPublicProfessionalProfilePath(profile.slug))}>
-                        Ver Perfil <ChevronRight size={17} aria-hidden="true" />
-                      </button>
+                    <div className="professional-directory-card-content">
+                      <div className="professional-directory-card-heading">
+                        {profileLogo ? (
+                          <img src={profileLogo} alt="" loading="lazy" />
+                        ) : (
+                          <span className="professional-directory-avatar" aria-hidden="true">
+                            {profile.professional_type === 'imobiliaria' ? <Building2 size={26} /> : <User size={26} />}
+                          </span>
+                        )}
+                        <div>
+                          <span className="professional-directory-type">{profile.professional_type === 'imobiliaria' ? 'IMOBILIÁRIA' : 'CORRETOR'}</span>
+                          <h2>{profileName}</h2>
+                        </div>
+                      </div>
+                      {profileCity && <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profileCity}</p>}
+                      <div className="professional-directory-card-footer">
+                        <span><House size={18} aria-hidden="true" />{activeListingCount > 0 ? `${activeListingCount} ${activeListingCount === 1 ? 'imóvel disponível' : 'imóveis disponíveis'}` : 'Nenhum imóvel publicado'}</span>
+                        <button type="button" className={activeListingCount > 0 ? 'has-listings' : ''} onClick={() => navigateToPath(getPublicProfessionalProfilePath(profile.slug))}>
+                          Ver perfil <span aria-hidden="true">→</span>
+                        </button>
+                      </div>
                     </div>
                   </article>
                 )
@@ -3099,8 +3123,9 @@ function App() {
             </div>
           )}
         </main>
-        <footer className="company-public-signature">
-          Anúncios verificados na plataforma <a href={getAppBasePath()}>Mora Fácil</a> • © 2026
+        <footer className="professional-directory-footer">
+          <span><strong>Mora <b>Fácil</b></strong><i aria-hidden="true" />Encontre imóveis. Conheça profissionais.</span>
+          <span>Proposta visual · Dados ilustrativos</span>
         </footer>
       </div>
     )
