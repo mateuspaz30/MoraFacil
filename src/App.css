@@ -4,6 +4,10 @@
   padding: 0 22px 48px;
 }
 
+.real-estate-shell > .site-footer .site-footer-container {
+  text-align: center;
+}
+
 .brand-curve-surface {
   --brand-curve-large: 50%;
   --brand-curve-small: 12px;

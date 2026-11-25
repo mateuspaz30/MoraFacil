@@ -1074,7 +1074,7 @@
   text-align: left;
 }
 
-.site-footer-container { width: min(100%, 1180px); margin: 0 auto; padding: 0 22px; box-sizing: border-box; }
+.site-footer-container { width: min(100%, 1180px); margin: 0 auto; padding: 0 22px; box-sizing: border-box; text-align: center; }
 .real-estate-shell > .site-footer { width: 100vw; margin: 30px calc(50% - 50vw) -28px; }
 .listing-detail-page + .site-footer { width: min(calc(100% - 56px), 1500px); margin: 48px auto 0; }
 .site-footer-copyright { margin: 0; color: inherit; font-size: 0.74rem; font-weight: 400; }
