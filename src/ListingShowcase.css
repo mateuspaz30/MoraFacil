@@ -1064,28 +1064,17 @@
 .listing-gallery-lightbox-count { position: absolute; top: 25px; left: 50%; color: #fff; font-size: 0.95rem; font-weight: 800; transform: translateX(-50%); }
 
 .site-footer {
-  position: relative;
-  isolation: isolate;
-  width: calc(100% + 44px);
-  margin: 30px -22px -48px;
-  padding: 12px 0;
-  background: linear-gradient(140deg, #061d35 0%, #0a3658 64%, #0b2947 100%);
-  color: #fff;
+  width: 100%;
+  margin: 30px auto 0;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: transparent;
+  color: #8793a0;
+  text-align: center;
 }
 
 .listing-detail-page + .site-footer { width: min(calc(100% - 56px), 1500px); margin: 48px auto 0; }
-.site-footer-container { width: min(100%, 1180px); margin: 0 auto; padding: 0 22px; box-sizing: border-box; }
-.site-footer-content { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; }
-.site-footer-brand { display: flex; align-items: center; gap: 8px; }
-.site-footer-brand img { display: block; width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
-.site-footer-brand > span { color: #fff; font-size: 0.96rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; white-space: nowrap; }
-.site-footer-brand strong { color: #8bea45; }
-.site-footer-contacts { display: flex; align-items: center; justify-content: center; gap: 16px; }
-.site-footer-contacts a { display: inline-flex; align-items: center; gap: 7px; color: #d7e1eb; font-size: 0.78rem; text-decoration: none; white-space: nowrap; }
-.site-footer-contacts a:hover { color: #8bea45; }
-.site-footer-contacts svg { display: block; width: 16px; height: 16px; flex: 0 0 16px; color: #8bea45; }
-.site-footer-divider { width: 1px; height: 18px; background: rgba(214, 226, 238, 0.35); }
-.site-footer-copyright { color: #b7c5d2; font-size: 0.72rem; white-space: nowrap; }
+.site-footer-copyright { margin: 0; color: inherit; font-size: 0.74rem; font-weight: 400; }
 
 @media (max-width: 760px) {
   .listing-detail-header { padding: 12px 16px 4px; }
@@ -1135,16 +1124,9 @@
 }
 
 @media (max-width: 600px) {
-  .site-footer { margin-top: 24px; margin-bottom: -34px; padding: 12px 0; }
-  .real-estate-shell > .site-footer { width: calc(100% + 28px); margin-right: -14px; margin-left: -14px; }
+  .site-footer { margin-top: 24px; padding: 22px 14px; }
   .listing-detail-page + .site-footer { width: calc(100% - 32px); margin: 34px auto 0; }
-  .site-footer-container { padding: 0 14px; }
-  .site-footer-content { grid-template-columns: 1fr; justify-items: center; gap: 8px; }
-  .site-footer-contacts { flex-wrap: wrap; gap: 6px 12px; }
-  .site-footer-contacts a { gap: 6px; font-size: 0.72rem; }
-  .site-footer-contacts svg { width: 15px; height: 15px; flex-basis: 15px; }
-  .site-footer-divider { height: 16px; }
-  .site-footer-copyright { font-size: 0.66rem; }
+  .site-footer-copyright { font-size: 0.68rem; }
 }
 
 .showcase-property-price.purpose-price.purpose-venda,
