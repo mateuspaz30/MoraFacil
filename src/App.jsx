@@ -18,7 +18,7 @@ import useSwipeNavigation from './useSwipeNavigation.js'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import logo from './assets/logo.png'
 import heroIllustration from './assets/hero-house.png'
-import { FavoriteButton, getListingDetailUrl, getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, ListingSortSelect, SiteFooter } from './ListingShowcase.jsx'
+import { FavoriteButton, getListingDetailUrl, getListingLocation, getListingSlug, getListingSlugFromPath, isPortalCityListing, ListingDetailPage, ListingShowcase, SiteFooter } from './ListingShowcase.jsx'
 
 const sampleListings = [
   {
@@ -696,14 +696,6 @@ const sortListingsByOrder = (items, order) => [...items].sort((first, second) =>
   return secondCreated - firstCreated
 })
 
-const companyCategoryPluralLabels = {
-  casa: 'Casas',
-  apartamento: 'Apartamentos',
-  chacara: 'Chácaras',
-  terreno: 'Terrenos',
-  ponto_comercial: 'Comercial',
-}
-
 function App() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [selectedMapListing, setSelectedMapListing] = useState(null)
@@ -799,7 +791,6 @@ function App() {
   const [companyPublicImageError, setCompanyPublicImageError] = useState('')
   const [companyListingFilters, setCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
   const [appliedCompanyListingFilters, setAppliedCompanyListingFilters] = useState({ search: '', purpose: 'all', category: 'all', neighborhood: 'all' })
-  const [companyQuickFilter, setCompanyQuickFilter] = useState('all')
   const [companySortOrder, setCompanySortOrder] = useState('recent')
   const [isAdmin, setIsAdmin] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
@@ -871,7 +862,6 @@ function App() {
   useEffect(() => {
     const updateCurrentPath = () => {
       setCurrentPath(window.location.pathname)
-      setCompanyQuickFilter('all')
       setCompanySortOrder('recent')
       setCompanyPublicEditMode(new URLSearchParams(window.location.search).get('edit') === '1')
       setCompanyPublicPreviewMode(new URLSearchParams(window.location.search).get('preview') === '1')
@@ -887,7 +877,6 @@ function App() {
   const navigateToPath = (path) => {
     window.history.pushState({}, '', path)
     setCurrentPath(window.location.pathname)
-    setCompanyQuickFilter('all')
     setCompanySortOrder('recent')
     const searchParams = new URLSearchParams(window.location.search)
     setCompanyPublicEditMode(searchParams.get('edit') === '1')
@@ -2697,21 +2686,6 @@ function App() {
   })).entries()]
     .sort((first, second) => first[1].localeCompare(second[1], 'pt-BR'))
   const companyPublicPurposes = new Set(companyPublicListings.map(getListingPurpose))
-  const companyPublicQuickFilters = [
-    { key: 'all', label: 'Todos', count: companyPublicListings.length },
-    ...['venda', 'aluguel']
-      .filter((purpose) => companyPublicPurposes.has(purpose))
-      .map((purpose) => ({
-        key: purpose,
-        label: purpose === 'venda' ? 'Venda' : 'Aluguel',
-        count: companyPublicListings.filter((item) => getListingPurpose(item) === purpose).length,
-      })),
-    ...companyPublicCategories.map(([key, label]) => ({
-      key,
-      label: companyCategoryPluralLabels[key] || `${label}s`,
-      count: companyPublicListings.filter((item) => getListingPropertyType(item).key === key).length,
-    })),
-  ]
   const filteredCompanyPublicListings = companyPublicListings.filter((item) => {
     const query = normalizeNeighborhoodName(appliedCompanyListingFilters.search)
     const searchableText = normalizeNeighborhoodName([
@@ -2725,7 +2699,6 @@ function App() {
       && (appliedCompanyListingFilters.purpose === 'all' || getListingPurpose(item) === appliedCompanyListingFilters.purpose)
       && (appliedCompanyListingFilters.category === 'all' || getListingPropertyType(item).key === appliedCompanyListingFilters.category)
       && (appliedCompanyListingFilters.neighborhood === 'all' || item.neighborhood === appliedCompanyListingFilters.neighborhood)
-      && (companyQuickFilter === 'all' || companyQuickFilter === getListingPurpose(item) || companyQuickFilter === getListingPropertyType(item).key)
   })
   const sortedCompanyPublicListings = sortListingsByOrder(filteredCompanyPublicListings, companySortOrder)
   const selectCompanyPeriod = (preset) => {
@@ -3206,27 +3179,14 @@ function App() {
                   <button type="submit"><Search size={18} aria-hidden="true" /> Buscar</button>
                 </form>
               </section>
-              <div className="company-public-quick-toolbar">
-                <div className="company-public-quick-filters" role="group" aria-label="Filtrar imóveis rapidamente">
-                  {companyPublicQuickFilters.map((filter) => (
-                    <button
-                      type="button"
-                      key={filter.key}
-                      className={companyQuickFilter === filter.key ? 'active' : ''}
-                      aria-pressed={companyQuickFilter === filter.key}
-                      onClick={() => setCompanyQuickFilter(filter.key)}
-                    >
-                      {filter.label} ({filter.count})
-                    </button>
-                  ))}
-                </div>
-                <ListingSortSelect value={companySortOrder} onChange={setCompanySortOrder} />
-              </div>
               <ListingShowcase
                 listings={sortedCompanyPublicListings}
                 companyOrigin={companyListingOrigin}
                 heading="Todos os imóveis disponíveis"
                 headingId="company-public-listings-title"
+                showSortControl
+                sortValue={companySortOrder}
+                onSortChange={setCompanySortOrder}
                 emptyMessage="Esta imobiliária ainda não possui imóveis publicados."
                 favoriteListingIds={favoriteListingIds}
                 favoriteActionId={favoriteActionId}
