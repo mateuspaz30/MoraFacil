@@ -266,6 +266,14 @@ const getPublicProfessionalSlugFromPath = (pathname) => {
 }
 const getCompanyPublicProfilePath = (slug) => `${getAppBasePath()}imobiliaria/${encodeURIComponent(slug)}`
 const getPublicProfessionalProfilePath = (slug) => `${getAppBasePath()}profissionais/${encodeURIComponent(slug)}`
+const getProfessionalDirectoryReturnPath = () => {
+  const returnPath = window.history.state?.returnTo
+  return typeof returnPath === 'string'
+    && returnPath.startsWith(getAppBasePath())
+    && getRelativeAppPath(returnPath) === 'profissionais'
+    ? returnPath
+    : ''
+}
 const getAccountTypeLabel = (userType) => ({
   pessoa_fisica: 'Pessoa Física',
   corretor: 'Corretor',
@@ -898,9 +906,14 @@ function App() {
     return () => window.removeEventListener('popstate', updateCurrentPath)
   }, [])
 
-  const navigateToPath = (path) => {
+  const navigateToPath = (path, historyState) => {
+    const currentRouteSegments = getRelativeAppPath(window.location.pathname).split('/')
+    const shouldPreserveProfessionalReturn = currentRouteSegments[0] === 'profissionais'
+      && currentRouteSegments[1]
+      && getProfessionalDirectoryReturnPath()
+    const nextHistoryState = historyState ?? (shouldPreserveProfessionalReturn ? window.history.state : {})
     previousInternalPathRef.current = window.location.pathname
-    window.history.pushState({}, '', path)
+    window.history.pushState(nextHistoryState, '', path)
     setCurrentPath(window.location.pathname)
     setCompanySortOrder('recent')
     const searchParams = new URLSearchParams(window.location.search)
@@ -3083,7 +3096,11 @@ function App() {
                       {profileCity && <p className="professional-directory-city"><MapPin size={16} aria-hidden="true" />{profileCity}</p>}
                       <div className="professional-directory-card-footer">
                         <span><House size={18} aria-hidden="true" />{activeListingCount > 0 ? `${activeListingCount} ${activeListingCount === 1 ? 'imóvel disponível' : 'imóveis disponíveis'}` : 'Nenhum imóvel publicado'}</span>
-                        <button type="button" className={activeListingCount > 0 ? 'has-listings' : ''} onClick={() => navigateToPath(getPublicProfessionalProfilePath(profile.slug))}>
+                        <button
+                          type="button"
+                          className={activeListingCount > 0 ? 'has-listings' : ''}
+                          onClick={() => navigateToPath(getPublicProfessionalProfilePath(profile.slug), { returnTo: window.location.pathname })}
+                        >
                           Ver perfil <span aria-hidden="true">→</span>
                         </button>
                       </div>
@@ -3228,6 +3245,8 @@ function App() {
       || companyPublicListings[0]?.city
       || 'Cidade não informada'
     const companyCityLabel = String(companyCity).replace(/[-,]\s*SP$/i, ' · SP')
+    const professionalDirectoryReturnPath = getProfessionalDirectoryReturnPath()
+    const isProfessionalDirectoryProfile = getRelativeAppPath(currentPath).split('/')[0] === 'profissionais'
 
     return (
       <div className="company-public-page">
@@ -3236,8 +3255,22 @@ function App() {
             <img src={logo} alt="" />
             <strong>Mora <span>Fácil</span></strong>
           </button>
-          <button type="button" className="company-public-portal-link" onClick={() => isCompanyPublicOwner ? navigateToPath(getAccountSectionPath('public-profile')) : navigateBackToInternalPage()}>
-            <ArrowLeft size={18} aria-hidden="true" /> {isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar'}
+          <button
+            type="button"
+            className="company-public-portal-link"
+            onClick={() => {
+              if (professionalDirectoryReturnPath) {
+                window.history.back()
+              } else if (isCompanyPublicOwner) {
+                navigateToPath(getAccountSectionPath('public-profile'))
+              } else if (isProfessionalDirectoryProfile) {
+                navigateToPath(getAppBasePath())
+              } else {
+                navigateBackToInternalPage()
+              }
+            }}
+          >
+            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar aos profissionais' : isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar'}
           </button>
         </header>
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
