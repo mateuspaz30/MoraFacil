@@ -10023,6 +10023,106 @@ dl.my-area-profile-grid > div {
   border-color: #078c59;
 }
 
+.admin-billing-plan-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 12px;
+}
+
+.admin-billing-plan-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #dfe7ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-billing-plan-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-billing-plan-card h3 {
+  margin: 0;
+  color: #0a2742;
+  font-size: 1rem;
+}
+
+.admin-billing-plan-card > div span,
+.admin-user-plan-control small,
+.admin-billing-note {
+  color: #58728d;
+  font-size: 0.82rem;
+}
+
+.admin-billing-plan-card label,
+.admin-user-plan-control {
+  display: grid;
+  gap: 6px;
+  color: #173a60;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-billing-plan-card input,
+.admin-user-plan-control select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #d8e2ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #173a60;
+  font: inherit;
+}
+
+.admin-billing-plan-card button,
+.admin-user-plan-control button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #078c59;
+  border-radius: 9px;
+  background: #078c59;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-billing-plan-card button:disabled,
+.admin-user-plan-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-billing-note {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.admin-listing-billing-state,
+.standard-listing-billing-state {
+  margin: 6px 0;
+  color: #8a5700;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.standard-listing-billing-state {
+  flex-basis: 100%;
+}
+
+.standard-listing-menu-status {
+  padding: 8px 10px;
+  color: #8a5700;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .admin-stats-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }

@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarDays,
+  CreditCard,
   Check,
   CircleCheck,
   CircleX,
@@ -24,6 +25,7 @@ import {
   X,
 } from 'lucide-react'
 import { getListingPurpose, getListingPropertyType, isIndividualListingExpired } from './listingPresentation.js'
+import { BILLING_STATUS_LABELS } from './billing/billingService.js'
 import StandardListingGallery from './StandardListingGallery.jsx'
 
 const sections = [
@@ -33,11 +35,25 @@ const sections = [
   ['neighborhoods', 'Gerenciar Bairros'],
   ['featured', 'Destaques da Home'],
   ['users', 'Usuários'],
+  ['billing', 'Planos e cobrança'],
 ]
 
 const formatDate = (value) => value && !Number.isNaN(new Date(value).getTime())
   ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(value))
   : 'Data não informada'
+
+const subscriptionStatusLabel = (subscription) => {
+  if (!subscription) return 'Sem plano ativo'
+  if (subscription.status === 'active' && subscription.payment_status === 'isento') return 'Ativo sem cobrança'
+  return ({
+    inactive: 'Inativo',
+    pending_payment: 'Pendente de pagamento',
+    awaiting_confirmation: 'Aguardando confirmação',
+    active: 'Ativo',
+    past_due: 'Pagamento atrasado',
+    cancelled: 'Cancelado',
+  })[subscription.status] || 'Status desconhecido'
+}
 
 const statusKey = (listing, validityNow = Date.now()) => {
   const status = String(listing.status || '').trim().toLocaleLowerCase('pt-BR')
@@ -68,6 +84,7 @@ function AdminListingCard({
   onApprove,
   onReject,
   onReactivate,
+  onReleaseWithoutCharge,
   onToggleFeatured,
   validityNow,
   saving,
@@ -78,6 +95,7 @@ function AdminListingCard({
   const purpose = getListingPurpose(listing)
   const propertyType = getListingPropertyType(listing)
   const listingStatus = statusKey(listing, validityNow)
+  const paymentUnconfirmed = ['pendente_pagamento', 'aguardando_confirmacao'].includes(listing.billing_status)
 
   const confirmReject = async () => {
     if (await onReject(listing, reason)) {
@@ -103,6 +121,12 @@ function AdminListingCard({
             ))}
         </div>
         <span className={`standard-listing-status ${listingStatus}`}><i aria-hidden="true" /><CircleCheck size={15} aria-hidden="true" />{statusLabel(listing, validityNow)}</span>
+        {listing.billing_status && (
+          <p className="admin-listing-billing-state">
+            Cobrança: {BILLING_STATUS_LABELS[listing.billing_status] || listing.billing_status}
+            {listing.billing_status === 'pendente_pagamento' && ' · R$ 4,90'}
+          </p>
+        )}
         <p className="standard-listing-date"><CalendarDays size={17} aria-hidden="true" />Enviado em {formatDate(listing.created_at)}</p>
         {listing.motivo_reprovacao && <p className="admin-listing-rejection">{listing.motivo_reprovacao}</p>}
       </div>
@@ -112,8 +136,13 @@ function AdminListingCard({
         <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}>
           <Star size={16} aria-hidden="true" />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}
         </button>
+        {owner?.userType === 'pessoa_fisica' && ['pendente_pagamento', 'aguardando_confirmacao'].includes(listing.billing_status) && (
+          <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => onReleaseWithoutCharge(listing)}>
+            <Check size={16} aria-hidden="true" />Liberar sem cobrança
+          </button>
+        )}
         {listingStatus === 'expired' && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => onReactivate(listing)}><Play size={16} aria-hidden="true" />{statusSaving ? 'Reativando…' : 'Reativar anúncio'}</button>}
-        {canModerate && !rejecting && (
+        {canModerate && !paymentUnconfirmed && !rejecting && (
           <>
             <button type="button" className="approve-listing-button" disabled={saving} onClick={() => onApprove(listing)}><Check size={16} aria-hidden="true" />Aprovar</button>
             <button type="button" className="reject-listing-button" disabled={saving} onClick={() => setRejecting(true)}><X size={16} aria-hidden="true" />Reprovar</button>
@@ -132,7 +161,7 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, statusSaving, validityNow, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onReleaseWithoutCharge, onComplete, onDelete, moderationError, statusSaving, validityNow, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [statusAction, setStatusAction] = useState(null)
@@ -141,6 +170,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
   const purpose = getListingPurpose(listing)
   const listingStatus = statusKey(listing, validityNow)
   const canModerate = listingStatus === 'pending'
+  const paymentUnconfirmed = ['pendente_pagamento', 'aguardando_confirmacao'].includes(listing.billing_status)
 
   const confirmStatusAction = async () => {
     const handler = statusAction === 'pause' ? onPause : onReactivate
@@ -181,6 +211,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
             <p><User size={17} />{owner?.name || listing.advertiser || 'Anunciante não informado'}{owner?.email ? ` · ${owner.email}` : ''}</p>
             <p><Building2 size={17} />{owner?.typeLabel || 'Tipo de usuário não informado'}</p>
             <p><CalendarDays size={17} />Enviado em {formatDate(listing.created_at)}</p>
+            {listing.billing_status && <p><CreditCard size={17} />Cobrança: {BILLING_STATUS_LABELS[listing.billing_status] || listing.billing_status}{listing.billing_status === 'pendente_pagamento' ? ' · R$ 4,90' : ''}</p>}
             {listing.description && <p className="admin-preview-description">{listing.description}</p>}
             {listing.motivo_reprovacao && <p className="admin-listing-rejection">{listing.motivo_reprovacao}</p>}
           </div>
@@ -188,6 +219,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
         <footer>
           <button type="button" onClick={() => onEdit(listing)}><Pencil size={16} />Editar anúncio</button>
           <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}><Star size={16} />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}</button>
+          {owner?.userType === 'pessoa_fisica' && paymentUnconfirmed && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={async () => { if (await onReleaseWithoutCharge(listing)) onClose() }}><Check size={16} />Liberar sem cobrança</button>}
           {['paused', 'expired'].includes(listingStatus)
             ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => setStatusAction('reactivate')}><Play size={16} />Reativar anúncio</button>
             : listingStatus === 'approved' && <button type="button" disabled={saving || statusSaving} onClick={() => setStatusAction('pause')}><Pause size={16} />Pausar anúncio</button>}
@@ -204,7 +236,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
           )}
           {['approved', 'paused'].includes(listingStatus) && <button type="button" disabled={saving} onClick={async () => { if (await onComplete(listing)) onClose() }}><Check size={16} />Marcar concluído</button>}
           <button type="button" className="reject-listing-button" disabled={saving} onClick={async () => { if (await onDelete(listing)) onClose() }}><Trash2 size={16} />Excluir anúncio</button>
-          {canModerate && !rejecting && <button type="button" className="approve-listing-button" disabled={saving} onClick={confirmApprove}><Check size={16} />Aprovar</button>}
+          {canModerate && !paymentUnconfirmed && !rejecting && <button type="button" className="approve-listing-button" disabled={saving} onClick={confirmApprove}><Check size={16} />Aprovar</button>}
           {canModerate && !rejecting && <button type="button" className="reject-listing-button" onClick={() => setRejecting(true)}><X size={16} />Reprovar</button>}
           {rejecting && (
             <div className="admin-rejection-form">
@@ -230,12 +262,21 @@ export default function AdminPanel({
   usersLoading,
   usersError,
   usersMessage,
+  billingPlans,
+  billingSubscriptions,
+  billingLoading,
+  billingError,
+  billingMessage,
+  billingSavingId,
+  onAssignPlan,
+  onSaveBillingPlan,
   onToggleAdmin,
   usersActionId,
   onApprove,
   onReject,
   onPause,
   onReactivate,
+  onReleaseWithoutCharge,
   onComplete,
   onDelete,
   onEdit,
@@ -265,7 +306,10 @@ export default function AdminPanel({
   const [search, setSearch] = useState('')
   const [previewListing, setPreviewListing] = useState(null)
   const [previewUser, setPreviewUser] = useState(null)
+  const [selectedPlanByUser, setSelectedPlanByUser] = useState({})
+  const [billingPlanDrafts, setBillingPlanDrafts] = useState({})
   const ownersById = useMemo(() => new Map(users.map((user) => [user.id, user])), [users])
+  const subscriptionsByUser = useMemo(() => new Map(billingSubscriptions.map((item) => [item.user_id, item])), [billingSubscriptions])
   const pending = listings.filter((listing) => statusKey(listing, validityNow) === 'pending')
   const approved = listings.filter((listing) => statusKey(listing, validityNow) === 'approved')
   const expired = listings.filter((listing) => statusKey(listing, validityNow) === 'expired')
@@ -312,6 +356,7 @@ export default function AdminPanel({
           onApprove={onApprove}
           onReject={onReject}
           onReactivate={onReactivate}
+          onReleaseWithoutCharge={onReleaseWithoutCharge}
           onToggleFeatured={onToggleFeatured}
           validityNow={validityNow}
           saving={featuredSavingId === listing.id}
@@ -481,9 +526,27 @@ export default function AdminPanel({
           {usersLoading ? <p className="account-empty" role="status">Carregando usuários…</p> : users.length ? (
             <div className="admin-table-scroll">
               <table className="my-area-listings-table admin-data-table">
-                <thead><tr><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Administrador</th><th>Cadastro</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Plano profissional</th><th>Administrador</th><th>Cadastro</th><th>Ações</th></tr></thead>
                 <tbody>{users.map((user) => <tr key={user.id}>
-                  <td>{user.name || 'Não informado'}</td><td>{user.email}</td><td>{user.typeLabel || 'Não informado'}</td><td>{user.isAdmin ? 'Sim' : 'Não'}</td><td>{formatDate(user.createdAt)}</td>
+                  <td>{user.name || 'Não informado'}</td><td>{user.email}</td><td>{user.typeLabel || 'Não informado'}</td>
+                  <td>{['corretor', 'imobiliaria'].includes(user.userType) ? (() => {
+                    const subscription = subscriptionsByUser.get(user.id)
+                    const eligiblePlans = billingPlans.filter((plan) => plan.account_type === user.userType && plan.active)
+                    const selectedPlanId = selectedPlanByUser[user.id] ?? subscription?.plan_id ?? ''
+                    return (
+                      <div className="admin-user-plan-control">
+                        <select aria-label={`Plano de ${user.name || user.email}`} value={selectedPlanId} onChange={(event) => setSelectedPlanByUser((current) => ({ ...current, [user.id]: event.target.value }))} disabled={billingLoading || billingSavingId === user.id}>
+                          <option value="">Selecione um plano</option>
+                          {eligiblePlans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · até {plan.active_listing_limit} anúncios</option>)}
+                        </select>
+                        <small>{subscriptionStatusLabel(subscription)}</small>
+                        <button type="button" disabled={!selectedPlanId || billingLoading || billingSavingId === user.id} onClick={() => onAssignPlan(user.id, selectedPlanId)}>
+                          {billingSavingId === user.id ? 'Salvando…' : 'Atribuir e ativar'}
+                        </button>
+                      </div>
+                    )
+                  })() : '—'}</td>
+                  <td>{user.isAdmin ? 'Sim' : 'Não'}</td><td>{formatDate(user.createdAt)}</td>
                   <td className="admin-table-actions"><button type="button" title={`Visualizar ${user.name || user.email}`} onClick={() => setPreviewUser(user)}><Eye size={16} />Visualizar</button>{user.id !== currentUserId && <button type="button" disabled={usersActionId === user.id} onClick={() => onToggleAdmin(user)}>{usersActionId === user.id ? 'Aguarde…' : user.isAdmin ? <><X size={15} />Remover admin</> : <><Shield size={15} />Tornar admin</>}</button>}</td>
                 </tr>)}</tbody>
               </table>
@@ -492,7 +555,38 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} validityNow={validityNow} saving={featuredSavingId === previewListing.id} />}
+      {section === 'billing' && (
+        <section className="admin-section-content">
+          <header className="admin-section-heading"><div><h2>Planos e cobrança</h2><p>Configure limites de referência e acompanhe os planos ativados manualmente, sem cobrança externa.</p></div></header>
+          {billingError && <p className="my-area-feedback error" role="alert">{billingError}</p>}
+          {billingMessage && <p className="my-area-feedback" role="status">{billingMessage}</p>}
+          {billingLoading ? <p className="account-empty" role="status">Carregando planos e assinaturas…</p> : (
+            <div className="admin-billing-plan-list">
+              {billingPlans.map((plan) => {
+                const draft = billingPlanDrafts[plan.id] || {
+                  limit: String(plan.active_listing_limit),
+                  price: plan.monthly_price_cents == null ? '' : (plan.monthly_price_cents / 100).toFixed(2),
+                }
+                return (
+                  <form className="admin-billing-plan-card" key={plan.id} onSubmit={(event) => {
+                    event.preventDefault()
+                    onSaveBillingPlan(plan.id, draft.limit, draft.price)
+                  }}>
+                    <div><h3>{plan.name}</h3><span>{plan.account_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor'}</span></div>
+                    <label>Limite de anúncios ativos<input type="number" min="1" step="1" value={draft.limit} onChange={(event) => setBillingPlanDrafts((current) => ({ ...current, [plan.id]: { ...draft, limit: event.target.value } }))} required /></label>
+                    <label>Mensalidade de referência (R$)<input type="number" min="0" step="0.01" value={draft.price} placeholder="A definir" onChange={(event) => setBillingPlanDrafts((current) => ({ ...current, [plan.id]: { ...draft, price: event.target.value } }))} /></label>
+                    <button type="submit" disabled={billingSavingId === plan.id}>{billingSavingId === plan.id ? 'Salvando…' : 'Salvar plano'}</button>
+                  </form>
+                )
+              })}
+              {!billingPlans.length && <p className="account-empty">Nenhum plano de referência foi configurado.</p>}
+            </div>
+          )}
+          <p className="admin-billing-note">Os planos são atribuídos e ativados por um administrador sem cobrança nesta etapa. O estado de pagamento é controlado no servidor; a integração com Pix, cartão e webhook ainda não está ativa.</p>
+        </section>
+      )}
+
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onReleaseWithoutCharge={onReleaseWithoutCharge} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} validityNow={validityNow} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">

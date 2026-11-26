@@ -10,6 +10,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getIndividualListingDaysRemaining, getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, INDIVIDUAL_LISTING_VALIDITY_DAYS, isIndividualListingExpired, isListingPubliclyAvailable, purposeColors } from './listingPresentation.js'
+import { assignProfessionalPlan, BILLING_STATUS_LABELS, loadAdminBillingData, releaseListingWithoutCharge, requestIndividualListingReactivation, updateProfessionalPlan } from './billing/billingService.js'
 import AdminPanel from './AdminPanel.jsx'
 import CompanyProfileImageCropDialog from './CompanyProfileImageCropDialog.jsx'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
@@ -753,6 +754,12 @@ function App() {
   const [adminUsersError, setAdminUsersError] = useState('')
   const [adminUsersMessage, setAdminUsersMessage] = useState('')
   const [adminUserActionId, setAdminUserActionId] = useState(null)
+  const [adminBillingPlans, setAdminBillingPlans] = useState([])
+  const [adminBillingSubscriptions, setAdminBillingSubscriptions] = useState([])
+  const [adminBillingLoading, setAdminBillingLoading] = useState(false)
+  const [adminBillingError, setAdminBillingError] = useState('')
+  const [adminBillingMessage, setAdminBillingMessage] = useState('')
+  const [adminBillingSavingId, setAdminBillingSavingId] = useState(null)
   const [featuredListings, setFeaturedListings] = useState([])
   const [featuredListingsStatus, setFeaturedListingsStatus] = useState(isSupabaseConfigured ? 'loading' : 'loaded')
   const [neighborhoods, setNeighborhoods] = useState(() => isSupabaseConfigured ? [] : defaultNeighborhoods)
@@ -771,6 +778,7 @@ function App() {
   const [announcementError, setAnnouncementError] = useState('')
   const [announcementCategory, setAnnouncementCategory] = useState('Casa')
   const [announcementSuccess, setAnnouncementSuccess] = useState(false)
+  const [announcementBillingNotice, setAnnouncementBillingNotice] = useState('')
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
@@ -1018,6 +1026,10 @@ function App() {
         setAdminUsers([])
         setAdminUsersError('')
         setAdminUsersMessage('')
+        setAdminBillingPlans([])
+        setAdminBillingSubscriptions([])
+        setAdminBillingError('')
+        setAdminBillingMessage('')
         setFavoriteMessage('')
         setProfileEditing(false)
       }
@@ -1316,6 +1328,30 @@ function App() {
   }, [authUser, isAdmin, accountSection])
 
   useEffect(() => {
+    if (!supabase || !authUser || !isAdmin || accountSection !== 'admin') return undefined
+
+    let active = true
+    const loadBilling = async () => {
+      setAdminBillingLoading(true)
+      setAdminBillingError('')
+      try {
+        const { plans, subscriptions } = await loadAdminBillingData(supabase)
+        if (!active) return
+        setAdminBillingPlans(plans)
+        setAdminBillingSubscriptions(subscriptions)
+      } catch (error) {
+        console.error('Falha ao carregar planos e assinaturas:', error)
+        if (active) setAdminBillingError(`Não foi possível carregar os dados de cobrança. Execute supabase/migrations/20261204_billing_foundation.sql no Supabase. ${error.message}`)
+      } finally {
+        if (active) setAdminBillingLoading(false)
+      }
+    }
+
+    loadBilling()
+    return () => { active = false }
+  }, [authUser, isAdmin, accountSection])
+
+  useEffect(() => {
     if (!isSupabaseConfigured) return
 
     const loadUserListings = async () => {
@@ -1566,6 +1602,7 @@ function App() {
     setAnnouncementSubmitting(false)
     setAnnouncementError('')
     setAnnouncementSuccess(false)
+    setAnnouncementBillingNotice('')
     setAnnouncementCategory(listing?.property_category === 'apartamento' ? 'Apartamento' : listing?.property_category === 'chacara' ? 'Chácara' : listing?.property_category === 'terreno' || listing?.type === 'terreno' ? 'Terreno' : listing?.property_category === 'ponto_comercial' || listing?.type === 'ponto_comercial' ? 'Ponto Comercial' : 'Casa')
     setAnnouncementCoordinates(listing?.coordinates || cityCoordinates[listing?.city] || mapCenter)
     setAnnouncementMapFocus(null)
@@ -1826,22 +1863,30 @@ function App() {
       const query = editingListingId
         ? supabase.from('listings').update(databaseListing).eq('id', editingListingId)
         : supabase.from('listings').insert(databaseListing)
-      let error
+      let savedListing
       try {
-        ({ error } = await query)
+        const { data, error } = await query.select('id, billing_status').single()
+        if (error) throw error
+        savedListing = data
       } catch (requestError) {
-        setAnnouncementError(`Falha de conexão ao salvar o imóvel: ${requestError.message || 'verifique sua conexão e tente novamente.'}`)
+        const missingFormColumns = /(images|property_category|purpose)/i.test(requestError.message || '')
+          && /(column|schema cache|does not exist|could not find)/i.test(requestError.message || '')
+        const missingBillingSchema = /(billing_status|billing_transactions|billing_plans)/i.test(requestError.message || '')
+          && /(column|schema cache|does not exist|could not find)/i.test(requestError.message || '')
+        setAnnouncementError(missingFormColumns
+          ? `O banco ainda não tem as colunas do novo formulário. Execute supabase/migrations/20261001_add_listing_image_gallery.sql no SQL Editor do Supabase. Detalhe: ${requestError.message}`
+          : missingBillingSchema
+            ? `O banco ainda não tem a estrutura de cobrança. Execute supabase/migrations/20261204_billing_foundation.sql no Supabase. Detalhe: ${requestError.message}`
+            : `Não foi possível cadastrar o imóvel. ${requestError.message || 'verifique sua conexão e tente novamente.'}`)
         setAnnouncementSubmitting(false)
         return
       }
-      if (error) {
-        const missingFormColumns = /(images|property_category|purpose)/i.test(error.message)
-          && /(column|schema cache|does not exist|could not find)/i.test(error.message)
-        setAnnouncementError(missingFormColumns
-          ? `O banco ainda não tem as colunas do novo formulário. Execute supabase/migrations/20261001_add_listing_image_gallery.sql no SQL Editor do Supabase. Detalhe: ${error.message}`
-          : `Não foi possível cadastrar o imóvel. ${error.message}`)
-        setAnnouncementSubmitting(false)
-        return
+      if (!editingListingId && savedListing.billing_status === 'pendente_pagamento') {
+        setAnnouncementBillingNotice('Este anúncio adicional exige pagamento de R$ 4,90. Ele permanecerá fora da vitrine até a confirmação. O pagamento online ainda não está disponível.')
+      } else if (!editingListingId && userProfile?.tipo_usuario === 'pessoa_fisica') {
+        setAnnouncementBillingNotice('Seu primeiro anúncio é gratuito e será publicado após a análise administrativa.')
+      } else {
+        setAnnouncementBillingNotice('')
       }
       const { data } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
       const normalizedListings = (data || []).map((item) => ({ ...item, coordinates: [item.latitude, item.longitude], location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`, area: formatArea(item.area), parking_spaces: Number(item.parking_spaces ?? item.garages) || 0, owner: item.user_id === authUser.id }))
@@ -2375,6 +2420,36 @@ function App() {
       setStatusSavingId(listing.id)
       setListingValidityMessage({ text: '', error: false })
       try {
+        const requiresPayment = !isAdmin && isIndividualListingExpired(listing)
+        if (requiresPayment) {
+          await requestIndividualListingReactivation(supabase, listing.id)
+          const { data, error: listingError } = await supabase
+            .from('listings')
+            .select('*')
+            .eq('id', listing.id)
+            .eq('user_id', listing.user_id)
+            .single()
+          if (listingError) throw listingError
+          if (data.billing_status !== 'pendente_pagamento') {
+            throw new Error('O banco não confirmou a solicitação de pagamento.')
+          }
+          const updatedListing = {
+            ...data,
+            coordinates: [data.latitude, data.longitude],
+            location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+            area: formatArea(data.area),
+            parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+            owner: true,
+          }
+          setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+          setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+          setListingValidityMessage({
+            text: `Solicitação registrada: pagamento de R$ 4,90 pendente. O anúncio continuará fora da vitrine até a confirmação. O pagamento online ainda não está disponível.`,
+            error: false,
+          })
+          return true
+        }
+
         const { error } = await supabase.rpc('reactivate_individual_listing', {
           target_listing_id: listing.id,
         })
@@ -2414,7 +2489,7 @@ function App() {
       } catch (error) {
         console.error('Falha ao reativar anúncio de pessoa física:', error)
         const migrationHint = /(reactivate_individual_listing|schema cache|function .* does not exist)/i.test(error.message || '')
-          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql e supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql no Supabase.'
+          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql, supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql e supabase/migrations/20261204_billing_foundation.sql no Supabase.'
           : ''
         setListingValidityMessage({
           text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
@@ -2612,6 +2687,90 @@ function App() {
       setAdminUsersError(`Não foi possível alterar a permissão administrativa. ${error.message}`)
     } finally {
       setAdminUserActionId(null)
+    }
+  }
+
+  const assignAdminProfessionalPlan = async (userId, planId) => {
+    if (!supabase || !isAdmin || !planId) return
+    setAdminBillingSavingId(userId)
+    setAdminBillingError('')
+    setAdminBillingMessage('')
+    try {
+      const subscription = await assignProfessionalPlan(supabase, userId, planId)
+      setAdminBillingSubscriptions((current) => [
+        ...current.filter((item) => item.user_id !== userId),
+        subscription,
+      ])
+      setAdminBillingMessage('Plano atribuído e ativado sem cobrança.')
+    } catch (error) {
+      console.error('Falha ao atribuir plano profissional:', error)
+      setAdminBillingError(`Não foi possível atribuir o plano. ${error.message}`)
+    } finally {
+      setAdminBillingSavingId(null)
+    }
+  }
+
+  const saveAdminProfessionalPlan = async (planId, limitValue, priceValue) => {
+    if (!supabase || !isAdmin) return
+    const activeListingLimit = Number(limitValue)
+    const monthlyPrice = priceValue.trim() === '' ? null : Number(priceValue)
+    if (!Number.isInteger(activeListingLimit) || activeListingLimit < 1
+      || (monthlyPrice !== null && (!Number.isFinite(monthlyPrice) || monthlyPrice < 0))) {
+      setAdminBillingError('Informe um limite inteiro positivo e um valor mensal válido.')
+      return
+    }
+
+    setAdminBillingSavingId(planId)
+    setAdminBillingError('')
+    setAdminBillingMessage('')
+    try {
+      const updatedPlan = await updateProfessionalPlan(
+        supabase,
+        planId,
+        activeListingLimit,
+        monthlyPrice === null ? null : Math.round(monthlyPrice * 100),
+      )
+      setAdminBillingPlans((current) => current.map((plan) => plan.id === planId ? updatedPlan : plan))
+      setAdminBillingMessage(`O plano “${updatedPlan.name}” foi atualizado.`)
+    } catch (error) {
+      console.error('Falha ao atualizar plano profissional:', error)
+      setAdminBillingError(`Não foi possível salvar o plano. ${error.message}`)
+    } finally {
+      setAdminBillingSavingId(null)
+    }
+  }
+
+  const releaseAdminListingWithoutCharge = async (listing) => {
+    if (!supabase || !authUser || !isAdmin) return false
+    setStatusSavingId(listing.id)
+    setModerationError('')
+    try {
+      await releaseListingWithoutCharge(supabase, listing.id)
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('id', listing.id)
+        .single()
+      if (error) throw error
+      const updatedListing = {
+        ...data,
+        coordinates: [data.latitude, data.longitude],
+        location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+        area: formatArea(data.area),
+        parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+        owner: data.user_id === authUser.id,
+      }
+      setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setAdminReviewListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setModerationMessage(`A cobrança do anúncio “${listing.title}” foi dispensada. A análise administrativa permanece necessária quando aplicável.`)
+      return true
+    } catch (error) {
+      console.error('Falha ao liberar anúncio sem cobrança:', error)
+      setModerationMessage(`Não foi possível liberar o anúncio sem cobrança. ${error.message}`)
+      return false
+    } finally {
+      setStatusSavingId(null)
     }
   }
 
@@ -4332,12 +4491,21 @@ function App() {
                     usersLoading={adminUsersLoading}
                     usersError={adminUsersError}
                     usersMessage={adminUsersMessage}
+                    billingPlans={adminBillingPlans}
+                    billingSubscriptions={adminBillingSubscriptions}
+                    billingLoading={adminBillingLoading}
+                    billingError={adminBillingError}
+                    billingMessage={adminBillingMessage}
+                    billingSavingId={adminBillingSavingId}
+                    onAssignPlan={assignAdminProfessionalPlan}
+                    onSaveBillingPlan={saveAdminProfessionalPlan}
                     onToggleAdmin={toggleAdminPermission}
                     usersActionId={adminUserActionId}
                     onApprove={approveListing}
                     onReject={rejectListing}
                     onPause={pauseListing}
                     onReactivate={reactivateListing}
+                    onReleaseWithoutCharge={releaseAdminListingWithoutCharge}
                     onComplete={completeListing}
                     onDelete={(listing) => removeUserListing(listing.id)}
                     onEdit={openAnnouncementForm}
@@ -4651,13 +4819,20 @@ function App() {
                                 </form>
                               )}
                               {statusKey === 'published' && <button type="button" className="standard-listing-view" onClick={() => navigateToPath(getListingDetailUrl(item))}><ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />Ver anúncio</button>}
+                              {item.billing_status && item.billing_status !== 'isento' && (
+                                <p className="standard-listing-billing-state" role="status">
+                                  {BILLING_STATUS_LABELS[item.billing_status] || item.billing_status}
+                                  {item.billing_status === 'pendente_pagamento' && ' · R$ 4,90'}
+                                </p>
+                              )}
                               <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={17} strokeWidth={2.2} aria-hidden="true" />Editar imóvel</button>
                               <div className="standard-listing-menu-wrap">
                                 <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} aria-hidden="true" /></button>
                                 {openListingActionId === item.id && (
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
-                                    {canRenewIndividualListing && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); reactivateListing(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
+                                    {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); reactivateListing(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
+                                    {canRenewIndividualListing && ['pendente_pagamento', 'aguardando_confirmacao'].includes(item.billing_status) && <span className="standard-listing-menu-status">Pagamento pendente</span>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>
                                 )}
@@ -5408,6 +5583,7 @@ function App() {
             <span className="announcement-success-icon" aria-hidden="true">✓</span>
             <h2 id="announcement-success-title">🎉 Anúncio enviado com sucesso!</h2>
             <p>Seu imóvel foi recebido e agora passará por uma análise antes da publicação.</p>
+            {announcementBillingNotice && <p className="announcement-billing-notice" role="status">{announcementBillingNotice}</p>}
             <p>Você poderá acompanhar o andamento em <strong>Meus Imóveis</strong>.</p>
             <div className="announcement-success-status"><span aria-hidden="true">●</span><div><small>Status atual</small><strong>Em análise</strong></div></div>
             <div className="announcement-success-actions">
