@@ -2413,12 +2413,16 @@ function App() {
   const reactivateListing = async (listing) => {
     if (listing.individual_validity_started_at) {
       if (!supabase || !authUser) {
-        setListingValidityMessage({ text: 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.', error: true })
+        setListingValidityMessage({
+          text: 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.',
+          error: true,
+          listingId: listing.id,
+        })
         return false
       }
 
       setStatusSavingId(listing.id)
-      setListingValidityMessage({ text: '', error: false })
+      setListingValidityMessage({ text: '', error: false, listingId: listing.id })
       try {
         const requiresPayment = !isAdmin && isIndividualListingExpired(listing)
         if (requiresPayment) {
@@ -2446,6 +2450,7 @@ function App() {
           setListingValidityMessage({
             text: `Solicitação registrada: pagamento de R$ 4,90 pendente. O anúncio continuará fora da vitrine até a confirmação. O pagamento online ainda não está disponível.`,
             error: false,
+            listingId: listing.id,
           })
           return true
         }
@@ -2483,7 +2488,11 @@ function App() {
             : remaining
         })
         setListingValidityNow(Date.now())
-        setListingValidityMessage({ text: `“${listing.title}” foi reativado por mais 30 dias.`, error: false })
+        setListingValidityMessage({
+          text: `“${listing.title}” foi reativado por mais 30 dias.`,
+          error: false,
+          listingId: listing.id,
+        })
         if (isAdmin) setModerationMessage(`“${listing.title}” foi reativado por mais 30 dias.`)
         return true
       } catch (error) {
@@ -2494,6 +2503,7 @@ function App() {
         setListingValidityMessage({
           text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
           error: true,
+          listingId: listing.id,
         })
         if (isAdmin) setModerationMessage(`Não foi possível reativar o anúncio. ${error.message}${migrationHint}`)
         return false
@@ -2503,6 +2513,7 @@ function App() {
     }
 
     if (await changeListingStatus(listing, 'aprovado')) {
+      setListingValidityMessage({ text: '', error: false })
       setModerationMessage(`“${listing.title}” foi reativado e está publicado.`)
       return true
     }
@@ -2763,6 +2774,11 @@ function App() {
       setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
       setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
       setAdminReviewListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+      setListingValidityMessage((current) => (
+        String(current.listingId) === String(listing.id)
+          ? { text: '', error: false }
+          : current
+      ))
       setModerationMessage(`A cobrança do anúncio “${listing.title}” foi dispensada. A análise administrativa permanece necessária quando aplicável.`)
       return true
     } catch (error) {
@@ -2865,6 +2881,14 @@ function App() {
     paused: 'Pausado',
     completed: 'Concluído',
   })[getListingStatusKey(item)]
+  const validityMessageListing = listingValidityMessage.listingId == null
+    ? null
+    : userListings.find((item) => String(item.id) === String(listingValidityMessage.listingId))
+  const validityMessageResolved = listingValidityMessage.error && validityMessageListing && (
+    ['pago', 'cortesia_admin'].includes(validityMessageListing.billing_status)
+    || (isApprovedListing(validityMessageListing)
+      && !isIndividualListingExpired(validityMessageListing, listingValidityNow))
+  )
   const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
   const adminPendingListings = isAdmin ? adminReviewListings : []
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
@@ -4712,7 +4736,7 @@ function App() {
                       </select>
                     </label>
                   </div>
-                  {listingValidityMessage.text && (
+                  {listingValidityMessage.text && !validityMessageResolved && (
                     <p className={`my-area-feedback${listingValidityMessage.error ? ' error' : ''}`} role={listingValidityMessage.error ? 'alert' : 'status'}>
                       {listingValidityMessage.text}
                     </p>
