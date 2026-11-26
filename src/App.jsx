@@ -1030,14 +1030,14 @@ function App() {
       try {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
+          .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_cover_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
           .eq('user_id', authUser.id)
           .maybeSingle()
         if (error) throw error
         if (mounted) setUserProfile(data)
       } catch (error) {
         console.error('Falha ao carregar os dados da conta:', error)
-        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil e, para imobiliárias, execute supabase/migrations/20261124_company_public_profile_details.sql. ${error.message}`)
+        if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil público e execute supabase/migrations/20261129_enable_broker_public_profile_editing.sql. ${error.message}`)
       }
     }
     loadUserProfile()
@@ -2009,7 +2009,7 @@ function App() {
         .from('user_profiles')
         .update(updates)
         .eq('user_id', authUser.id)
-        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
+        .select('user_id, tipo_usuario, nome_completo, cpf, creci, telefone, nome_imobiliaria, cnpj, nome_responsavel, public_slug, public_city, public_description, public_logo_url, public_cover_url, public_display_name, public_slogan, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours')
         .maybeSingle()
       if (error) throw error
       if (!data) {
@@ -2073,7 +2073,12 @@ function App() {
   }
 
   const saveCompanyPublicProfile = async () => {
-    if (!supabase || !authUser || !publicCompanyProfile.data || publicCompanyProfile.data.user_id !== authUser.id) {
+    if (!supabase
+      || !authUser
+      || !['corretor', 'imobiliaria'].includes(accountUserType)
+      || !publicCompanyProfile.data
+      || publicCompanyProfile.data.user_id !== authUser.id
+      || publicCompanyProfile.data.account_type !== accountUserType) {
       setCompanyPublicSaveError('Somente o proprietário autenticado pode editar este perfil.')
       return
     }
@@ -2122,12 +2127,14 @@ function App() {
         .select('public_display_name, public_slogan, public_city, public_description, public_phone, public_whatsapp, public_instagram, public_facebook, public_website, public_business_hours, public_logo_url, public_cover_url')
         .maybeSingle()
       if (error) throw error
-      if (!data) throw new Error('Nenhum perfil foi atualizado. Confira as permissões e execute a migration do perfil público visual.')
+      if (!data) {
+        throw new Error('Nenhum perfil foi atualizado. Confira as permissões e execute supabase/migrations/20261129_enable_broker_public_profile_editing.sql no Supabase.')
+      }
 
       const currentCompany = publicCompanyProfile.data
       const updatedCompany = {
         ...currentCompany,
-        company_name: data.public_display_name?.trim() || accountProfile.companyName,
+        company_name: data.public_display_name?.trim() || accountProfile.companyName || accountProfile.name,
         slogan: data.public_slogan || '',
         city: data.public_city || '',
         description: data.public_description || '',
@@ -2161,9 +2168,11 @@ function App() {
       setCompanyPublicActiveField('')
       setCompanyPublicSaveMessage('Perfil público atualizado com sucesso.')
     } catch (error) {
-      console.error('Falha ao salvar o perfil público da imobiliária:', error)
+      console.error('Falha ao salvar o perfil público profissional:', error)
       const errorDetail = String(error.message || 'Erro desconhecido.')
-      const migrationHint = /public_cover_url|schema cache|column .* does not exist/i.test(errorDetail)
+      const migrationHint = /permission denied|42501|row-level security/i.test(errorDetail)
+        ? ' Confira se supabase/migrations/20261129_enable_broker_public_profile_editing.sql foi executada no Supabase.'
+        : /public_cover_url|schema cache|column .* does not exist/i.test(errorDetail)
         ? ' Confira se supabase/migrations/20261126_company_public_profile_editor.sql foi executada no Supabase.'
         : ''
       setCompanyPublicSaveError(`Não foi possível salvar as alterações. ${errorDetail}${migrationHint}`)
@@ -2544,8 +2553,10 @@ function App() {
   const accountUserType = accountUserProfile?.tipo_usuario || authUser?.user_metadata?.tipo_usuario || ''
   const isStandardAccount = ['pessoa_fisica', 'corretor'].includes(accountUserType)
   const isCompanyAccount = accountUserType === 'imobiliaria'
+  const isPublicProfessionalAccount = ['corretor', 'imobiliaria'].includes(accountUserType)
   const visibleAccountSection = isStandardAccount
     && !['account', 'favorites'].includes(accountSection)
+    && !(accountUserType === 'corretor' && accountSection === 'public-profile')
     && !(isAdmin && accountSection === 'admin')
     ? 'listings'
     : isCompanyAccount && accountSection === 'overview'
@@ -2565,6 +2576,7 @@ function App() {
     publicCity: accountUserProfile?.public_city || '',
     publicDescription: accountUserProfile?.public_description || '',
     publicLogoUrl: accountUserProfile?.public_logo_url || '',
+    publicCoverUrl: accountUserProfile?.public_cover_url || '',
     publicDisplayName: accountUserProfile?.public_display_name || '',
     publicSlogan: accountUserProfile?.public_slogan || '',
     publicPhone: accountUserProfile?.public_phone || '',
@@ -3129,10 +3141,15 @@ function App() {
 
   if (companyPublicRouteSlug) {
     const company = activePublicCompanyProfile.data
-    const isCompanyPublicOwner = Boolean(authUser && company?.user_id === authUser.id && accountUserType === 'imobiliaria')
+    const isPublicProfessionalOwner = Boolean(
+      authUser
+      && company?.user_id === authUser.id
+      && ['corretor', 'imobiliaria'].includes(accountUserType)
+      && company?.account_type === accountUserType,
+    )
     const publicProfessionalRole = company?.account_type === 'corretor' ? 'Corretor' : 'Imobiliária'
     const publicProfessionalArticle = publicProfessionalRole === 'Corretor' ? 'o corretor' : 'a imobiliária'
-    const isCompanyPublicEditSession = isCompanyPublicOwner && companyPublicEditMode
+    const isCompanyPublicEditSession = isPublicProfessionalOwner && companyPublicEditMode
     const isCompanyPublicEditing = isCompanyPublicEditSession && !companyPublicPreviewMode
     const companyPublicOriginalDraft = {
       display_name: company?.company_name || '',
@@ -3192,7 +3209,9 @@ function App() {
       setCompanyPublicSaveMessage('')
       setCompanyPublicEditMode(false)
       setCompanyPublicPreviewMode(false)
-      navigateToPath(getCompanyPublicProfilePath(companyPublicRouteSlug))
+      navigateToPath(isProfessionalDirectoryProfile
+        ? getPublicProfessionalProfilePath(companyPublicRouteSlug)
+        : getCompanyPublicProfilePath(companyPublicRouteSlug))
     }
     const renderCompanyPublicField = (field, label, options = {}) => {
       const { multiline = false, type = 'text', placeholder = `Adicionar ${label.toLocaleLowerCase('pt-BR')}`, maxLength = 300, className = '', id, dashed = false } = options
@@ -3272,7 +3291,7 @@ function App() {
                 } else {
                   navigateToPath(professionalDirectoryReturnPath)
                 }
-              } else if (isCompanyPublicOwner) {
+              } else if (isPublicProfessionalOwner) {
                 navigateToPath(getAccountSectionPath('public-profile'))
               } else if (isProfessionalDirectoryProfile) {
                 navigateToPath(getAppBasePath())
@@ -3281,7 +3300,7 @@ function App() {
               }
             }}
           >
-            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar aos profissionais' : isCompanyPublicOwner ? 'Voltar ao painel' : 'Voltar'}
+            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar aos profissionais' : isPublicProfessionalOwner ? 'Voltar ao painel' : 'Voltar'}
           </button>
         </header>
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
@@ -3323,10 +3342,10 @@ function App() {
           ) : company && (
             <>
               {(companyPublicDisplay.cover_url || isCompanyPublicEditing) && (
-                <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Capa institucional da imobiliária">
+                <section className={`company-public-cover${isCompanyPublicEditing ? ' editable' : ''}`} aria-label="Capa do perfil profissional">
                   {(companyPublicCoverPreview || companyPublicDisplay.cover_url) && <img src={companyPublicCoverPreview || companyPublicDisplay.cover_url} alt="" />}
                   {isCompanyPublicEditing && !companyPublicDisplay.cover_url && !companyPublicCoverPreview && (
-                    <span className="company-public-cover-prompt">Adicione uma imagem institucional para apresentar sua imobiliária.</span>
+                    <span className="company-public-cover-prompt">Adicione uma imagem de capa para apresentar seu perfil profissional.</span>
                   )}
                   {isCompanyPublicEditing && (
                     <label className="company-public-image-trigger cover-trigger">
@@ -3472,7 +3491,7 @@ function App() {
                     {isCompanyPublicEditing && <span className="company-public-edit-hint">Clique no texto para editar</span>}
                   </div>
                   {isCompanyPublicEditSession
-                    ? renderCompanyPublicField('description', 'Quem Somos', { multiline: true, placeholder: 'Conte brevemente sobre sua imobiliária.', maxLength: 1000, className: 'company-public-about-editor' })
+                    ? renderCompanyPublicField('description', 'Sobre', { multiline: true, placeholder: 'Conte brevemente sobre sua atuação profissional.', maxLength: 1000, className: 'company-public-about-editor' })
                     : companyPublicDisplay.description
                       ? <p className="company-public-about-description">{companyPublicDisplay.description}</p>
                       : <p className="company-public-about-empty">{publicProfessionalRole === 'Corretor' ? 'Este corretor ainda não adicionou uma apresentação.' : 'A imobiliária ainda não adicionou uma apresentação.'}</p>}
@@ -3601,6 +3620,7 @@ function App() {
                     ...(isStandardAccount ? [
                     ['listings', Building2, 'Meus Imóveis'],
                     ['favorites', Heart, 'Favoritos'],
+                    ...(accountUserType === 'corretor' ? [['public-profile', Globe2, 'Perfil Público']] : []),
                     ['account', User, 'Minha Conta'],
                   ] : isCompanyAccount ? [
                     ['dashboard', House, 'Dashboard'],
@@ -3638,7 +3658,7 @@ function App() {
               <main className="my-area-main">
               <header className={`my-area-topbar${(visibleAccountSection === 'overview' || isCompanyDashboard) ? ' overview' : ''}${isStandardAccount && visibleAccountSection === 'listings' ? ' listings-page' : ''}`}>
                   <div className="my-area-heading-copy">
-                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyAccount ? 'Área da imobiliária' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
+                  {!(isStandardAccount && visibleAccountSection === 'listings') && <span>{visibleAccountSection === 'admin' ? 'Área administrativa' : isCompanyAccount ? 'Área da imobiliária' : visibleAccountSection === 'public-profile' && isPublicProfessionalAccount ? 'Perfil profissional' : visibleAccountSection === 'overview' || isStandardAccount ? 'Minha Área' : 'Área do usuário'}</span>}
                   <h1>{visibleAccountSection === 'admin' ? 'Administração' : isCompanyDashboard ? 'Dashboard' : visibleAccountSection === 'overview' ? 'Visão Geral' : visibleAccountSection === 'listings' ? 'Meus Imóveis' : visibleAccountSection === 'favorites' ? 'Favoritos' : visibleAccountSection === 'statistics' ? 'Estatísticas' : visibleAccountSection === 'public-profile' ? 'Perfil Público' : 'Minha Conta'}</h1>
                   {(visibleAccountSection === 'overview' || isCompanyDashboard) && <p>{isCompanyDashboard ? 'Acompanhe o desempenho dos seus imóveis.' : `Olá, ${accountDisplayName}. Acompanhe seus imóveis em um só lugar.`}</p>}
                   {isCompanyAccount && visibleAccountSection === 'statistics' && <p>Desempenho dos imóveis com base nos dados registrados.</p>}
@@ -4148,16 +4168,18 @@ function App() {
                     <p className="my-area-metric-note"><span className="my-area-metric-note-content"><Info size={16} aria-hidden="true" />Cliques no WhatsApp não confirmam conversas iniciadas.</span></p>
                   </div>
                 )}
-                {visibleAccountSection === 'public-profile' && isCompanyAccount && (
+                {visibleAccountSection === 'public-profile' && isPublicProfessionalAccount && (
                   <section className="my-area-panel company-profile-settings" aria-labelledby="company-profile-settings-title">
                     <div className="my-area-panel-heading">
-                      <div><h2 id="company-profile-settings-title">Seu perfil público</h2><p>Veja como sua imobiliária aparece para os visitantes.</p></div>
+                      <div><h2 id="company-profile-settings-title">Seu perfil público</h2><p>Veja como seu perfil profissional aparece para os visitantes.</p></div>
                     </div>
                     {accountProfile.publicSlug ? (
                       <div className="company-profile-actions">
                         <button type="button" className="company-profile-open-button" onClick={() => {
                           setCompanyPublicEditMode(false)
-                          navigateToPath(getCompanyPublicProfilePath(accountProfile.publicSlug))
+                          navigateToPath(accountUserType === 'corretor'
+                            ? getPublicProfessionalProfilePath(accountProfile.publicSlug)
+                            : getCompanyPublicProfilePath(accountProfile.publicSlug))
                         }}>
                           Abrir perfil público <ExternalLink size={17} aria-hidden="true" />
                         </button>
@@ -4165,7 +4187,9 @@ function App() {
                           setCompanyPublicEditMode(true)
                           setCompanyPublicPreviewMode(false)
                           setCompanyPublicTab('showcase')
-                          navigateToPath(`${getCompanyPublicProfilePath(accountProfile.publicSlug)}?edit=1`)
+                          navigateToPath(`${accountUserType === 'corretor'
+                            ? getPublicProfessionalProfilePath(accountProfile.publicSlug)
+                            : getCompanyPublicProfilePath(accountProfile.publicSlug)}?edit=1`)
                         }}>
                           <Pencil size={17} aria-hidden="true" /> Editar perfil público
                         </button>
