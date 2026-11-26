@@ -7723,8 +7723,19 @@ dl.my-area-profile-grid > div {
 }
 
 .company-public-portal-link {
-  color: #536b84;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d5e0e8;
+  border-radius: 10px;
+  background: #f7fafc;
+  color: #183553;
   font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.company-public-portal-link:hover {
+  border-color: #b7c8d6;
+  background: #edf3f7;
 }
 
 .company-public-main {
@@ -9610,17 +9621,7 @@ dl.my-area-profile-grid > div {
     gap: 6px;
     min-height: 40px;
     padding: 8px 11px;
-    border: 1px solid #d5e0e8;
-    border-radius: 10px;
-    background: #f7fafc;
-    color: #183553;
     font-size: 0.78rem;
-    white-space: nowrap;
-  }
-
-  .company-public-portal-link:hover {
-    border-color: #b7c8d6;
-    background: #edf3f7;
   }
 
   .company-public-main {
