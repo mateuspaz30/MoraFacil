@@ -13023,3 +13023,99 @@ dl.my-area-profile-grid > div {
     aspect-ratio: 1.7 / 1;
   }
 }
+
+.portal-back-button:is(
+  .company-public-portal-link,
+  .professional-directory-back,
+  .my-area-home-link,
+  .my-area-guest-home,
+  .announcement-back,
+  .cancel-form-btn,
+  .auth-back,
+  .listing-back-link
+) {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #d5e0e8;
+  border-radius: 10px;
+  padding: 9px 14px;
+  background: #f7fafc;
+  box-shadow: 0 2px 6px rgba(15, 35, 69, 0.06);
+  color: #183553;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+  touch-action: manipulation;
+}
+
+.portal-back-button:is(
+  .company-public-portal-link,
+  .professional-directory-back,
+  .my-area-home-link,
+  .my-area-guest-home,
+  .announcement-back,
+  .cancel-form-btn,
+  .auth-back,
+  .listing-back-link
+):hover:not(:disabled) {
+  border-color: #b7c8d6;
+  background: #edf3f7;
+  color: #183553;
+  text-decoration: none;
+}
+
+.portal-back-button:is(
+  .company-public-portal-link,
+  .professional-directory-back,
+  .my-area-home-link,
+  .my-area-guest-home,
+  .announcement-back,
+  .cancel-form-btn,
+  .auth-back,
+  .listing-back-link
+):active:not(:disabled) {
+  background: #e6eef4;
+  box-shadow: inset 0 1px 2px rgba(15, 35, 69, 0.1);
+}
+
+.portal-back-button:is(
+  .company-public-portal-link,
+  .professional-directory-back,
+  .my-area-home-link,
+  .my-area-guest-home,
+  .announcement-back,
+  .cancel-form-btn,
+  .auth-back,
+  .listing-back-link
+):focus-visible {
+  outline: 3px solid rgba(7, 140, 89, 0.3);
+  outline-offset: 2px;
+}
+
+.portal-back-button:is(
+  .company-public-portal-link,
+  .professional-directory-back,
+  .my-area-home-link,
+  .my-area-guest-home,
+  .announcement-back,
+  .cancel-form-btn,
+  .auth-back,
+  .listing-back-link
+):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.my-area-home-link.portal-back-button svg {
+  flex: 0 0 18px;
+}

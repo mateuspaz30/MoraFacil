@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
@@ -586,8 +586,8 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
             <h1>{listing.title}</h1>
             <div className="listing-detail-address-line"><LocationPinIcon /><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
           </div>
-          <a className="listing-back-link" href={origin ? originProfileUrl : `${import.meta.env.BASE_URL}#imoveis-disponiveis`}>
-            {origin ? `← Voltar para ${origin.name}` : '← Voltar'}
+          <a className="listing-back-link portal-back-button" href={origin ? originProfileUrl : `${import.meta.env.BASE_URL}#imoveis-disponiveis`}>
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar
           </a>
         </div>
       </header>

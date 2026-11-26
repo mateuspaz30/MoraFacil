@@ -3043,8 +3043,8 @@ function App() {
             <img src={logo} alt="" />
             <strong>Mora <span>Fácil</span></strong>
           </button>
-          <button type="button" className="professional-directory-back" onClick={() => navigateToPath(getAppBasePath())}>
-            <ArrowLeft size={18} aria-hidden="true" /> Voltar ao portal
+          <button type="button" className="professional-directory-back portal-back-button" onClick={() => navigateToPath(getAppBasePath())}>
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar
           </button>
         </header>
         <main className="professional-directory-main">
@@ -3310,7 +3310,7 @@ function App() {
           </button>
           <button
             type="button"
-            className="company-public-portal-link"
+            className="company-public-portal-link portal-back-button"
             onClick={() => {
               if (professionalDirectoryReturnPath) {
                 if (window.history.state?.returnTo === professionalDirectoryReturnPath) {
@@ -3327,7 +3327,7 @@ function App() {
               }
             }}
           >
-            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar' : isPublicProfessionalOwner ? 'Voltar ao painel' : 'Voltar'}
+            <ArrowLeft size={18} aria-hidden="true" /> Voltar
           </button>
         </header>
         {isCompanyPublicEditing && companyPublicImageCrop && (
@@ -3687,7 +3687,7 @@ function App() {
                   ))}
                 </nav>
                 <div className="my-area-sidebar-footer">
-                  <button type="button" className="my-area-sidebar-action my-area-home-link" onClick={() => navigateToPath(getAppBasePath())}><ArrowLeft size={28} strokeWidth={2.2} />Voltar ao portal</button>
+                  <button type="button" className="my-area-sidebar-action my-area-home-link portal-back-button" onClick={() => navigateToPath(getAppBasePath())}><ArrowLeft size={18} aria-hidden="true" />Voltar</button>
                 </div>
               </aside>
               <main className="my-area-main">
@@ -4846,7 +4846,7 @@ function App() {
                 <h1>Entre para acessar sua área</h1>
                 <p>Faça login ou crie sua conta para gerenciar seus imóveis e dados cadastrais.</p>
                 <button type="button" className="submit-form-btn" onClick={() => { setAuthMode('login'); setAuthMessage(''); setAuthOpen(true) }}>Entrar na conta</button>
-                <button type="button" className="my-area-guest-home" onClick={() => navigateToPath(getAppBasePath())}>Voltar ao portal</button>
+                <button type="button" className="my-area-guest-home portal-back-button" onClick={() => navigateToPath(getAppBasePath())}><ArrowLeft size={18} aria-hidden="true" />Voltar</button>
               </div>
             )}
           </section>
@@ -5162,7 +5162,7 @@ function App() {
           <section className="property-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
             <div className="announcement-page-heading">
               <div>
-                <button type="button" className="announcement-back" onClick={closeAnnouncementForm}>← Voltar</button>
+                <button type="button" className="announcement-back portal-back-button" onClick={closeAnnouncementForm}><ArrowLeft size={18} aria-hidden="true" />Voltar</button>
                 <h2 id="announcement-title">{editingListingId ? 'Editar imóvel' : 'Cadastrar imóvel'}</h2>
                 <p>Preencha os dados para publicar seu anúncio.</p>
               </div>
@@ -5318,7 +5318,7 @@ function App() {
                   setAuthOpen(true)
                 }
               }}>Ir para Meus Imóveis</button>
-              <button type="button" className="cancel-form-btn" onClick={() => setAnnouncementSuccess(false)}>Voltar para a página inicial</button>
+              <button type="button" className="cancel-form-btn portal-back-button" onClick={() => setAnnouncementSuccess(false)}><ArrowLeft size={18} aria-hidden="true" />Voltar</button>
             </div>
           </section>
         </div>
@@ -5370,7 +5370,7 @@ function App() {
                   </div>
                 ) : (
                   <>
-                    <button type="button" className="auth-back" onClick={() => { setAuthSignupStep('profile'); setAuthMessage('') }}>← Alterar perfil</button>
+                    <button type="button" className="auth-back portal-back-button" onClick={() => { setAuthSignupStep('profile'); setAuthMessage('') }}><ArrowLeft size={18} aria-hidden="true" />Voltar</button>
                     {authForm.userType === 'imobiliaria' ? (
                       <>
                         <div className="form-group">
