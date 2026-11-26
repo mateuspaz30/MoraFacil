@@ -376,6 +376,7 @@ export default function AdminPanel({
         ))}
       </nav>
       {moderationMessage && <p className="my-area-feedback" role="status">{moderationMessage}</p>}
+      {moderationError && <p className="my-area-feedback error" role="alert">{moderationError}</p>}
       {listingsError && <p className="my-area-feedback error" role="alert">{listingsError}</p>}
 
       {section === 'overview' && (

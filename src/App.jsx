@@ -2413,16 +2413,19 @@ function App() {
   const reactivateListing = async (listing) => {
     if (listing.individual_validity_started_at) {
       if (!supabase || !authUser) {
+        const message = 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.'
         setListingValidityMessage({
-          text: 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.',
+          text: message,
           error: true,
           listingId: listing.id,
         })
+        if (isAdmin) setModerationError(message)
         return false
       }
 
       setStatusSavingId(listing.id)
       setListingValidityMessage({ text: '', error: false, listingId: listing.id })
+      if (isAdmin) setModerationError('')
       try {
         const requiresPayment = !isAdmin && isIndividualListingExpired(listing)
         if (requiresPayment) {
@@ -2455,19 +2458,13 @@ function App() {
           return true
         }
 
-        const { error } = await supabase.rpc('reactivate_individual_listing', {
+        const { data: reactivatedData, error } = await supabase.rpc('reactivate_individual_listing', {
           target_listing_id: listing.id,
         })
         if (error) throw error
 
-        const { data, error: listingError } = await supabase
-          .from('listings')
-          .select('*')
-          .eq('id', listing.id)
-          .eq('user_id', listing.user_id)
-          .single()
-        if (listingError) throw listingError
-        if (data.status !== 'aprovado' || !data.individual_validity_started_at) {
+        const data = Array.isArray(reactivatedData) ? reactivatedData[0] : reactivatedData
+        if (!data?.id || data.status !== 'aprovado' || !data.individual_validity_started_at) {
           throw new Error('O anúncio não foi confirmado como reativado pelo banco.')
         }
 
@@ -2493,19 +2490,26 @@ function App() {
           error: false,
           listingId: listing.id,
         })
-        if (isAdmin) setModerationMessage(`“${listing.title}” foi reativado por mais 30 dias.`)
+        if (isAdmin) {
+          setModerationError('')
+          setModerationMessage(`“${listing.title}” foi reativado por mais 30 dias.`)
+        }
         return true
       } catch (error) {
         console.error('Falha ao reativar anúncio de pessoa física:', error)
         const migrationHint = /(reactivate_individual_listing|schema cache|function .* does not exist)/i.test(error.message || '')
-          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql, supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql e supabase/migrations/20261204_billing_foundation.sql no Supabase.'
+          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql, supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql, supabase/migrations/20261204_billing_foundation.sql e supabase/migrations/20261205_fix_individual_listing_reactivation.sql no Supabase.'
           : ''
         setListingValidityMessage({
           text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
           error: true,
           listingId: listing.id,
         })
-        if (isAdmin) setModerationMessage(`Não foi possível reativar o anúncio. ${error.message}${migrationHint}`)
+        if (isAdmin) {
+          const message = `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`
+          setModerationError(message)
+          setModerationMessage('')
+        }
         return false
       } finally {
         setStatusSavingId(null)
@@ -2783,7 +2787,8 @@ function App() {
       return true
     } catch (error) {
       console.error('Falha ao liberar anúncio sem cobrança:', error)
-      setModerationMessage(`Não foi possível liberar o anúncio sem cobrança. ${error.message}`)
+      setModerationError(`Não foi possível liberar o anúncio sem cobrança. ${error.message}`)
+      setModerationMessage('')
       return false
     } finally {
       setStatusSavingId(null)
@@ -2881,14 +2886,6 @@ function App() {
     paused: 'Pausado',
     completed: 'Concluído',
   })[getListingStatusKey(item)]
-  const validityMessageListing = listingValidityMessage.listingId == null
-    ? null
-    : userListings.find((item) => String(item.id) === String(listingValidityMessage.listingId))
-  const validityMessageResolved = listingValidityMessage.error && validityMessageListing && (
-    ['pago', 'cortesia_admin'].includes(validityMessageListing.billing_status)
-    || (isApprovedListing(validityMessageListing)
-      && !isIndividualListingExpired(validityMessageListing, listingValidityNow))
-  )
   const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
   const adminPendingListings = isAdmin ? adminReviewListings : []
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
@@ -4736,7 +4733,7 @@ function App() {
                       </select>
                     </label>
                   </div>
-                  {listingValidityMessage.text && !validityMessageResolved && (
+                  {listingValidityMessage.text && (
                     <p className={`my-area-feedback${listingValidityMessage.error ? ' error' : ''}`} role={listingValidityMessage.error ? 'alert' : 'status'}>
                       {listingValidityMessage.text}
                     </p>
