@@ -4846,8 +4846,8 @@ function App() {
               className="mobile-menu-secondary"
               onClick={() => { setMobileMenuOpen(false); navigateToPath(`${getAppBasePath()}profissionais`) }}
             >
-              <span className="mobile-menu-action-icon"><Building2 size={20} aria-hidden="true" /></span>
-              <span className="mobile-menu-action-label">🏢 Perfis Profissionais</span>
+              <span className="mobile-menu-action-icon"><MenuSearchIcon /></span>
+              <span className="mobile-menu-action-label">Perfis Profissionais</span>
               <span className="mobile-menu-action-arrow"><MenuArrowIcon /></span>
             </button>
             {authUser && <div className="mobile-menu-divider" />}
