@@ -8461,14 +8461,6 @@ dl.my-area-profile-grid > div {
   color: #078c35;
 }
 
-.professional-directory-footer .site-footer-copyright {
-  color: #102a43;
-}
-
-.professional-directory-footer-count {
-  white-space: nowrap;
-}
-
 @media (max-width: 900px) {
   .professional-directory-results-controls {
     align-items: stretch;
