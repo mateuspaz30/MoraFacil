@@ -8457,6 +8457,11 @@ dl.my-area-profile-grid > div {
   text-align: center;
 }
 
+.professional-directory-footer strong {
+  color: #102a43;
+  font-weight: 700;
+}
+
 .professional-directory-footer b {
   color: #078c35;
 }

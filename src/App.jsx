@@ -3097,12 +3097,7 @@ function App() {
         <footer className="site-footer professional-directory-footer">
           <div className="site-footer-container">
             <p className="site-footer-copyright">
-              © 2026 Mora <b>Fácil</b>. Todos os direitos reservados.
-              {professionalDirectory.status === 'loaded' && (
-                <span className="professional-directory-footer-count" aria-live="polite">
-                  {' '}· {visibleProfessionalProfiles.length} {visibleProfessionalProfiles.length === 1 ? 'perfil encontrado' : 'perfis encontrados'}
-                </span>
-              )}
+              © 2026 <strong>Mora <b>Fácil</b></strong>. Todos os direitos reservados.
             </p>
           </div>
         </footer>
