@@ -9,7 +9,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
-import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
+import { getIndividualListingDaysRemaining, getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, INDIVIDUAL_LISTING_VALIDITY_DAYS, isIndividualListingExpired, isListingPubliclyAvailable, purposeColors } from './listingPresentation.js'
 import AdminPanel from './AdminPanel.jsx'
 import CompanyProfileImageCropDialog from './CompanyProfileImageCropDialog.jsx'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
@@ -794,6 +794,8 @@ function App() {
   const [favoriteReturnPath, setFavoriteReturnPath] = useState('')
   const [userProfile, setUserProfile] = useState(null)
   const [userProfileError, setUserProfileError] = useState('')
+  const [listingValidityNow, setListingValidityNow] = useState(() => Date.now())
+  const [listingValidityMessage, setListingValidityMessage] = useState({ text: '', error: false })
   const [professionalDirectory, setProfessionalDirectory] = useState({
     status: supabase ? 'idle' : 'error',
     profiles: [],
@@ -957,10 +959,10 @@ function App() {
     }
   }, [announcementMapFullscreenOpen, mapFullscreenOpen])
 
-  const publicPublishedListings = publishedListings.filter(isApprovedListing)
+  const publicPublishedListings = publishedListings.filter((item) => isListingPubliclyAvailable(item))
   const listings = isSupabaseConfigured
     ? (publishedListings.length > 0 ? publicPublishedListings : approvedSampleListings)
-    : [...approvedSampleListings, ...userListings.filter(isApprovedListing)]
+    : [...approvedSampleListings, ...userListings.filter((item) => isListingPubliclyAvailable(item))]
   const activeNeighborhoodNames = neighborhoods
     .filter((neighborhood) => neighborhood.active)
     .map((neighborhood) => neighborhood.name)
@@ -1185,7 +1187,7 @@ function App() {
         if (error) throw error
         if (!mounted) return
 
-        setFeaturedListings((data || []).map((item) => ({
+        setFeaturedListings((data || []).filter((item) => isListingPubliclyAvailable(item)).map((item) => ({
           ...item,
           coordinates: [item.latitude, item.longitude],
           location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
@@ -1348,6 +1350,23 @@ function App() {
   }, [authUser, isAdmin])
 
   useEffect(() => {
+    const millisecondsPerDay = 24 * 60 * 60 * 1000
+    const nextValidityChangeDelay = [...publishedListings, ...featuredListings]
+      .reduce((nearestDelay, item) => {
+        const daysRemaining = getIndividualListingDaysRemaining(item, listingValidityNow)
+        if (daysRemaining === null || daysRemaining === 0) return nearestDelay
+        const validityStartedAt = Date.parse(item.individual_validity_started_at)
+        const expiresAt = validityStartedAt + INDIVIDUAL_LISTING_VALIDITY_DAYS * millisecondsPerDay
+        const nextChangeAt = expiresAt - (daysRemaining - 1) * millisecondsPerDay
+        return Math.min(nearestDelay, Math.max(1, nextChangeAt - listingValidityNow + 1))
+      }, Number.POSITIVE_INFINITY)
+    if (!Number.isFinite(nextValidityChangeDelay)) return undefined
+
+    const timeoutId = window.setTimeout(() => setListingValidityNow(Date.now()), nextValidityChangeDelay)
+    return () => window.clearTimeout(timeoutId)
+  }, [featuredListings, listingValidityNow, publishedListings])
+
+  useEffect(() => {
     if (!authUser) return undefined
 
     let mounted = true
@@ -1473,7 +1492,7 @@ function App() {
   const resultsLabel = `${filteredListings.length} ${filteredListings.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`
 
   const heroCarouselListings = (isSupabaseConfigured ? featuredListings : listings)
-    .filter((item) => isApprovedListing(item) && item.destaque_home === true)
+    .filter((item) => isListingPubliclyAvailable(item, listingValidityNow) && item.destaque_home === true)
     .sort((first, second) => {
       const firstOrder = Number.parseInt(first.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
       const secondOrder = Number.parseInt(second.ordem_destaque, 10) || Number.MAX_SAFE_INTEGER
@@ -2347,6 +2366,60 @@ function App() {
   }
 
   const reactivateListing = async (listing) => {
+    if (listing.individual_validity_started_at && listing.user_id === authUser?.id) {
+      if (!supabase || !authUser) {
+        setListingValidityMessage({ text: 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.', error: true })
+        return false
+      }
+
+      setStatusSavingId(listing.id)
+      setListingValidityMessage({ text: '', error: false })
+      try {
+        const { error } = await supabase.rpc('reactivate_individual_listing', {
+          target_listing_id: listing.id,
+        })
+        if (error) throw error
+
+        const { data, error: listingError } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('id', listing.id)
+          .eq('user_id', authUser.id)
+          .single()
+        if (listingError) throw listingError
+        if (data.status !== 'aprovado' || !data.individual_validity_started_at) {
+          throw new Error('O anúncio não foi confirmado como reativado pelo banco.')
+        }
+
+        const updatedListing = {
+          ...data,
+          coordinates: [data.latitude, data.longitude],
+          location: `${data.neighborhood}, ${data.city || 'Ipuã-SP'}`,
+          area: formatArea(data.area),
+          parking_spaces: Number(data.parking_spaces ?? data.garages) || 0,
+          owner: true,
+        }
+        setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+        setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+        setFeaturedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+        setListingValidityNow(Date.now())
+        setListingValidityMessage({ text: `“${listing.title}” foi reativado por mais 30 dias.`, error: false })
+        return true
+      } catch (error) {
+        console.error('Falha ao reativar anúncio de pessoa física:', error)
+        const migrationHint = /(reactivate_individual_listing|schema cache|function .* does not exist)/i.test(error.message || '')
+          ? ' Execute supabase/migrations/20261202_individual_listing_validity.sql no Supabase.'
+          : ''
+        setListingValidityMessage({
+          text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
+          error: true,
+        })
+        return false
+      } finally {
+        setStatusSavingId(null)
+      }
+    }
+
     if (await changeListingStatus(listing, 'aprovado')) {
       setModerationMessage(`“${listing.title}” foi reativado e está publicado.`)
       return true
@@ -2610,6 +2683,8 @@ function App() {
 
   const getListingStatusKey = (item) => {
     const status = String(item.status || '').trim().toLocaleLowerCase('pt-BR')
+    if (['aprovado', 'disponível', 'disponivel', 'ativo'].includes(status)
+      && isIndividualListingExpired(item, listingValidityNow)) return 'expired'
     if (status === 'em_analise' || status === 'em análise') return 'pending'
     if (status === 'reprovado') return 'rejected'
     if (status === 'pausado') return 'paused'
@@ -2619,6 +2694,7 @@ function App() {
   const getListingStatusLabel = (item) => ({
     pending: 'Em análise',
     published: 'Publicado',
+    expired: 'Expirado',
     rejected: 'Reprovado',
     paused: 'Pausado',
     completed: 'Concluído',
@@ -2626,6 +2702,7 @@ function App() {
   const pendingListings = userListings.filter((item) => getListingStatusKey(item) === 'pending')
   const adminPendingListings = isAdmin ? adminReviewListings : []
   const activeListings = userListings.filter((item) => getListingStatusKey(item) === 'published')
+  const expiredListings = userListings.filter((item) => getListingStatusKey(item) === 'expired')
   const pausedListings = userListings.filter((item) => getListingStatusKey(item) === 'paused')
   const rejectedListings = userListings.filter((item) => getListingStatusKey(item) === 'rejected')
   const completedListings = userListings.filter((item) => getListingStatusKey(item) === 'completed')
@@ -2635,6 +2712,7 @@ function App() {
       ? adminPendingListings
     : accountFilter === 'pending' ? pendingListings
     : accountFilter === 'published' ? activeListings
+      : accountFilter === 'expired' ? expiredListings
       : accountFilter === 'paused' ? pausedListings
       : accountFilter === 'rejected' ? rejectedListings
         : accountFilter === 'completed' ? completedListings : userListings
@@ -2643,7 +2721,7 @@ function App() {
   ))
   const ownFeaturedListings = authUser
     ? userListings
-      .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isApprovedListing(item))
+      .filter((item) => item.user_id === authUser.id && item.destaque_home === true && isListingPubliclyAvailable(item, listingValidityNow))
       .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
     : []
   const totalListingViews = userListings.reduce((total, item) => total + (Number(item.visualizacoes) || 0), 0)
@@ -3953,7 +4031,7 @@ function App() {
                               <tbody>
                                 {visibleRecentListings.map((item) => {
                                   const statusKey = getListingStatusKey(item)
-                                  const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Pendente' : statusKey === 'paused' ? 'Pausado' : 'Inativo'
+                                  const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'expired' ? 'Expirado' : statusKey === 'pending' ? 'Pendente' : statusKey === 'paused' ? 'Pausado' : 'Inativo'
                                   return (
                                     <tr key={item.id}>
                                       <td>
@@ -4442,6 +4520,7 @@ function App() {
                       <select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
                         <option value="all">Todos os status</option>
                         <option value="published">Aprovados</option>
+                        {(expiredListings.length > 0 || accountFilter === 'expired') && <option value="expired">Expirados</option>}
                         <option value="pending">Em análise</option>
                         <option value="paused">Pausados</option>
                         <option value="rejected">Reprovados</option>
@@ -4457,6 +4536,11 @@ function App() {
                       </select>
                     </label>
                   </div>
+                  {listingValidityMessage.text && (
+                    <p className={`my-area-feedback${listingValidityMessage.error ? ' error' : ''}`} role={listingValidityMessage.error ? 'alert' : 'status'}>
+                      {listingValidityMessage.text}
+                    </p>
+                  )}
                   {standardAccountListings.length === 0 ? (
                     <div className="account-empty">{accountFilter === 'manage' ? 'Não há anúncios cadastrados para gerenciar.' : userListings.length ? 'Nenhum imóvel corresponde aos filtros selecionados.' : 'Você ainda não cadastrou imóveis.'}</div>
                   ) : (
@@ -4478,7 +4562,10 @@ function App() {
                         const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
                           ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
                           : 'Data não informada'
-                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : statusKey === 'paused' ? 'Pausado' : 'Concluído'
+                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'expired' ? 'Expirado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : statusKey === 'paused' ? 'Pausado' : 'Concluído'
+                        const daysRemaining = getIndividualListingDaysRemaining(item, listingValidityNow)
+                        const canRenewIndividualListing = Boolean(item.individual_validity_started_at)
+                          && ['published', 'expired', 'paused'].includes(statusKey)
                         return (
                           <article key={item.id} className="account-dashboard-card standard-listing-card">
                             <StandardListingGallery listing={item} purpose={purpose} />
@@ -4493,7 +4580,13 @@ function App() {
                                 <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
                               </div>
                               <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
-                              <p className="standard-listing-date"><CalendarDays size={17} strokeWidth={2} aria-hidden="true" />Publicado em {createdAt}</p>
+                              <p className={`standard-listing-date${daysRemaining !== null && statusKey === 'published' ? ' has-validity' : ''}`}>
+                                <CalendarDays size={17} strokeWidth={2} aria-hidden="true" />
+                                <span>Publicado em {createdAt}</span>
+                                {daysRemaining !== null && statusKey === 'published' && (
+                                  <span className="standard-listing-validity">· Expira em {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'}</span>
+                                )}
+                              </p>
                               <div className="standard-listing-engagement" aria-label="Métricas deste imóvel">
                                 <div className="standard-listing-engagement-item">
                                   <Eye size={23} strokeWidth={2.2} aria-hidden="true" />
@@ -4556,6 +4649,7 @@ function App() {
                                 {openListingActionId === item.id && (
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
+                                    {canRenewIndividualListing && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); reactivateListing(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>
                                 )}
@@ -4579,6 +4673,7 @@ function App() {
                   <section className="standard-account-insight-card standard-account-status-card">
                     <h2>Situação dos anúncios</h2>
                     <div className="published"><i aria-hidden="true" /><span>Aprovados</span><strong>{activeListings.length}</strong></div>
+                    <div className="expired"><i aria-hidden="true" /><span>Expirados</span><strong>{expiredListings.length}</strong></div>
                     <div className="pending"><i aria-hidden="true" /><span>Em análise</span><strong>{pendingListings.length}</strong></div>
                     <div className="rejected"><i aria-hidden="true" /><span>Reprovados</span><strong>{rejectedListings.length}</strong></div>
                   </section>

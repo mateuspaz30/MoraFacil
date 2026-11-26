@@ -5688,6 +5688,28 @@ dl.my-area-profile-grid > div {
   color: #bd3b3b;
 }
 
+.standard-listing-status.expired {
+  background: #fff0c7;
+  color: #9a5d00;
+}
+
+.standard-listing-date.has-validity {
+  overflow: visible;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.66rem;
+  white-space: normal;
+}
+
+.standard-listing-date.has-validity > span {
+  white-space: nowrap;
+}
+
+.standard-listing-validity {
+  color: #9a5d00;
+  font-weight: 700;
+}
+
 .standard-listing-features {
   display: flex;
   min-height: 25px;
@@ -5926,6 +5948,10 @@ dl.my-area-profile-grid > div {
 
 .standard-account-status-card > div.published i {
   background: #219653;
+}
+
+.standard-account-status-card > div.expired i {
+  background: #d98a00;
 }
 
 .standard-account-status-card > div.pending i {
