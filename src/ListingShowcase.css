@@ -1078,6 +1078,8 @@
 .real-estate-shell > .site-footer { width: 100vw; margin: 30px calc(50% - 50vw) -28px; }
 .listing-detail-page + .site-footer { width: min(calc(100% - 56px), 1500px); margin: 48px auto 0; }
 .site-footer-copyright { margin: 0; color: inherit; font-size: 0.74rem; font-weight: 400; }
+.site-footer-copyright strong { color: #102a43; font-weight: 700; }
+.site-footer-copyright b { color: #078c35; }
 
 @media (max-width: 760px) {
   .listing-detail-header { padding: 12px 16px 4px; }

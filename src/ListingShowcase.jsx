@@ -79,7 +79,9 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-container">
-        <p className="site-footer-copyright">© 2026 Mora Fácil. Todos os direitos reservados.</p>
+        <p className="site-footer-copyright">
+          © 2026 <strong>Mora <b>Fácil</b></strong>. Todos os direitos reservados.
+        </p>
       </div>
     </footer>
   )
