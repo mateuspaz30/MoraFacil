@@ -400,6 +400,9 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
   const advertiserProfile = advertiserLoadResult?.userId === listing.user_id ? advertiserLoadResult.profile : null
   const advertiserName = advertiserProfile?.display_name || listing.advertiser || 'Anunciante'
   const AdvertiserFallbackIcon = advertiserProfile?.account_type === 'imobiliaria' ? Building2 : UserRound
+  const advertiserImageUrl = advertiserProfile?.account_type === 'pessoa_fisica'
+    ? advertiserProfile.avatar_url
+    : advertiserProfile?.logo_url
 
   useEffect(() => {
     if (!listing.user_id || recordedListingIdRef.current === listing.id) return
@@ -680,8 +683,8 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
             <h2>Anunciado por</h2>
             <div className="listing-detail-advertiser">
               <span className="listing-detail-advertiser-avatar">
-                {advertiserProfile?.logo_url && failedAdvertiserLogoUrl !== advertiserProfile.logo_url
-                  ? <img src={advertiserProfile.logo_url} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserProfile.logo_url)} />
+                {advertiserImageUrl && failedAdvertiserLogoUrl !== advertiserImageUrl
+                  ? <img src={advertiserImageUrl} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserImageUrl)} />
                   : <AdvertiserFallbackIcon size={25} aria-hidden="true" />}
               </span>
               <span className="listing-detail-advertiser-copy"><strong>{advertiserName}</strong></span>
