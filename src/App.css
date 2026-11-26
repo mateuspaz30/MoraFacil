@@ -10053,7 +10053,7 @@ dl.my-area-profile-grid > div {
 
 .admin-status-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -10087,6 +10087,11 @@ dl.my-area-profile-grid > div {
 .admin-status-card.approved .admin-status-icon {
   background: #eaf6eb;
   color: #078c24;
+}
+
+.admin-status-card.expired .admin-status-icon {
+  background: #fff3dc;
+  color: #a96800;
 }
 
 .admin-status-card.rejected .admin-status-icon {

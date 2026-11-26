@@ -23,7 +23,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react'
-import { getListingPurpose, getListingPropertyType } from './listingPresentation.js'
+import { getListingPurpose, getListingPropertyType, isIndividualListingExpired } from './listingPresentation.js'
 import StandardListingGallery from './StandardListingGallery.jsx'
 
 const sections = [
@@ -39,8 +39,10 @@ const formatDate = (value) => value && !Number.isNaN(new Date(value).getTime())
   ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(value))
   : 'Data não informada'
 
-const statusKey = (listing) => {
+const statusKey = (listing, validityNow = Date.now()) => {
   const status = String(listing.status || '').trim().toLocaleLowerCase('pt-BR')
+  if (['aprovado', 'disponível', 'disponivel', 'ativo', 'pausado'].includes(status)
+    && isIndividualListingExpired(listing, validityNow)) return 'expired'
   if (status === 'em_analise' || status === 'em análise') return 'pending'
   if (status === 'reprovado') return 'rejected'
   if (status === 'pausado') return 'paused'
@@ -48,13 +50,14 @@ const statusKey = (listing) => {
   return 'approved'
 }
 
-const statusLabel = (listing) => ({
+const statusLabel = (listing, validityNow = Date.now()) => ({
   approved: 'Aprovado',
+  expired: 'Expirado',
   pending: 'Pendente',
   rejected: 'Reprovado',
   paused: 'Pausado',
   completed: 'Concluído',
-})[statusKey(listing)]
+})[statusKey(listing, validityNow)]
 
 function AdminListingCard({
   listing,
@@ -64,13 +67,17 @@ function AdminListingCard({
   onEdit,
   onApprove,
   onReject,
+  onReactivate,
   onToggleFeatured,
+  validityNow,
   saving,
+  statusSaving,
 }) {
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const purpose = getListingPurpose(listing)
   const propertyType = getListingPropertyType(listing)
+  const listingStatus = statusKey(listing, validityNow)
 
   const confirmReject = async () => {
     if (await onReject(listing, reason)) {
@@ -95,7 +102,7 @@ function AdminListingCard({
               </span>
             ))}
         </div>
-        <span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" /><CircleCheck size={15} aria-hidden="true" />{statusLabel(listing)}</span>
+        <span className={`standard-listing-status ${listingStatus}`}><i aria-hidden="true" /><CircleCheck size={15} aria-hidden="true" />{statusLabel(listing, validityNow)}</span>
         <p className="standard-listing-date"><CalendarDays size={17} aria-hidden="true" />Enviado em {formatDate(listing.created_at)}</p>
         {listing.motivo_reprovacao && <p className="admin-listing-rejection">{listing.motivo_reprovacao}</p>}
       </div>
@@ -105,6 +112,7 @@ function AdminListingCard({
         <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}>
           <Star size={16} aria-hidden="true" />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}
         </button>
+        {listingStatus === 'expired' && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => onReactivate(listing)}><Play size={16} aria-hidden="true" />{statusSaving ? 'Reativando…' : 'Reativar anúncio'}</button>}
         {canModerate && !rejecting && (
           <>
             <button type="button" className="approve-listing-button" disabled={saving} onClick={() => onApprove(listing)}><Check size={16} aria-hidden="true" />Aprovar</button>
@@ -124,14 +132,14 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, statusSaving, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onComplete, onDelete, moderationError, statusSaving, validityNow, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [statusAction, setStatusAction] = useState(null)
   const [statusActionBusy, setStatusActionBusy] = useState(false)
   const [statusActionError, setStatusActionError] = useState('')
   const purpose = getListingPurpose(listing)
-  const listingStatus = statusKey(listing)
+  const listingStatus = statusKey(listing, validityNow)
   const canModerate = listingStatus === 'pending'
 
   const confirmStatusAction = async () => {
@@ -166,7 +174,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
         <div className="admin-preview-content">
           <StandardListingGallery listing={listing} purpose={purpose} showThumbnails={false} />
           <div className="admin-preview-details">
-            <span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" />{statusLabel(listing)}</span>
+            <span className={`standard-listing-status ${listingStatus}`}><i aria-hidden="true" />{statusLabel(listing, validityNow)}</span>
             <h3>{listing.title}</h3>
             <strong className={`account-card-price purpose-price purpose-${purpose}`}>{listing.price}</strong>
             <p><MapPin size={17} />{listing.neighborhood}, {listing.city || 'Ipuã-SP'}</p>
@@ -180,7 +188,7 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
         <footer>
           <button type="button" onClick={() => onEdit(listing)}><Pencil size={16} />Editar anúncio</button>
           <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}><Star size={16} />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}</button>
-          {listingStatus === 'paused'
+          {['paused', 'expired'].includes(listingStatus)
             ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => setStatusAction('reactivate')}><Play size={16} />Reativar anúncio</button>
             : listingStatus === 'approved' && <button type="button" disabled={saving || statusSaving} onClick={() => setStatusAction('pause')}><Pause size={16} />Pausar anúncio</button>}
           {statusAction && (
@@ -235,6 +243,7 @@ export default function AdminPanel({
   onMoveFeatured,
   featuredSavingId,
   statusSavingId,
+  validityNow,
   moderationError,
   neighborhoodDraft,
   editingNeighborhoodName,
@@ -257,24 +266,26 @@ export default function AdminPanel({
   const [previewListing, setPreviewListing] = useState(null)
   const [previewUser, setPreviewUser] = useState(null)
   const ownersById = useMemo(() => new Map(users.map((user) => [user.id, user])), [users])
-  const pending = listings.filter((listing) => statusKey(listing) === 'pending')
-  const approved = listings.filter((listing) => statusKey(listing) === 'approved')
-  const rejected = listings.filter((listing) => statusKey(listing) === 'rejected')
+  const pending = listings.filter((listing) => statusKey(listing, validityNow) === 'pending')
+  const approved = listings.filter((listing) => statusKey(listing, validityNow) === 'approved')
+  const expired = listings.filter((listing) => statusKey(listing, validityNow) === 'expired')
+  const rejected = listings.filter((listing) => statusKey(listing, validityNow) === 'rejected')
   const activeNeighborhoods = neighborhoods.filter((neighborhood) => neighborhood.active)
   const realtors = users.filter((user) => user.userType === 'corretor')
   const agencies = users.filter((user) => user.userType === 'imobiliaria')
   const featured = listings
-    .filter((listing) => listing.status === 'aprovado' && listing.destaque_home)
+    .filter((listing) => statusKey(listing, validityNow) === 'approved' && listing.destaque_home)
     .sort((first, second) => Number(first.ordem_destaque) - Number(second.ordem_destaque))
   const latest = [...listings]
     .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())
     .slice(0, 6)
   const filteredListings = listings.filter((listing) => {
     const filterMatches = listingFilter === 'all'
-      || (listingFilter === 'approved' && statusKey(listing) === 'approved')
-      || (listingFilter === 'pending' && statusKey(listing) === 'pending')
-      || (listingFilter === 'rejected' && statusKey(listing) === 'rejected')
-      || (listingFilter === 'paused' && statusKey(listing) === 'paused')
+      || (listingFilter === 'approved' && statusKey(listing, validityNow) === 'approved')
+      || (listingFilter === 'expired' && statusKey(listing, validityNow) === 'expired')
+      || (listingFilter === 'pending' && statusKey(listing, validityNow) === 'pending')
+      || (listingFilter === 'rejected' && statusKey(listing, validityNow) === 'rejected')
+      || (listingFilter === 'paused' && statusKey(listing, validityNow) === 'paused')
     const owner = ownersById.get(listing.user_id)
     const ownerTypeMatches = ownerTypeFilter === 'all' || owner?.userType === ownerTypeFilter
     const query = search.trim().toLocaleLowerCase('pt-BR')
@@ -300,8 +311,11 @@ export default function AdminPanel({
           onEdit={onEdit}
           onApprove={onApprove}
           onReject={onReject}
+          onReactivate={onReactivate}
           onToggleFeatured={onToggleFeatured}
+          validityNow={validityNow}
           saving={featuredSavingId === listing.id}
+          statusSaving={statusSavingId === listing.id}
         />
       ))}
     </div>
@@ -340,6 +354,14 @@ export default function AdminPanel({
                   <p>Anúncios aprovados</p>
                 </div>
               </article>
+              <article className="admin-status-card expired">
+                <span className="admin-status-icon"><CalendarDays size={30} strokeWidth={1.8} /></span>
+                <div className="admin-status-copy">
+                  <h3>Expirados</h3>
+                  <strong>{expired.length}</strong>
+                  <p>Anúncios de pessoa física vencidos</p>
+                </div>
+              </article>
               <article className="admin-status-card rejected">
                 <span className="admin-status-icon"><CircleX size={30} strokeWidth={1.8} /></span>
                 <div className="admin-status-copy">
@@ -373,7 +395,7 @@ export default function AdminPanel({
                       <td>{listing.title}</td>
                       <td>{owner?.name || listing.advertiser || 'Não informado'}</td>
                       <td>{formatDate(listing.created_at)}</td>
-                      <td><span className={`standard-listing-status ${statusKey(listing)}`}><i aria-hidden="true" />{statusLabel(listing)}</span></td>
+                      <td><span className={`standard-listing-status ${statusKey(listing, validityNow)}`}><i aria-hidden="true" />{statusLabel(listing, validityNow)}</span></td>
                       <td><button type="button" onClick={() => setPreviewListing(listing)}>Visualizar</button></td>
                     </tr>
                   })}</tbody>
@@ -396,7 +418,7 @@ export default function AdminPanel({
           <header className="admin-section-heading"><div><h2>Todos os Anúncios</h2><p>{filteredListings.length} anúncio{filteredListings.length === 1 ? '' : 's'}</p></div></header>
           <div className="admin-listing-tools">
             <label className="admin-search"><Search size={18} /><span className="sr-only">Buscar título, anunciante ou bairro</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, anunciante ou bairro" /></label>
-            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos os status</option><option value="approved">Aprovados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option><option value="paused">Pausados</option></select></label>
+            <label><span className="sr-only">Filtrar anúncios por status</span><select value={listingFilter} onChange={(event) => setListingFilter(event.target.value)}><option value="all">Todos os status</option><option value="approved">Aprovados</option><option value="expired">Expirados</option><option value="pending">Pendentes</option><option value="rejected">Reprovados</option><option value="paused">Pausados</option></select></label>
             <label><span className="sr-only">Filtrar anúncios por tipo de anunciante</span><select value={ownerTypeFilter} onChange={(event) => setOwnerTypeFilter(event.target.value)}><option value="all">Todos os tipos</option><option value="pessoa_fisica">Pessoa Física</option><option value="imobiliaria">Imobiliária</option><option value="corretor">Corretor</option></select></label>
           </div>
           {renderListingCards(filteredListings, false)}
@@ -470,7 +492,7 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} saving={featuredSavingId === previewListing.id} />}
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} validityNow={validityNow} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">

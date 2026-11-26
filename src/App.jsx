@@ -2366,7 +2366,7 @@ function App() {
   }
 
   const reactivateListing = async (listing) => {
-    if (listing.individual_validity_started_at && listing.user_id === authUser?.id) {
+    if (listing.individual_validity_started_at) {
       if (!supabase || !authUser) {
         setListingValidityMessage({ text: 'Não foi possível reativar o anúncio: conexão com o Supabase ou sessão indisponível.', error: true })
         return false
@@ -2401,19 +2401,26 @@ function App() {
         }
         setUserListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
         setPublishedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
-        setFeaturedListings((current) => current.map((item) => item.id === listing.id ? updatedListing : item))
+        setFeaturedListings((current) => {
+          const remaining = current.filter((item) => item.id !== listing.id)
+          return isListingPubliclyAvailable(updatedListing) && updatedListing.destaque_home === true
+            ? [...remaining, updatedListing]
+            : remaining
+        })
         setListingValidityNow(Date.now())
         setListingValidityMessage({ text: `“${listing.title}” foi reativado por mais 30 dias.`, error: false })
+        if (isAdmin) setModerationMessage(`“${listing.title}” foi reativado por mais 30 dias.`)
         return true
       } catch (error) {
         console.error('Falha ao reativar anúncio de pessoa física:', error)
         const migrationHint = /(reactivate_individual_listing|schema cache|function .* does not exist)/i.test(error.message || '')
-          ? ' Execute supabase/migrations/20261202_individual_listing_validity.sql no Supabase.'
+          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql e supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql no Supabase.'
           : ''
         setListingValidityMessage({
           text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
           error: true,
         })
+        if (isAdmin) setModerationMessage(`Não foi possível reativar o anúncio. ${error.message}${migrationHint}`)
         return false
       } finally {
         setStatusSavingId(null)
@@ -2683,7 +2690,7 @@ function App() {
 
   const getListingStatusKey = (item) => {
     const status = String(item.status || '').trim().toLocaleLowerCase('pt-BR')
-    if (['aprovado', 'disponível', 'disponivel', 'ativo'].includes(status)
+    if (['aprovado', 'disponível', 'disponivel', 'ativo', 'pausado'].includes(status)
       && isIndividualListingExpired(item, listingValidityNow)) return 'expired'
     if (status === 'em_analise' || status === 'em análise') return 'pending'
     if (status === 'reprovado') return 'rejected'
@@ -4317,6 +4324,7 @@ function App() {
                     section={adminSection}
                     onSectionChange={setAdminSection}
                     listings={publishedListings}
+                    validityNow={listingValidityNow}
                     listingsError={adminListingsError}
                     neighborhoods={neighborhoods}
                     users={adminUsers}
