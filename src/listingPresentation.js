@@ -22,7 +22,9 @@ export const isIndividualListingExpired = (listing, now = Date.now()) => (
 export const isListingPubliclyAvailable = (listing, now = Date.now()) => {
   const status = String(listing?.status || '').trim().toLocaleLowerCase('pt-BR')
   const isApproved = ['aprovado', 'disponível', 'disponivel', 'ativo'].includes(status)
-  return isApproved && !isIndividualListingExpired(listing, now)
+  const billingStatus = listing?.billing_status
+  const isBillingCleared = !billingStatus || ['isento', 'pago', 'cortesia_admin'].includes(billingStatus)
+  return isApproved && isBillingCleared && !isIndividualListingExpired(listing, now)
 }
 
 const propertyTypes = {

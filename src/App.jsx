@@ -804,6 +804,8 @@ function App() {
   const [userProfileError, setUserProfileError] = useState('')
   const [listingValidityNow, setListingValidityNow] = useState(() => Date.now())
   const [listingValidityMessage, setListingValidityMessage] = useState({ text: '', error: false })
+  const [listingRenewalConfirmation, setListingRenewalConfirmation] = useState(null)
+  const [listingRenewalConfirming, setListingRenewalConfirming] = useState(false)
   const [professionalDirectory, setProfessionalDirectory] = useState({
     status: supabase ? 'idle' : 'error',
     profiles: [],
@@ -2427,7 +2429,7 @@ function App() {
       setListingValidityMessage({ text: '', error: false, listingId: listing.id })
       if (isAdmin) setModerationError('')
       try {
-        const requiresPayment = !isAdmin && isIndividualListingExpired(listing)
+        const requiresPayment = !isAdmin
         if (requiresPayment) {
           await requestIndividualListingReactivation(supabase, listing.id)
           const { data, error: listingError } = await supabase
@@ -2498,7 +2500,7 @@ function App() {
       } catch (error) {
         console.error('Falha ao reativar anúncio de pessoa física:', error)
         const migrationHint = /(reactivate_individual_listing|schema cache|function .* does not exist)/i.test(error.message || '')
-          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql, supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql, supabase/migrations/20261204_billing_foundation.sql e supabase/migrations/20261205_fix_individual_listing_reactivation.sql no Supabase.'
+          ? ' Execute, nesta ordem, supabase/migrations/20261202_individual_listing_validity.sql, supabase/migrations/20261203_allow_admin_individual_listing_reactivation.sql, supabase/migrations/20261204_billing_foundation.sql, supabase/migrations/20261205_fix_individual_listing_reactivation.sql e supabase/migrations/20261206_charge_confirmed_individual_renewals.sql no Supabase.'
           : ''
         setListingValidityMessage({
           text: `Não foi possível reativar o anúncio. ${error.message}${migrationHint}`,
@@ -2522,6 +2524,17 @@ function App() {
       return true
     }
     return false
+  }
+
+  const confirmIndividualListingRenewal = async () => {
+    if (!listingRenewalConfirmation || listingRenewalConfirming) return
+    setListingRenewalConfirming(true)
+    try {
+      await reactivateListing(listingRenewalConfirmation)
+      setListingRenewalConfirmation(null)
+    } finally {
+      setListingRenewalConfirming(false)
+    }
   }
 
   const saveFeaturedListing = async (event, listing, draft) => {
@@ -4746,6 +4759,7 @@ function App() {
                         const statusKey = getListingStatusKey(item)
                         const purpose = getListingPurpose(item)
                         const propertyType = getListingPropertyType(item)
+                        const paymentPending = ['pendente_pagamento', 'aguardando_confirmacao'].includes(item.billing_status)
                         const featuredDraft = featuredDrafts[item.id] || {
                           destaqueHome: item.destaque_home === true,
                           ordemDestaque: item.ordem_destaque == null ? '' : String(item.ordem_destaque),
@@ -4759,7 +4773,7 @@ function App() {
                         const createdAt = item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
                           ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(item.created_at))
                           : 'Data não informada'
-                        const statusLabel = statusKey === 'published' ? 'Aprovado' : statusKey === 'expired' ? 'Expirado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : statusKey === 'paused' ? 'Pausado' : 'Concluído'
+                        const statusLabel = paymentPending ? 'Aguardando pagamento' : statusKey === 'published' ? 'Aprovado' : statusKey === 'expired' ? 'Expirado' : statusKey === 'pending' ? 'Em análise' : statusKey === 'rejected' ? 'Reprovado' : statusKey === 'paused' ? 'Pausado' : 'Concluído'
                         const daysRemaining = getIndividualListingDaysRemaining(item, listingValidityNow)
                         const canRenewIndividualListing = Boolean(item.individual_validity_started_at)
                           && ['published', 'expired', 'paused'].includes(statusKey)
@@ -4776,7 +4790,7 @@ function App() {
                                 {Number(item.parking_spaces || item.garages) > 0 && <span><Car size={17} strokeWidth={2} aria-hidden="true" />{item.parking_spaces || item.garages} {Number(item.parking_spaces || item.garages) === 1 ? 'vaga' : 'vagas'}</span>}
                                 <span><Ruler size={17} strokeWidth={2} aria-hidden="true" />{propertyType.key === 'terreno' ? `Área total: ${formatArea(item.area)}` : formatArea(item.area)}</span>
                               </div>
-                              <span className={`standard-listing-status ${statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
+                              <span className={`standard-listing-status ${paymentPending ? 'pending' : statusKey}`}><i aria-hidden="true" /><CircleCheck size={15} strokeWidth={2.4} aria-hidden="true" />{statusLabel}</span>
                               <p className={`standard-listing-date${daysRemaining !== null && statusKey === 'published' ? ' has-validity' : ''}`}>
                                 <CalendarDays size={17} strokeWidth={2} aria-hidden="true" />
                                 <span>Publicado em {createdAt}</span>
@@ -4852,7 +4866,7 @@ function App() {
                                 {openListingActionId === item.id && (
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
-                                    {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); reactivateListing(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
+                                    {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); setListingRenewalConfirmation(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
                                     {canRenewIndividualListing && ['pendente_pagamento', 'aguardando_confirmacao'].includes(item.billing_status) && <span className="standard-listing-menu-status">Pagamento pendente</span>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>
@@ -5782,6 +5796,44 @@ function App() {
                 </div>
                 <a className="contact-button" href={`tel:${selectedListing.phone.replace(/\D/g, '')}`}>☎&nbsp; Entrar em contato</a>
               </div>
+            </div>
+          </section>
+        </div>
+      )}
+      {listingRenewalConfirmation && (
+        <div
+          className="property-modal-backdrop listing-renewal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !listingRenewalConfirming) {
+              setListingRenewalConfirmation(null)
+            }
+          }}
+        >
+          <section className="listing-renewal-dialog" role="dialog" aria-modal="true" aria-labelledby="listing-renewal-title">
+            <h2 id="listing-renewal-title">Deseja renovar mais 30 dias no seu anúncio?</h2>
+            <p>
+              {isAdmin
+                ? 'A renovação será liberada pelo administrador sem cobrança.'
+                : 'A renovação gera uma cobrança de R$ 4,90. O anúncio ficará fora da vitrine até a confirmação do pagamento. O pagamento online ainda não está disponível.'}
+            </p>
+            <div className="listing-renewal-actions">
+              <button
+                type="button"
+                className="listing-renewal-cancel"
+                disabled={listingRenewalConfirming}
+                onClick={() => setListingRenewalConfirmation(null)}
+              >
+                Não
+              </button>
+              <button
+                type="button"
+                className="listing-renewal-confirm"
+                disabled={listingRenewalConfirming}
+                onClick={confirmIndividualListingRenewal}
+              >
+                {listingRenewalConfirming ? 'Processando…' : 'Sim'}
+              </button>
             </div>
           </section>
         </div>
