@@ -2384,7 +2384,7 @@ function App() {
           .from('listings')
           .select('*')
           .eq('id', listing.id)
-          .eq('user_id', authUser.id)
+          .eq('user_id', listing.user_id)
           .single()
         if (listingError) throw listingError
         if (data.status !== 'aprovado' || !data.individual_validity_started_at) {
