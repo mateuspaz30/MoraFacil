@@ -587,7 +587,7 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
             <div className="listing-detail-address-line"><LocationPinIcon /><span>{fullAddress}{neighborhood ? ` - ${neighborhood}` : ''}, {city}</span>{listing.cep && <small>CEP {listing.cep}</small>}</div>
           </div>
           <a className="listing-back-link" href={origin ? originProfileUrl : `${import.meta.env.BASE_URL}#imoveis-disponiveis`}>
-            {origin ? `← Voltar para ${origin.name}` : '← Voltar aos imóveis'}
+            {origin ? `← Voltar para ${origin.name}` : '← Voltar'}
           </a>
         </div>
       </header>
