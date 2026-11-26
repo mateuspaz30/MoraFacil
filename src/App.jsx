@@ -2969,6 +2969,14 @@ function App() {
       console.error('Falha ao registrar clique no WhatsApp do imóvel:', error)
     }
   }, [])
+  const loadPublicListingAdvertiser = useCallback(async (userId) => {
+    if (!supabase || !userId) return null
+    const { data, error } = await supabase.rpc('get_public_listing_advertiser', {
+      target_user_id: userId,
+    })
+    if (error) throw error
+    return Array.isArray(data) ? data[0] || null : data || null
+  }, [])
 
   const routeSlug = getListingSlugFromPath()
   if (routeSlug) {
@@ -2998,6 +3006,7 @@ function App() {
       <ListingDetailPage
         listing={routeListing}
         origin={detailOrigin}
+        onLoadAdvertiser={loadPublicListingAdvertiser}
         onView={recordListingView}
         onContactClick={recordWhatsAppClick}
         isFavorite={favoriteListingIds.some((id) => String(id) === String(routeListing.id))}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag } from 'lucide-react'
+import { Bath, BedDouble, Building2, CalendarDays, Camera, Car, Heart, House, KeyRound, LandPlot, MapPin, Ruler, Store, Tag, UserRound } from 'lucide-react'
 import './ListingShowcase.css'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel } from './listingPresentation.js'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
@@ -337,11 +337,13 @@ export function ListingShowcase({
   )
 }
 
-export function ListingDetailPage({ listing, origin, onView, onContactClick, isFavorite, favoriteBusy, favoriteMessage, onToggleFavorite }) {
+export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, onContactClick, isFavorite, favoriteBusy, favoriteMessage, onToggleFavorite }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareFeedback, setShareFeedback] = useState('')
+  const [advertiserLoadResult, setAdvertiserLoadResult] = useState(null)
+  const [failedAdvertiserLogoUrl, setFailedAdvertiserLogoUrl] = useState('')
   const shareCloseButtonRef = useRef(null)
   const galleryCloseButtonRef = useRef(null)
   const recordedListingIdRef = useRef(null)
@@ -395,12 +397,34 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
     const profileRoute = origin.type === 'professional' ? 'profissionais' : 'imobiliaria'
     return `${import.meta.env.BASE_URL}${profileRoute}/${encodeURIComponent(origin.slug)}${returnQuery ? `?${returnQuery}` : ''}`
   })() : ''
+  const advertiserProfile = advertiserLoadResult?.userId === listing.user_id ? advertiserLoadResult.profile : null
+  const advertiserProfileError = advertiserLoadResult?.userId === listing.user_id && advertiserLoadResult.error
+  const advertiserProfileUrl = advertiserProfile?.slug
+    ? `${import.meta.env.BASE_URL}${advertiserProfile.account_type === 'corretor' ? 'profissionais' : 'imobiliaria'}/${encodeURIComponent(advertiserProfile.slug)}`
+    : ''
+  const advertiserName = advertiserProfile?.display_name || listing.advertiser || 'Anunciante'
+  const AdvertiserFallbackIcon = advertiserProfile?.account_type === 'imobiliaria' ? Building2 : UserRound
 
   useEffect(() => {
     if (!listing.user_id || recordedListingIdRef.current === listing.id) return
     recordedListingIdRef.current = listing.id
     onView?.(listing)
   }, [listing, onView])
+
+  useEffect(() => {
+    if (!listing.user_id || !onLoadAdvertiser) return undefined
+
+    let active = true
+    onLoadAdvertiser(listing.user_id)
+      .then((profile) => {
+        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile, error: false })
+      })
+      .catch((error) => {
+        console.error('Falha ao carregar os dados públicos do anunciante:', error)
+        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile: null, error: true })
+      })
+    return () => { active = false }
+  }, [listing.user_id, onLoadAdvertiser])
 
   const changeImage = useCallback((direction) => {
     if (galleryImages.length < 2) return
@@ -653,13 +677,30 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
           <section className="listing-detail-price-card">
             <span className="listing-detail-eyebrow">Valor do imóvel</span>
             <strong className={`listing-detail-price purpose-price purpose-${purpose}`}>{price}</strong>
-            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer" onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><WhatsAppIcon size={24} />Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
-            {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`} onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
+            <span className={`listing-detail-price-purpose purpose-${purpose}`}>{purposeLabel}</span>
           </section>
 
           <section className="listing-detail-advertiser-card">
-            <h2>Anunciante</h2>
-            <div className="listing-detail-advertiser"><span>{String(listing.advertiser || 'A').trim().charAt(0).toLocaleUpperCase('pt-BR')}</span><div><strong>{listing.advertiser || 'Anunciante'}</strong></div></div>
+            <h2>Anunciado por</h2>
+            {advertiserProfileUrl
+              ? <a className="listing-detail-advertiser" href={advertiserProfileUrl} aria-label={`Ver perfil público de ${advertiserName}`}>
+                  <span className="listing-detail-advertiser-avatar">
+                    {advertiserProfile.logo_url && failedAdvertiserLogoUrl !== advertiserProfile.logo_url
+                      ? <img src={advertiserProfile.logo_url} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserProfile.logo_url)} />
+                      : <AdvertiserFallbackIcon size={25} aria-hidden="true" />}
+                  </span>
+                  <span className="listing-detail-advertiser-copy"><strong>{advertiserName}</strong><small>{advertiserProfile.account_type === 'corretor' ? 'Corretor' : 'Imobiliária'} · Ver perfil público</small></span>
+                </a>
+              : <div className="listing-detail-advertiser">
+                  <span className="listing-detail-advertiser-avatar"><UserRound size={25} aria-hidden="true" /></span>
+                  <span className="listing-detail-advertiser-copy"><strong>{listing.advertiser || 'Anunciante'}</strong><small>{advertiserProfileError ? 'Não foi possível carregar o perfil público.' : 'Anunciante'}</small></span>
+                </div>}
+          </section>
+
+          <section className="listing-detail-contact-card" aria-label="Contato do anunciante">
+            <h2>Fale com o anunciante</h2>
+            {whatsappDigits ? <a className="listing-contact-button whatsapp" href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(contactMessage)}`} target="_blank" rel="noreferrer" onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><WhatsAppIcon size={24} />Conversar no WhatsApp</a> : <button type="button" className="listing-contact-button whatsapp" disabled>WhatsApp indisponível</button>}
+            {phoneDigits ? <a className="listing-contact-button outline" href={`tel:${phoneDigits}`} onClick={(event) => openTrackedContact(event, () => onContactClick?.(listing))}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-7-7l3-2-2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>Entrar em contato</a> : <button type="button" className="listing-contact-button outline" disabled>Contato indisponível</button>}
           </section>
 
           <section className="listing-detail-information-card listing-detail-card">
