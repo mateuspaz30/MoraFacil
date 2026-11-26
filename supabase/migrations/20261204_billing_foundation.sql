@@ -33,17 +33,6 @@ create table if not exists public.individual_listing_entitlements (
   free_listing_claimed_at timestamptz not null default now()
 );
 
-insert into public.individual_listing_entitlements (user_id, free_listing_id, free_listing_claimed_at)
-select distinct on (listing.user_id)
-  listing.user_id,
-  listing.id,
-  coalesce(listing.created_at, now())
-from public.listings as listing
-join public.user_profiles as profile on profile.user_id = listing.user_id
-where profile.tipo_usuario = 'pessoa_fisica'
-order by listing.user_id, listing.created_at nulls last, listing.id
-on conflict (user_id) do nothing;
-
 create table if not exists public.billing_plans (
   id text primary key,
   account_type text not null check (account_type in ('corretor', 'imobiliaria')),
@@ -718,5 +707,16 @@ $$;
 
 revoke all on function public.get_public_professional_directory() from public;
 grant execute on function public.get_public_professional_directory() to anon, authenticated;
+
+insert into public.individual_listing_entitlements (user_id, free_listing_id, free_listing_claimed_at)
+select distinct on (listing.user_id)
+  listing.user_id,
+  listing.id,
+  coalesce(listing.created_at, now())
+from public.listings as listing
+join public.user_profiles as profile on profile.user_id = listing.user_id
+where profile.tipo_usuario = 'pessoa_fisica'
+order by listing.user_id, listing.created_at nulls last, listing.id
+on conflict (user_id) do nothing;
 
 commit;
