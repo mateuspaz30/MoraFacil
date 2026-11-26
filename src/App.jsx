@@ -3327,7 +3327,7 @@ function App() {
               }
             }}
           >
-            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar aos profissionais' : isPublicProfessionalOwner ? 'Voltar ao painel' : 'Voltar'}
+            <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar' : isPublicProfessionalOwner ? 'Voltar ao painel' : 'Voltar'}
           </button>
         </header>
         {isCompanyPublicEditing && companyPublicImageCrop && (
