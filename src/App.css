@@ -12783,3 +12783,218 @@ dl.my-area-profile-grid > div {
   outline: 3px solid rgba(7, 140, 89, 0.3);
   outline-offset: 2px;
 }
+
+.company-public-cover {
+  height: auto;
+  aspect-ratio: 3 / 1;
+}
+
+.company-image-crop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgba(5, 20, 34, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.company-image-crop-dialog {
+  display: grid;
+  gap: 18px;
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid #dfe7ed;
+  border-radius: 18px;
+  padding: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(4, 17, 32, 0.3);
+}
+
+.company-image-crop-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.company-image-crop-header h2 {
+  margin: 0;
+  color: #102a43;
+  font-size: 1.2rem;
+}
+
+.company-image-crop-header p {
+  margin: 5px 0 0;
+  color: #60758a;
+  font-size: 0.86rem;
+}
+
+.company-image-crop-close,
+.company-image-crop-zoom button {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid #d7e1e9;
+  border-radius: 10px;
+  background: #fff;
+  color: #29465f;
+  cursor: pointer;
+}
+
+.company-image-crop-close:disabled,
+.company-image-crop-zoom button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.company-image-crop-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #d5e0e8;
+  border-radius: 12px;
+  background:
+    linear-gradient(45deg, #e9eef2 25%, transparent 25%),
+    linear-gradient(-45deg, #e9eef2 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e9eef2 75%),
+    linear-gradient(-45deg, transparent 75%, #e9eef2 75%),
+    #f6f8fa;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.company-image-crop-frame.logo {
+  width: min(420px, 100%);
+  justify-self: center;
+}
+
+.company-image-crop-frame:active {
+  cursor: grabbing;
+}
+
+.company-image-crop-frame > img {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.company-image-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #29465f;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.company-image-crop-zoom > span {
+  min-width: 42px;
+}
+
+.company-image-crop-zoom input {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: #078c35;
+}
+
+.company-image-crop-error {
+  margin: 0;
+  color: #a52b36;
+  font-size: 0.84rem;
+}
+
+.company-image-crop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.company-image-crop-actions button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #cbd8e2;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #fff;
+  color: #29465f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.company-image-crop-actions .company-image-crop-apply {
+  border-color: #078c35;
+  background: #078c35;
+  color: #fff;
+}
+
+.company-image-crop-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.company-image-crop-dialog button:focus-visible,
+.company-image-crop-dialog input:focus-visible {
+  outline: 3px solid rgba(7, 140, 89, 0.32);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .company-image-crop-backdrop {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .company-image-crop-dialog {
+    gap: 14px;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .company-image-crop-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .company-image-crop-header p {
+    font-size: 0.78rem;
+  }
+
+  .company-image-crop-close,
+  .company-image-crop-zoom button {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .company-image-crop-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .company-image-crop-actions button {
+    min-width: 0;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .company-public-cover {
+    aspect-ratio: 1.7 / 1;
+  }
+}

@@ -11,6 +11,7 @@ import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, purposeColors } from './listingPresentation.js'
 import AdminPanel from './AdminPanel.jsx'
+import CompanyProfileImageCropDialog from './CompanyProfileImageCropDialog.jsx'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
 import ListingPhotoCount from './ListingPhotoCount.jsx'
 import StandardListingGallery from './StandardListingGallery.jsx'
@@ -821,6 +822,7 @@ function App() {
   const [companyPublicCoverFile, setCompanyPublicCoverFile] = useState(null)
   const [companyPublicLogoPreview, setCompanyPublicLogoPreview] = useState('')
   const [companyPublicCoverPreview, setCompanyPublicCoverPreview] = useState('')
+  const [companyPublicImageCrop, setCompanyPublicImageCrop] = useState(null)
   const companyPublicLogoPreviewRef = useRef('')
   const companyPublicCoverPreviewRef = useRef('')
   const [companyPublicActiveField, setCompanyPublicActiveField] = useState('')
@@ -871,9 +873,14 @@ function App() {
   const [featuredDrafts, setFeaturedDrafts] = useState({})
   const [featuredSavingId, setFeaturedSavingId] = useState(null)
 
+  function discardCompanyPublicImageCrop() {
+    setCompanyPublicImageCrop(null)
+  }
+
   function clearCompanyPublicImagePreviews() {
     if (companyPublicLogoPreviewRef.current) URL.revokeObjectURL(companyPublicLogoPreviewRef.current)
     if (companyPublicCoverPreviewRef.current) URL.revokeObjectURL(companyPublicCoverPreviewRef.current)
+    discardCompanyPublicImageCrop()
     companyPublicLogoPreviewRef.current = ''
     companyPublicCoverPreviewRef.current = ''
     setCompanyPublicLogoPreview('')
@@ -2056,8 +2063,17 @@ function App() {
       setCompanyPublicImageError('A imagem deve ter no máximo 8 MB.')
       return
     }
+    discardCompanyPublicImageCrop()
+    setCompanyPublicImageCrop({ file, imageKind })
+    setCompanyPublicSaveError('')
+    setCompanyPublicSaveMessage('')
+  }
+
+  const applyCompanyPublicImageCrop = (file) => {
+    const crop = companyPublicImageCrop
+    if (!crop) return
     const previewUrl = URL.createObjectURL(file)
-    if (imageKind === 'logo') {
+    if (crop.imageKind === 'logo') {
       if (companyPublicLogoPreviewRef.current) URL.revokeObjectURL(companyPublicLogoPreviewRef.current)
       companyPublicLogoPreviewRef.current = previewUrl
       setCompanyPublicLogoPreview(previewUrl)
@@ -2068,6 +2084,8 @@ function App() {
       setCompanyPublicCoverPreview(previewUrl)
       setCompanyPublicCoverFile(file)
     }
+    discardCompanyPublicImageCrop()
+    setCompanyPublicImageError('')
     setCompanyPublicSaveError('')
     setCompanyPublicSaveMessage('')
   }
@@ -3312,6 +3330,14 @@ function App() {
             <ArrowLeft size={18} aria-hidden="true" /> {professionalDirectoryReturnPath ? 'Voltar aos profissionais' : isPublicProfessionalOwner ? 'Voltar ao painel' : 'Voltar'}
           </button>
         </header>
+        {isCompanyPublicEditing && companyPublicImageCrop && (
+          <CompanyProfileImageCropDialog
+            file={companyPublicImageCrop.file}
+            imageKind={companyPublicImageCrop.imageKind}
+            onCancel={discardCompanyPublicImageCrop}
+            onApply={applyCompanyPublicImageCrop}
+          />
+        )}
         <main className={`company-public-main${isCompanyPublicEditing ? ' edit-mode' : ''}`}>
           {isCompanyPublicEditSession && (
             <div className="company-public-edit-toolbar">
