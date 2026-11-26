@@ -41,9 +41,12 @@ export const getListingSlug = (listing) => slugify([
 export const getListingDetailUrl = (listing, companyOrigin = null) => {
   const search = new URLSearchParams({ id: String(listing.id) })
   if (companyOrigin?.slug) {
-    search.set('origem', 'imobiliaria')
+    search.set('origem', companyOrigin.type === 'professional' ? 'profissional' : 'imobiliaria')
     search.set('slug', companyOrigin.slug)
     if (companyOrigin.name) search.set('nome', companyOrigin.name)
+    if (companyOrigin.type === 'professional' && companyOrigin.returnToDirectory) {
+      search.set('retorno', `${import.meta.env.BASE_URL}profissionais/`)
+    }
     if (companyOrigin.editing) search.set('edit', '1')
     if (companyOrigin.preview) search.set('preview', '1')
     if (companyOrigin.tab && companyOrigin.tab !== 'showcase') search.set('aba', companyOrigin.tab)
@@ -385,8 +388,12 @@ export function ListingDetailPage({ listing, origin, onView, onContactClick, isF
     if (origin.editing) returnParams.set('edit', '1')
     if (origin.preview) returnParams.set('preview', '1')
     if (origin.tab && origin.tab !== 'showcase') returnParams.set('aba', origin.tab)
+    if (origin.type === 'professional' && origin.returnToDirectory) {
+      returnParams.set('retorno', `${import.meta.env.BASE_URL}profissionais/`)
+    }
     const returnQuery = returnParams.toString()
-    return `${import.meta.env.BASE_URL}imobiliaria/${encodeURIComponent(origin.slug)}${returnQuery ? `?${returnQuery}` : ''}`
+    const profileRoute = origin.type === 'professional' ? 'profissionais' : 'imobiliaria'
+    return `${import.meta.env.BASE_URL}${profileRoute}/${encodeURIComponent(origin.slug)}${returnQuery ? `?${returnQuery}` : ''}`
   })() : ''
 
   useEffect(() => {

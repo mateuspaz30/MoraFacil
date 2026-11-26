@@ -267,12 +267,13 @@ const getPublicProfessionalSlugFromPath = (pathname) => {
 const getCompanyPublicProfilePath = (slug) => `${getAppBasePath()}imobiliaria/${encodeURIComponent(slug)}`
 const getPublicProfessionalProfilePath = (slug) => `${getAppBasePath()}profissionais/${encodeURIComponent(slug)}`
 const getProfessionalDirectoryReturnPath = () => {
-  const returnPath = window.history.state?.returnTo
-  return typeof returnPath === 'string'
+  const historyReturnPath = window.history.state?.returnTo
+  const queryReturnPath = new URLSearchParams(window.location.search).get('retorno')
+  return [historyReturnPath, queryReturnPath].find((returnPath) => (
+    typeof returnPath === 'string'
     && returnPath.startsWith(getAppBasePath())
     && getRelativeAppPath(returnPath) === 'profissionais'
-    ? returnPath
-    : ''
+  )) || ''
 }
 const getAccountTypeLabel = (userType) => ({
   pessoa_fisica: 'Pessoa Física',
@@ -2961,14 +2962,18 @@ function App() {
   if (routeSlug) {
     const detailSearchParams = new URLSearchParams(window.location.search)
     const routeListingId = detailSearchParams.get('id')
-    const originSlug = detailSearchParams.get('origem') === 'imobiliaria'
+    const originType = detailSearchParams.get('origem')
+    const originSlug = ['imobiliaria', 'profissional'].includes(originType)
       ? detailSearchParams.get('slug') || ''
       : ''
+    const returnToProfessionalDirectory = detailSearchParams.get('retorno') === `${getAppBasePath()}profissionais/`
     const originTab = detailSearchParams.get('aba')
     const detailOrigin = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(originSlug)
       ? {
+        type: originType === 'profissional' ? 'professional' : 'company',
         slug: originSlug,
-        name: detailSearchParams.get('nome')?.trim() || 'Imobiliária',
+        name: detailSearchParams.get('nome')?.trim() || (originType === 'profissional' ? 'Profissional' : 'Imobiliária'),
+        returnToDirectory: returnToProfessionalDirectory,
         editing: detailSearchParams.get('edit') === '1',
         preview: detailSearchParams.get('preview') === '1',
         tab: ['showcase', 'about', 'contacts'].includes(originTab) ? originTab : 'showcase',
@@ -3161,9 +3166,13 @@ function App() {
     const visibleCompanyName = companyPublicDisplay?.company_name?.trim()
       || company?.company_name
       || (company?.account_type === 'corretor' ? 'Corretor' : 'Imobiliária')
+    const isProfessionalDirectoryProfile = getRelativeAppPath(currentPath).split('/')[0] === 'profissionais'
+    const professionalDirectoryReturnPath = getProfessionalDirectoryReturnPath()
     const companyListingOrigin = {
+      type: isProfessionalDirectoryProfile ? 'professional' : 'company',
       slug: companyPublicRouteSlug,
       name: visibleCompanyName,
+      returnToDirectory: Boolean(professionalDirectoryReturnPath),
       editing: isCompanyPublicEditSession,
       preview: companyPublicPreviewMode,
       tab: companyPublicTab,
@@ -3245,8 +3254,6 @@ function App() {
       || companyPublicListings[0]?.city
       || 'Cidade não informada'
     const companyCityLabel = String(companyCity).replace(/[-,]\s*SP$/i, ' · SP')
-    const professionalDirectoryReturnPath = getProfessionalDirectoryReturnPath()
-    const isProfessionalDirectoryProfile = getRelativeAppPath(currentPath).split('/')[0] === 'profissionais'
 
     return (
       <div className="company-public-page">
@@ -3260,7 +3267,11 @@ function App() {
             className="company-public-portal-link"
             onClick={() => {
               if (professionalDirectoryReturnPath) {
-                window.history.back()
+                if (window.history.state?.returnTo === professionalDirectoryReturnPath) {
+                  window.history.back()
+                } else {
+                  navigateToPath(professionalDirectoryReturnPath)
+                }
               } else if (isCompanyPublicOwner) {
                 navigateToPath(getAccountSectionPath('public-profile'))
               } else if (isProfessionalDirectoryProfile) {
