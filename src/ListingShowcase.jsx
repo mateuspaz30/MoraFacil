@@ -398,10 +398,6 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
     return `${import.meta.env.BASE_URL}${profileRoute}/${encodeURIComponent(origin.slug)}${returnQuery ? `?${returnQuery}` : ''}`
   })() : ''
   const advertiserProfile = advertiserLoadResult?.userId === listing.user_id ? advertiserLoadResult.profile : null
-  const advertiserProfileError = advertiserLoadResult?.userId === listing.user_id && advertiserLoadResult.error
-  const advertiserProfileUrl = advertiserProfile?.slug
-    ? `${import.meta.env.BASE_URL}${advertiserProfile.account_type === 'corretor' ? 'profissionais' : 'imobiliaria'}/${encodeURIComponent(advertiserProfile.slug)}`
-    : ''
   const advertiserName = advertiserProfile?.display_name || listing.advertiser || 'Anunciante'
   const AdvertiserFallbackIcon = advertiserProfile?.account_type === 'imobiliaria' ? Building2 : UserRound
 
@@ -417,11 +413,11 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
     let active = true
     onLoadAdvertiser(listing.user_id)
       .then((profile) => {
-        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile, error: false })
+        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile })
       })
       .catch((error) => {
         console.error('Falha ao carregar os dados públicos do anunciante:', error)
-        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile: null, error: true })
+        if (active) setAdvertiserLoadResult({ userId: listing.user_id, profile: null })
       })
     return () => { active = false }
   }, [listing.user_id, onLoadAdvertiser])
@@ -682,19 +678,14 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
 
           <section className="listing-detail-advertiser-card">
             <h2>Anunciado por</h2>
-            {advertiserProfileUrl
-              ? <a className="listing-detail-advertiser" href={advertiserProfileUrl} aria-label={`Ver perfil público de ${advertiserName}`}>
-                  <span className="listing-detail-advertiser-avatar">
-                    {advertiserProfile.logo_url && failedAdvertiserLogoUrl !== advertiserProfile.logo_url
-                      ? <img src={advertiserProfile.logo_url} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserProfile.logo_url)} />
-                      : <AdvertiserFallbackIcon size={25} aria-hidden="true" />}
-                  </span>
-                  <span className="listing-detail-advertiser-copy"><strong>{advertiserName}</strong><small>{advertiserProfile.account_type === 'corretor' ? 'Corretor' : 'Imobiliária'} · Ver perfil público</small></span>
-                </a>
-              : <div className="listing-detail-advertiser">
-                  <span className="listing-detail-advertiser-avatar"><UserRound size={25} aria-hidden="true" /></span>
-                  <span className="listing-detail-advertiser-copy"><strong>{listing.advertiser || 'Anunciante'}</strong><small>{advertiserProfileError ? 'Não foi possível carregar o perfil público.' : 'Anunciante'}</small></span>
-                </div>}
+            <div className="listing-detail-advertiser">
+              <span className="listing-detail-advertiser-avatar">
+                {advertiserProfile?.logo_url && failedAdvertiserLogoUrl !== advertiserProfile.logo_url
+                  ? <img src={advertiserProfile.logo_url} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserProfile.logo_url)} />
+                  : <AdvertiserFallbackIcon size={25} aria-hidden="true" />}
+              </span>
+              <span className="listing-detail-advertiser-copy"><strong>{advertiserName}</strong></span>
+            </div>
           </section>
 
           <section className="listing-detail-contact-card" aria-label="Contato do anunciante">
