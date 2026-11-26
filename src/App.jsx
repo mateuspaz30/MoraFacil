@@ -792,7 +792,6 @@ function App() {
   const [professionalSearchInput, setProfessionalSearchInput] = useState('')
   const [professionalSearch, setProfessionalSearch] = useState('')
   const [professionalCategory, setProfessionalCategory] = useState('all')
-  const [professionalSort, setProfessionalSort] = useState('name')
   const [profileEditing, setProfileEditing] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
@@ -2752,28 +2751,8 @@ function App() {
     imobiliaria: professionalDirectory.profiles.filter((profile) => profile.professional_type === 'imobiliaria').length,
     corretor: professionalDirectory.profiles.filter((profile) => profile.professional_type === 'corretor').length,
   }
-  const sortedProfessionalProfiles = [...filteredProfessionalProfiles].sort((first, second) => {
-    if (professionalSort === 'name') {
-      return first.professional_name.localeCompare(second.professional_name, 'pt-BR')
-    }
-    if (professionalSort === 'listings') {
-      return Number(second.active_listing_count) - Number(first.active_listing_count)
-        || first.professional_name.localeCompare(second.professional_name, 'pt-BR')
-    }
-    if (!normalizedProfessionalSearch) {
-      return first.professional_name.localeCompare(second.professional_name, 'pt-BR')
-    }
-    const getRelevance = (profile) => {
-      const name = normalizeNeighborhoodName(profile.professional_name)
-      const city = normalizeNeighborhoodName(profile.city)
-      if (name.startsWith(normalizedProfessionalSearch)) return 0
-      if (name.includes(normalizedProfessionalSearch)) return 1
-      if (city.startsWith(normalizedProfessionalSearch)) return 2
-      return 3
-    }
-    return getRelevance(first) - getRelevance(second)
-      || first.professional_name.localeCompare(second.professional_name, 'pt-BR')
-  })
+  const visibleProfessionalProfiles = [...filteredProfessionalProfiles]
+    .sort((first, second) => first.professional_name.localeCompare(second.professional_name, 'pt-BR'))
   const companyPublicListings = activePublicCompanyProfile.data
     ? publicPublishedListings
       .filter((item) => item.user_id === activePublicCompanyProfile.data.user_id)
@@ -3033,7 +3012,7 @@ function App() {
             </label>
             <button type="submit" className="professional-directory-search-button">Buscar</button>
           </form>
-          <section className="professional-directory-results-controls" aria-label="Filtros e ordenação dos profissionais">
+          <section className="professional-directory-results-controls" aria-label="Categorias dos profissionais">
             <div className="professional-directory-category-tabs" role="group" aria-label="Filtrar por categoria">
               {[
                 ['all', 'Todos'],
@@ -3049,25 +3028,17 @@ function App() {
                 >{label} ({professionalCategoryCounts[category]})</button>
               ))}
             </div>
-            <label className="professional-directory-select">
-              <span className="sr-only">Ordenar profissionais</span>
-              <select value={professionalSort} onChange={(event) => setProfessionalSort(event.target.value)}>
-                <option value="name">Ordenar: Nome A–Z</option>
-                <option value="relevance">Ordenar: Relevância</option>
-                <option value="listings">Ordenar: Mais imóveis ativos</option>
-              </select>
-            </label>
           </section>
           <p className="professional-directory-count" aria-live="polite">
             {professionalDirectory.status === 'loaded'
-              ? `${sortedProfessionalProfiles.length} ${sortedProfessionalProfiles.length === 1 ? 'profissional encontrado' : 'profissionais encontrados'}`
+              ? `${visibleProfessionalProfiles.length} ${visibleProfessionalProfiles.length === 1 ? 'profissional encontrado' : 'profissionais encontrados'}`
               : ' '}
           </p>
           {['idle', 'loading'].includes(professionalDirectory.status) ? (
             <p className="professional-directory-feedback" role="status">Carregando perfis profissionais…</p>
           ) : professionalDirectory.status === 'error' ? (
             <p className="professional-directory-feedback error" role="alert">{professionalDirectory.error}</p>
-          ) : sortedProfessionalProfiles.length === 0 ? (
+          ) : visibleProfessionalProfiles.length === 0 ? (
             <p className="professional-directory-feedback" role="status">
               {professionalDirectory.profiles.length
                 ? 'Nenhum perfil corresponde à busca. Tente outro nome ou cidade.'
@@ -3075,7 +3046,7 @@ function App() {
             </p>
           ) : (
             <div className="professional-directory-grid">
-              {sortedProfessionalProfiles.map((profile) => {
+              {visibleProfessionalProfiles.map((profile) => {
                 const profileName = profile.professional_name || (profile.professional_type === 'imobiliaria' ? 'Imobiliária' : 'Corretor')
                 const profileLogo = getSafeExternalUrl(profile.logo_url)
                 const profileCover = getSafeExternalUrl(profile.cover_url)
@@ -3123,8 +3094,17 @@ function App() {
             </div>
           )}
         </main>
-        <footer className="professional-directory-footer">
-          <span>© 2026 Mora <b>Fácil</b>. Todos os direitos reservados.</span>
+        <footer className="site-footer professional-directory-footer">
+          <div className="site-footer-container">
+            <p className="site-footer-copyright">
+              © 2026 Mora <b>Fácil</b>. Todos os direitos reservados.
+              {professionalDirectory.status === 'loaded' && (
+                <span className="professional-directory-footer-count" aria-live="polite">
+                  {' '}· {visibleProfessionalProfiles.length} {visibleProfessionalProfiles.length === 1 ? 'perfil encontrado' : 'perfis encontrados'}
+                </span>
+              )}
+            </p>
+          </div>
         </footer>
       </div>
     )
