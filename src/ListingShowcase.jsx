@@ -400,6 +400,7 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
   const advertiserProfile = advertiserLoadResult?.userId === listing.user_id ? advertiserLoadResult.profile : null
   const advertiserName = advertiserProfile?.display_name || listing.advertiser || 'Anunciante'
   const AdvertiserFallbackIcon = advertiserProfile?.account_type === 'imobiliaria' ? Building2 : UserRound
+  const advertiserInitial = String(advertiserName).trim().charAt(0).toLocaleUpperCase('pt-BR') || 'A'
   const advertiserImageUrl = advertiserProfile?.account_type === 'pessoa_fisica'
     ? advertiserProfile.avatar_url
     : advertiserProfile?.logo_url
@@ -685,6 +686,8 @@ export function ListingDetailPage({ listing, origin, onLoadAdvertiser, onView, o
               <span className="listing-detail-advertiser-avatar">
                 {advertiserImageUrl && failedAdvertiserLogoUrl !== advertiserImageUrl
                   ? <img src={advertiserImageUrl} alt="" onError={() => setFailedAdvertiserLogoUrl(advertiserImageUrl)} />
+                  : advertiserProfile?.account_type === 'pessoa_fisica'
+                    ? <span aria-hidden="true">{advertiserInitial}</span>
                   : <AdvertiserFallbackIcon size={25} aria-hidden="true" />}
               </span>
               <span className="listing-detail-advertiser-copy"><strong>{advertiserName}</strong></span>
