@@ -449,12 +449,17 @@ begin
       using errcode = '42501';
   end if;
 
-  select listing, profile.tipo_usuario
-  into target_listing, owner_type
+  select listing.*
+  into target_listing
   from public.listings as listing
-  join public.user_profiles as profile on profile.user_id = listing.user_id
   where listing.id = target_listing_id
-    and (listing.user_id = auth.uid() or is_administrator);
+    and (listing.user_id = auth.uid() or is_administrator)
+  for update;
+
+  select profile.tipo_usuario
+  into owner_type
+  from public.user_profiles as profile
+  where profile.user_id = target_listing.user_id;
 
   if target_listing.id is null or owner_type is distinct from 'pessoa_fisica' then
     raise exception 'O anúncio não pode ser reativado por esta operação.'
@@ -511,12 +516,16 @@ begin
       using errcode = '42501';
   end if;
 
-  select listing, profile.tipo_usuario
-  into target_listing, owner_type
+  select listing.*
+  into target_listing
   from public.listings as listing
-  join public.user_profiles as profile on profile.user_id = listing.user_id
   where listing.id = target_listing_id
   for update;
+
+  select profile.tipo_usuario
+  into owner_type
+  from public.user_profiles as profile
+  where profile.user_id = target_listing.user_id;
 
   if target_listing.id is null or owner_type is distinct from 'pessoa_fisica' then
     raise exception 'A liberação manual está disponível apenas para anúncios de pessoa física.'
