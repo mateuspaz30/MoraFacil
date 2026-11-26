@@ -12732,3 +12732,54 @@ dl.my-area-profile-grid > div {
     font-size: 0.7rem;
   }
 }
+
+:is(
+  .announce-btn,
+  .account-btn,
+  .search-btn,
+  .detail-button,
+  .card-detail-button,
+  .contact-button,
+  .locate-button,
+  .cancel-form-btn,
+  .submit-form-btn,
+  .auth-back,
+  .my-area-create-listing,
+  .my-area-edit-button,
+  .company-profile-open-button,
+  .company-profile-edit-button,
+  .company-public-share,
+  .professional-directory-search-button,
+  .professional-directory-card-footer > button,
+  .admin-section-heading > button,
+  .admin-table-actions button
+) {
+  border-radius: 10px;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+  touch-action: manipulation;
+}
+
+:is(
+  .announce-btn,
+  .account-btn,
+  .search-btn,
+  .detail-button,
+  .card-detail-button,
+  .contact-button,
+  .locate-button,
+  .cancel-form-btn,
+  .submit-form-btn,
+  .auth-back,
+  .my-area-create-listing,
+  .my-area-edit-button,
+  .company-profile-open-button,
+  .company-profile-edit-button,
+  .company-public-share,
+  .professional-directory-search-button,
+  .professional-directory-card-footer > button,
+  .admin-section-heading > button,
+  .admin-table-actions button
+):focus-visible {
+  outline: 3px solid rgba(7, 140, 89, 0.3);
+  outline-offset: 2px;
+}
