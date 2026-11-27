@@ -4948,7 +4948,10 @@ function App() {
                                 </p>
                               )}
                               {accountUserType === 'pessoa_fisica' && paymentPending && (
-                                <button type="button" className="standard-listing-view" onClick={() => openIndividualListingPayment(item)}>
+                                <button type="button" className="standard-listing-view" aria-haspopup="dialog" onClick={(event) => {
+                                  event.stopPropagation()
+                                  openIndividualListingPayment(item)
+                                }}>
                                   <CreditCard size={16} aria-hidden="true" />Ver pagamento
                                 </button>
                               )}
@@ -4959,7 +4962,10 @@ function App() {
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
                                     {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => openIndividualListingRenewalConfirmation(item)}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
-                                    {accountUserType === 'pessoa_fisica' && paymentPending && <button type="button" onClick={() => openIndividualListingPayment(item)}>Abrir pagamento · R$ 4,90</button>}
+                                    {accountUserType === 'pessoa_fisica' && paymentPending && <button type="button" onClick={(event) => {
+                                      event.stopPropagation()
+                                      openIndividualListingPayment(item)
+                                    }}>Abrir pagamento · R$ 4,90</button>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>
                                 )}
@@ -5931,13 +5937,13 @@ function App() {
         </div>,
         document.body,
       )}
-      {listingPaymentDialog && createPortal(
+      {listingPaymentDialog ? createPortal(
         <IndividualListingPaymentDialog
           listing={listingPaymentDialog}
           onClose={() => setListingPaymentDialog(null)}
         />,
         document.body,
-      )}
+      ) : null}
       <SiteFooter />
     </div>
   )

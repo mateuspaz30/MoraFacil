@@ -864,6 +864,10 @@
 }
 
 .listing-payment-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
   z-index: 1320;
   overflow-y: auto;
 }
@@ -6088,6 +6092,8 @@ dl.my-area-profile-grid > div {
 
 .standard-listing-actions {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
   gap: 7px;
   padding: 0 5px 5px;
@@ -6520,6 +6526,8 @@ dl.my-area-profile-grid > div {
 .standard-account-dashboard .standard-listing-actions {
   grid-column: 2;
   grid-row: 2;
+  min-width: 0;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 0 3px 4px;
 }
@@ -10409,7 +10417,9 @@ dl.my-area-profile-grid > div {
 }
 
 .standard-listing-billing-state {
+  min-width: 0;
   flex-basis: 100%;
+  overflow-wrap: anywhere;
 }
 
 .standard-listing-menu-status {
