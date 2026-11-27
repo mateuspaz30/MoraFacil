@@ -222,7 +222,10 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
           {owner?.userType === 'pessoa_fisica' && paymentUnconfirmed && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={async () => { if (await onReleaseWithoutCharge(listing)) onClose() }}><Check size={16} />Liberar sem cobrança</button>}
           {['paused', 'expired'].includes(listingStatus)
             ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => {
-              if (listing.individual_validity_started_at) onRequestReactivate(listing)
+              if (owner?.userType === 'pessoa_fisica' || listing.individual_validity_started_at) {
+                onClose()
+                onRequestReactivate(listing)
+              }
               else setStatusAction('reactivate')
             }}><Play size={16} />Reativar anúncio</button>
             : listingStatus === 'approved' && <button type="button" disabled={saving || statusSaving} onClick={() => setStatusAction('pause')}><Pause size={16} />Pausar anúncio</button>}

@@ -5806,7 +5806,7 @@ function App() {
           </section>
         </div>
       )}
-      {listingRenewalConfirmation && (
+      {listingRenewalConfirmation && createPortal(
         <div
           className="property-modal-backdrop listing-renewal-backdrop"
           role="presentation"
@@ -5842,7 +5842,8 @@ function App() {
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
       <SiteFooter />
     </div>
