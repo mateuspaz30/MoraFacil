@@ -868,7 +868,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: 1320;
+  z-index: 2000;
   overflow-y: auto;
 }
 
@@ -2889,6 +2889,25 @@
   box-shadow: 0 24px 80px rgba(2, 18, 35, 0.55);
   color: #fff;
   transform: translateX(-50%);
+}
+
+.my-area-startup-loading {
+  display: grid;
+  min-height: min(70vh, 680px);
+  align-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: #fff;
+  text-align: center;
+}
+
+.my-area-startup-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #8bea45;
+  border-radius: 50%;
+  animation: announcement-spin 800ms linear infinite;
 }
 
 .account-close {

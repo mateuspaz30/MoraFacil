@@ -817,6 +817,7 @@ function App() {
       return []
     }
   })
+  const [userListingsLoadedFor, setUserListingsLoadedFor] = useState(() => isSupabaseConfigured ? '' : 'local')
   const [publishedListings, setPublishedListings] = useState([])
   const [adminReviewListings, setAdminReviewListings] = useState([])
   const [adminReviewLoading, setAdminReviewLoading] = useState(false)
@@ -855,6 +856,7 @@ function App() {
   const [announcementBillingNotice, setAnnouncementBillingNotice] = useState('')
   const [editingListingId, setEditingListingId] = useState(null)
   const [authUser, setAuthUser] = useState(null)
+  const [authSessionReady, setAuthSessionReady] = useState(() => !supabase)
   const [favoriteData, setFavoriteData] = useState({ userId: null, ids: [] })
   const [receivedFavoriteCount, setReceivedFavoriteCount] = useState(null)
   const [receivedFavoriteCountError, setReceivedFavoriteCountError] = useState('')
@@ -876,6 +878,7 @@ function App() {
   const [favoriteReturnPath, setFavoriteReturnPath] = useState('')
   const [userProfile, setUserProfile] = useState(null)
   const [userProfileError, setUserProfileError] = useState('')
+  const [userProfileLoadedFor, setUserProfileLoadedFor] = useState(() => isSupabaseConfigured ? '' : 'local')
   const [listingValidityNow, setListingValidityNow] = useState(() => Date.now())
   const [listingValidityMessage, setListingValidityMessage] = useState({ text: '', error: false })
   const [listingRenewalConfirmation, setListingRenewalConfirmation] = useState(null)
@@ -1033,6 +1036,11 @@ function App() {
     setFavoriteReturnPath('')
   }
   const isMyAreaRoute = getRelativeAppPath(currentPath).split('/')[0] === 'minha-area'
+  const isMyAreaDataReady = authSessionReady
+    && (!authUser || !supabase || (
+      userProfileLoadedFor === authUser.id
+      && userListingsLoadedFor === authUser.id
+    ))
 
   useEffect(() => {
     if (!mapFullscreenOpen && !announcementMapFullscreenOpen) return undefined
@@ -1085,15 +1093,26 @@ function App() {
     if (!supabase) return undefined
 
     let mounted = true
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) setAuthUser(session?.user || null)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) throw error
+        if (mounted) setAuthUser(session?.user || null)
+      })
+      .catch((error) => {
+        console.error('Falha ao restaurar a sessão da conta:', error)
+      })
+      .finally(() => {
+        if (mounted) setAuthSessionReady(true)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthSessionReady(true)
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         setModerationMessage('')
         setFeaturedDrafts({})
         setUserProfile(null)
+        setUserProfileLoadedFor('')
+        setUserListingsLoadedFor('')
         setUserProfileError('')
         setIsAdmin(false)
         setAdminReviewListings([])
@@ -1136,6 +1155,8 @@ function App() {
       } catch (error) {
         console.error('Falha ao carregar os dados da conta:', error)
         if (mounted) setUserProfileError(`Não foi possível carregar os dados do perfil. Confira as migrações de perfil público e execute supabase/migrations/20261129_enable_broker_public_profile_editing.sql. ${error.message}`)
+      } finally {
+        if (mounted) setUserProfileLoadedFor(authUser.id)
       }
     }
     loadUserProfile()
@@ -1431,35 +1452,46 @@ function App() {
   useEffect(() => {
     if (!isSupabaseConfigured) return
 
+    let active = true
+    const loadedFor = authUser?.id || 'anonymous'
     const loadUserListings = async () => {
-      const { data, error } = await supabase
-        .from('listings')
-        .select('*')
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('listings')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-      if (error) {
+        if (!active) return
+        if (error) {
+          console.error('Falha ao carregar os anúncios para a área administrativa:', error)
+          if (isAdmin) setAdminListingsError(`Não foi possível carregar todos os anúncios. ${error.message}`)
+          return
+        }
+
+        setAdminListingsError('')
+        const normalizedListings = (data || []).map((item) => ({
+          ...item,
+          id: item.id,
+          coordinates: [item.latitude, item.longitude],
+          location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
+          area: formatArea(item.area),
+          parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
+          owner: item.user_id === authUser?.id,
+        }))
+        setPublishedListings(normalizedListings)
+        setUserListings(authUser
+          ? normalizedListings.filter((item) => item.user_id === authUser.id)
+          : [])
+      } catch (error) {
         console.error('Falha ao carregar os anúncios para a área administrativa:', error)
-        if (isAdmin) setAdminListingsError(`Não foi possível carregar todos os anúncios. ${error.message}`)
-        return
+        if (active && isAdmin) setAdminListingsError(`Não foi possível carregar todos os anúncios. ${error.message}`)
+      } finally {
+        if (active) setUserListingsLoadedFor(loadedFor)
       }
-
-      setAdminListingsError('')
-      const normalizedListings = (data || []).map((item) => ({
-        ...item,
-        id: item.id,
-        coordinates: [item.latitude, item.longitude],
-        location: `${item.neighborhood}, ${item.city || 'Ipuã-SP'}`,
-        area: formatArea(item.area),
-        parking_spaces: Number(item.parking_spaces ?? item.garages) || 0,
-        owner: item.user_id === authUser?.id,
-      }))
-      setPublishedListings(normalizedListings)
-      setUserListings(authUser
-        ? normalizedListings.filter((item) => item.user_id === authUser.id)
-        : [])
     }
 
     loadUserListings()
+    return () => { active = false }
   }, [authUser, isAdmin])
 
   useEffect(() => {
@@ -4002,7 +4034,12 @@ function App() {
 
         {isMyAreaRoute && (
           <section className="account-popover account-page" aria-label="Minha Área">
-            {authUser ? (
+            {!isMyAreaDataReady ? (
+              <div className="my-area-startup-loading" role="status" aria-busy="true">
+                <span className="my-area-startup-spinner" aria-hidden="true" />
+                <strong>Carregando sua área...</strong>
+              </div>
+            ) : authUser ? (
             <>
             <div className={`my-area-layout${isStandardAccount ? ' standard-account' : ''}${isCompanyAccount ? ' company-account' : ''}`}>
               <aside className="my-area-sidebar" aria-label="Navegação da Minha Área">
@@ -5348,6 +5385,8 @@ function App() {
         </div>
       )}
 
+      {!isMyAreaRoute && (
+        <>
       <section className="hero-content brand-curve-surface brand-curve-bottom" aria-label="Encontre seu próximo lar">
         <div className="hero-copy">
           <h2>Encontre seu<br /><span>próximo lar.</span></h2>
@@ -5565,6 +5604,8 @@ function App() {
         favoriteMessage={favoriteMessage}
         onToggleFavorite={handleToggleFavorite}
       />
+        </>
+      )}
 
       {announcementOpen && (
         <div className="property-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -5944,7 +5985,7 @@ function App() {
         />,
         document.body,
       ) : null}
-      <SiteFooter />
+      {!isMyAreaRoute && <SiteFooter />}
     </div>
   )
 }
