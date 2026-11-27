@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
+const checkoutConfigurationVersion = 'payment-types-v2'
+
 const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -113,7 +115,8 @@ Deno.serve(async (request) => {
   const storedMetadata = transaction.metadata && typeof transaction.metadata === 'object'
     ? transaction.metadata as Record<string, unknown>
     : {}
-  if (typeof storedMetadata.provider_preference_id === 'string') {
+  if (storedMetadata.checkout_configuration_version === checkoutConfigurationVersion
+    && typeof storedMetadata.provider_preference_id === 'string') {
     if (storedMetadata.requested_payment_method !== paymentMethod) {
       return respond({ error: 'Já existe um checkout iniciado com outra forma de pagamento para este anúncio.' }, 409)
     }
@@ -141,19 +144,22 @@ Deno.serve(async (request) => {
 
   const availableMethods = await availableMethodsResponse.json()
   const methods = Array.isArray(availableMethods) ? availableMethods : []
-  const allowedMethod = (method: Record<string, unknown>) => paymentMethod === 'pix'
-    ? method.id === 'pix'
+  const isSelectedMethod = (method: Record<string, unknown>) => paymentMethod === 'pix'
+    ? method.id === 'pix' && method.payment_type_id === 'bank_transfer'
     : method.payment_type_id === 'credit_card'
-  const excludedMethods = methods
-    .filter((method: Record<string, unknown>) => (
-      !allowedMethod(method)
-      && method.id !== 'account_money'
-      && typeof method.id === 'string'
-    ))
-    .map((method: Record<string, string>) => ({ id: method.id }))
-  if (!methods.some((method: Record<string, unknown>) => allowedMethod(method))) {
+  if (!methods.some((method: Record<string, unknown>) => isSelectedMethod(method))) {
     return respond({ error: `A forma ${paymentMethod === 'pix' ? 'Pix' : 'cartão de crédito'} não está habilitada nesta conta Mercado Pago.` }, 409)
   }
+  const selectedPaymentType = paymentMethod === 'pix' ? 'bank_transfer' : 'credit_card'
+  const excludedPaymentTypes = [...new Set(
+    methods
+      .map((method: Record<string, unknown>) => method.payment_type_id)
+      .filter((type: unknown): type is string => (
+        typeof type === 'string'
+        && type !== selectedPaymentType
+        && type !== 'account_money'
+      )),
+  )].map((id) => ({ id }))
 
   const webhookUrl = `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/mercado-pago-webhook`
   const backUrl = `${siteOrigin}${new URL(siteUrl).pathname.replace(/\/+$/, '')}/minha-area/meus-imoveis?pagamento=retorno`
@@ -167,7 +173,9 @@ Deno.serve(async (request) => {
       unit_price: transaction.amount_cents / 100,
       currency_id: 'BRL',
     }],
-    payer: userData.user.email ? { email: userData.user.email } : undefined,
+    payer: mode === 'production' && userData.user.email
+      ? { email: userData.user.email }
+      : undefined,
     external_reference: transaction.id,
     metadata: { billing_transaction_id: transaction.id, listing_id: listing.id },
     notification_url: webhookUrl,
@@ -177,7 +185,10 @@ Deno.serve(async (request) => {
       failure: backUrl,
     },
     auto_return: 'approved',
-    payment_methods: { excluded_payment_methods: excludedMethods },
+    payment_methods: {
+      ...(paymentMethod === 'pix' ? { default_payment_method_id: 'pix' } : {}),
+      excluded_payment_types: excludedPaymentTypes,
+    },
   }
 
   let preferenceResponse: Response
@@ -187,7 +198,7 @@ Deno.serve(async (request) => {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'X-Idempotency-Key': `${transaction.id}:${paymentMethod}`,
+        'X-Idempotency-Key': `${transaction.id}:${paymentMethod}:${checkoutConfigurationVersion}`,
       },
       body: JSON.stringify(preferenceBody),
     })
@@ -197,7 +208,17 @@ Deno.serve(async (request) => {
   }
   const preference = await preferenceResponse.json().catch(() => null)
   if (!preferenceResponse.ok) {
-    console.error('Mercado Pago recusou a preferência de pagamento:', preferenceResponse.status, preference?.message || '')
+    console.error(
+      'Mercado Pago recusou a preferência de pagamento:',
+      preferenceResponse.status,
+      preference?.message || '',
+      Array.isArray(preference?.cause)
+        ? preference.cause.map((cause: Record<string, unknown>) => ({
+          code: cause.code,
+          description: cause.description,
+        }))
+        : [],
+    )
     return respond({ error: 'O Mercado Pago não conseguiu iniciar o pagamento. Tente novamente.' }, 502)
   }
 
