@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, Eye, ExternalLink, Globe2, Heart, Home, House, Info, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
+import { ArrowLeft, Bath, BedDouble, Building2, CalendarDays, Camera, Car, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Clock3, CreditCard, Eye, ExternalLink, Globe2, Heart, Home, House, Info, LandPlot, Leaf, Lightbulb, MapPin, MoreHorizontal, Pencil, Phone, Plus, QrCode, Ruler, Search, Settings2, Share2, Shield, Store, Tag, Trash2, User } from 'lucide-react'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
 import '@fontsource/inter/800.css'
@@ -669,6 +669,80 @@ function MapListingOverlay({ listing, target, onClose }) {
   )
 }
 
+function IndividualListingPaymentDialog({ listing, onClose }) {
+  const billingStatus = listing.billing_status
+  const paymentConfirmed = billingStatus === 'pago'
+  const releasedWithoutPayment = ['isento', 'cortesia_admin'].includes(billingStatus)
+  const awaitingConfirmation = billingStatus === 'aguardando_confirmacao'
+  const released = paymentConfirmed || releasedWithoutPayment
+  const activeStep = released ? 2 : awaitingConfirmation ? 1 : 0
+  const statusMessage = paymentConfirmed
+    ? 'Pagamento confirmado. O anúncio está liberado conforme o status atual do sistema.'
+    : billingStatus === 'cortesia_admin'
+      ? 'Este anúncio foi liberado pelo administrador sem cobrança.'
+      : billingStatus === 'isento'
+        ? 'Este anúncio está isento de cobrança.'
+        : awaitingConfirmation
+          ? 'Estamos aguardando a confirmação do pagamento pelo sistema.'
+          : 'A cobrança de R$ 4,90 está pendente. O anúncio permanece fora da vitrine até a confirmação.'
+
+  return (
+    <div className="property-modal-backdrop listing-payment-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="listing-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="listing-payment-title">
+        <header className="listing-payment-heading">
+          <div>
+            <span className="listing-payment-eyebrow">Pagamento do anúncio</span>
+            <h2 id="listing-payment-title">{listing.title}</h2>
+          </div>
+          <button type="button" className="listing-payment-close" aria-label="Fechar pagamento" onClick={onClose}>×</button>
+        </header>
+
+        <div className={`listing-payment-status${released ? ' is-released' : ''}`} role="status">
+          <strong>{released ? 'Anúncio liberado' : awaitingConfirmation ? 'Aguardando confirmação' : 'Aguardando pagamento'}</strong>
+          <p>{statusMessage}</p>
+        </div>
+
+        <ol className="listing-payment-progress" aria-label="Etapas do pagamento">
+          {['Aguardando pagamento', 'Processando', 'Liberado'].map((step, index) => (
+            <li key={step} className={index === activeStep ? 'is-current' : index < activeStep ? 'is-complete' : ''}>
+              <span>{index < activeStep ? <Check size={14} aria-hidden="true" /> : index + 1}</span>
+              {step}
+            </li>
+          ))}
+        </ol>
+
+        <div className="listing-payment-amount">
+          <span>Valor da renovação</span>
+          <strong>{releasedWithoutPayment ? 'R$ 0,00' : 'R$ 4,90'}</strong>
+        </div>
+
+        {!released && (
+          <>
+            <h3 className="listing-payment-methods-title">Forma de pagamento</h3>
+            <div className="listing-payment-methods">
+              <button type="button" disabled aria-label="Pix, integração em preparação">
+                <QrCode size={22} aria-hidden="true" />
+                <span><strong>Pix</strong><small>Disponível em breve</small></span>
+              </button>
+              <button type="button" disabled aria-label="Cartão de crédito, integração em preparação">
+                <CreditCard size={22} aria-hidden="true" />
+                <span><strong>Cartão de crédito</strong><small>Disponível em breve</small></span>
+              </button>
+            </div>
+            <p className="listing-payment-integration-note">
+              O checkout ainda não está conectado ao Mercado Pago. A confirmação e a liberação deverão ocorrer pelo servidor após a integração com o webhook.
+            </p>
+          </>
+        )}
+
+        <div className="listing-payment-actions">
+          <button type="button" onClick={onClose}>{released ? 'Fechar' : 'Entendi'}</button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 const MenuSearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -806,6 +880,7 @@ function App() {
   const [listingValidityMessage, setListingValidityMessage] = useState({ text: '', error: false })
   const [listingRenewalConfirmation, setListingRenewalConfirmation] = useState(null)
   const [listingRenewalConfirming, setListingRenewalConfirming] = useState(false)
+  const [listingPaymentDialog, setListingPaymentDialog] = useState(null)
   const [professionalDirectory, setProfessionalDirectory] = useState({
     status: supabase ? 'idle' : 'error',
     profiles: [],
@@ -2457,6 +2532,7 @@ function App() {
             error: false,
             listingId: listing.id,
           })
+          setListingPaymentDialog(updatedListing)
           return true
         }
 
@@ -2540,6 +2616,11 @@ function App() {
   const openIndividualListingRenewalConfirmation = (listing) => {
     setOpenListingActionId(null)
     setListingRenewalConfirmation(listing)
+  }
+
+  const openIndividualListingPayment = (listing) => {
+    setOpenListingActionId(null)
+    setListingPaymentDialog(listing)
   }
 
   const saveFeaturedListing = async (event, listing, draft) => {
@@ -4866,6 +4947,11 @@ function App() {
                                   {item.billing_status === 'pendente_pagamento' && ' · R$ 4,90'}
                                 </p>
                               )}
+                              {accountUserType === 'pessoa_fisica' && paymentPending && (
+                                <button type="button" className="standard-listing-view" onClick={() => openIndividualListingPayment(item)}>
+                                  <CreditCard size={16} aria-hidden="true" />Ver pagamento
+                                </button>
+                              )}
                               <button type="button" className="standard-listing-edit" onClick={() => openAnnouncementForm(item)}><Pencil size={17} strokeWidth={2.2} aria-hidden="true" />Editar imóvel</button>
                               <div className="standard-listing-menu-wrap">
                                 <button type="button" className="standard-listing-menu-trigger" aria-label={`Mais ações para ${item.title}`} aria-expanded={openListingActionId === item.id} onClick={() => setOpenListingActionId((current) => current === item.id ? null : item.id)}><MoreHorizontal size={22} aria-hidden="true" /></button>
@@ -4873,7 +4959,7 @@ function App() {
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
                                     {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => openIndividualListingRenewalConfirmation(item)}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
-                                    {canRenewIndividualListing && ['pendente_pagamento', 'aguardando_confirmacao'].includes(item.billing_status) && <span className="standard-listing-menu-status">Pagamento pendente</span>}
+                                    {accountUserType === 'pessoa_fisica' && paymentPending && <button type="button" onClick={() => openIndividualListingPayment(item)}>Abrir pagamento · R$ 4,90</button>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>
                                 )}
@@ -5843,6 +5929,13 @@ function App() {
             </div>
           </section>
         </div>,
+        document.body,
+      )}
+      {listingPaymentDialog && createPortal(
+        <IndividualListingPaymentDialog
+          listing={listingPaymentDialog}
+          onClose={() => setListingPaymentDialog(null)}
+        />,
         document.body,
       )}
       <SiteFooter />
