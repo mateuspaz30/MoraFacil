@@ -145,7 +145,11 @@ Deno.serve(async (request) => {
     ? method.id === 'pix'
     : method.payment_type_id === 'credit_card'
   const excludedMethods = methods
-    .filter((method: Record<string, unknown>) => !allowedMethod(method) && typeof method.id === 'string')
+    .filter((method: Record<string, unknown>) => (
+      !allowedMethod(method)
+      && method.id !== 'account_money'
+      && typeof method.id === 'string'
+    ))
     .map((method: Record<string, string>) => ({ id: method.id }))
   if (!methods.some((method: Record<string, unknown>) => allowedMethod(method))) {
     return respond({ error: `A forma ${paymentMethod === 'pix' ? 'Pix' : 'cartão de crédito'} não está habilitada nesta conta Mercado Pago.` }, 409)
