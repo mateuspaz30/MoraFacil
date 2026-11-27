@@ -44,6 +44,21 @@ export async function requestIndividualListingReactivation(client, listingId) {
   }))
 }
 
+export async function startIndividualListingCheckout(client, listingId, paymentMethod) {
+  const { data, error } = await client.functions.invoke('individual-listing-checkout', {
+    body: { listingId, paymentMethod },
+  })
+  if (error) {
+    const response = error.context
+    if (response instanceof Response) {
+      const body = await response.clone().json().catch(() => null)
+      if (body?.error) throw new Error(body.error)
+    }
+    throw error
+  }
+  return data
+}
+
 export async function releaseListingWithoutCharge(client, listingId) {
   return unwrap(await client.rpc('admin_release_listing_without_charge', {
     target_listing_id: listingId,

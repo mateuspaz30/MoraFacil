@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { getIndividualListingDaysRemaining, getListingImages, getListingPropertyType, getListingPurpose, getListingPurposeLabel, INDIVIDUAL_LISTING_VALIDITY_DAYS, isIndividualListingExpired, isListingPubliclyAvailable, purposeColors } from './listingPresentation.js'
-import { assignProfessionalPlan, BILLING_STATUS_LABELS, loadAdminBillingData, releaseListingWithoutCharge, requestIndividualListingReactivation, updateProfessionalPlan } from './billing/billingService.js'
+import { assignProfessionalPlan, BILLING_STATUS_LABELS, loadAdminBillingData, releaseListingWithoutCharge, requestIndividualListingReactivation, startIndividualListingCheckout, updateProfessionalPlan } from './billing/billingService.js'
 import AdminPanel from './AdminPanel.jsx'
 import CompanyProfileImageCropDialog from './CompanyProfileImageCropDialog.jsx'
 import ListingImagePlaceholder from './ListingImagePlaceholder.jsx'
@@ -669,13 +669,15 @@ function MapListingOverlay({ listing, target, onClose }) {
   )
 }
 
-function IndividualListingPaymentDialog({ listing, onClose }) {
+function IndividualListingPaymentDialog({ listing, onClose, onStartPayment }) {
+  const [paymentStartingMethod, setPaymentStartingMethod] = useState('')
+  const [paymentError, setPaymentError] = useState('')
   const billingStatus = listing.billing_status
   const paymentConfirmed = billingStatus === 'pago'
   const releasedWithoutPayment = ['isento', 'cortesia_admin'].includes(billingStatus)
   const awaitingConfirmation = billingStatus === 'aguardando_confirmacao'
   const released = paymentConfirmed || releasedWithoutPayment
-  const activeStep = released ? 2 : awaitingConfirmation ? 1 : 0
+  const activeStep = released ? 2 : awaitingConfirmation || paymentStartingMethod ? 1 : 0
   const statusMessage = paymentConfirmed
     ? 'Pagamento confirmado. O anúncio está liberado conforme o status atual do sistema.'
     : billingStatus === 'cortesia_admin'
@@ -683,7 +685,7 @@ function IndividualListingPaymentDialog({ listing, onClose }) {
       : billingStatus === 'isento'
         ? 'Este anúncio está isento de cobrança.'
         : awaitingConfirmation
-          ? 'Estamos aguardando a confirmação do pagamento pelo sistema.'
+          ? 'Checkout iniciado. O sistema aguarda a confirmação segura do Mercado Pago.'
           : 'A cobrança de R$ 4,90 está pendente. O anúncio permanece fora da vitrine até a confirmação.'
 
   return (
@@ -698,7 +700,7 @@ function IndividualListingPaymentDialog({ listing, onClose }) {
         </header>
 
         <div className={`listing-payment-status${released ? ' is-released' : ''}`} role="status">
-          <strong>{released ? 'Anúncio liberado' : awaitingConfirmation ? 'Aguardando confirmação' : 'Aguardando pagamento'}</strong>
+          <strong>{released ? 'Anúncio liberado' : awaitingConfirmation || paymentStartingMethod ? 'Processando pagamento' : 'Aguardando pagamento'}</strong>
           <p>{statusMessage}</p>
         </div>
 
@@ -720,18 +722,37 @@ function IndividualListingPaymentDialog({ listing, onClose }) {
           <>
             <h3 className="listing-payment-methods-title">Forma de pagamento</h3>
             <div className="listing-payment-methods">
-              <button type="button" disabled aria-label="Pix, integração em preparação">
+              <button type="button" disabled={Boolean(paymentStartingMethod)} onClick={async () => {
+                setPaymentStartingMethod('pix')
+                setPaymentError('')
+                try {
+                  await onStartPayment(listing, 'pix')
+                } catch (error) {
+                  setPaymentError(error.message)
+                  setPaymentStartingMethod('')
+                }
+              }}>
                 <QrCode size={22} aria-hidden="true" />
-                <span><strong>Pix</strong><small>Disponível em breve</small></span>
+                <span><strong>{paymentStartingMethod === 'pix' ? 'Abrindo Pix…' : 'Pagar com Pix'}</strong><small>Checkout seguro Mercado Pago</small></span>
               </button>
-              <button type="button" disabled aria-label="Cartão de crédito, integração em preparação">
+              <button type="button" disabled={Boolean(paymentStartingMethod)} onClick={async () => {
+                setPaymentStartingMethod('credit_card')
+                setPaymentError('')
+                try {
+                  await onStartPayment(listing, 'credit_card')
+                } catch (error) {
+                  setPaymentError(error.message)
+                  setPaymentStartingMethod('')
+                }
+              }}>
                 <CreditCard size={22} aria-hidden="true" />
-                <span><strong>Cartão de crédito</strong><small>Disponível em breve</small></span>
+                <span><strong>{paymentStartingMethod === 'credit_card' ? 'Abrindo cartão…' : 'Pagar com cartão'}</strong><small>Checkout seguro Mercado Pago</small></span>
               </button>
             </div>
             <p className="listing-payment-integration-note">
-              O checkout ainda não está conectado ao Mercado Pago. A confirmação e a liberação deverão ocorrer pelo servidor após a integração com o webhook.
+              A liberação só acontece após a confirmação segura do pagamento pelo servidor.
             </p>
+            {paymentError && <p className="listing-payment-error" role="alert">{paymentError}</p>}
           </>
         )}
 
@@ -2653,6 +2674,36 @@ function App() {
   const openIndividualListingPayment = (listing) => {
     setOpenListingActionId(null)
     setListingPaymentDialog(listing)
+  }
+
+  const startIndividualListingPayment = async (listing, paymentMethod) => {
+    if (!supabase || !authUser) throw new Error('Entre na sua conta antes de iniciar o pagamento.')
+    const { checkout_url: checkoutUrl, status, error } = await startIndividualListingCheckout(
+      supabase,
+      listing.id,
+      paymentMethod,
+    )
+    if (error) throw new Error(error)
+    if (typeof checkoutUrl !== 'string') throw new Error('O servidor não retornou o endereço seguro do checkout.')
+
+    let checkout
+    try {
+      checkout = new URL(checkoutUrl)
+    } catch {
+      throw new Error('O servidor retornou um endereço de checkout inválido.')
+    }
+    if (checkout.protocol !== 'https:'
+      || !(checkout.hostname === 'mercadopago.com.br'
+        || checkout.hostname.endsWith('.mercadopago.com.br')
+        || checkout.hostname === 'mercadopago.com'
+        || checkout.hostname.endsWith('.mercadopago.com'))) {
+      throw new Error('O endereço de checkout não pertence ao Mercado Pago.')
+    }
+
+    const updatedListing = { ...listing, billing_status: status || 'aguardando_confirmacao' }
+    setUserListings((current) => current.map((item) => String(item.id) === String(listing.id) ? updatedListing : item))
+    setPublishedListings((current) => current.map((item) => String(item.id) === String(listing.id) ? updatedListing : item))
+    window.location.assign(checkout.href)
   }
 
   const saveFeaturedListing = async (event, listing, draft) => {
@@ -5982,6 +6033,7 @@ function App() {
         <IndividualListingPaymentDialog
           listing={listingPaymentDialog}
           onClose={() => setListingPaymentDialog(null)}
+          onStartPayment={startIndividualListingPayment}
         />,
         document.body,
       ) : null}

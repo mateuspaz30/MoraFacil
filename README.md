@@ -67,6 +67,12 @@ supabase functions deploy admin-management
 
 A função valida cada chamada com a sessão autenticada e `is_admin()` antes de usar a chave de serviço no servidor. Nunca coloque `SUPABASE_SERVICE_ROLE_KEY` no frontend ou no repositório; configure-a apenas como segredo do projeto Supabase caso ela não esteja disponível como variável padrão da Edge Function.
 
+## Cobrança de anúncios de pessoa física
+
+Para habilitar o checkout de R$ 4,90, execute [`supabase/migrations/20261207_mercado_pago_individual_checkout.sql`](supabase/migrations/20261207_mercado_pago_individual_checkout.sql) depois de [`supabase/migrations/20261204_billing_foundation.sql`](supabase/migrations/20261204_billing_foundation.sql). Implante as Edge Functions `individual-listing-checkout` e `mercado-pago-webhook` no Supabase. Configure os secrets `MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET`, `MERCADO_PAGO_SITE_URL` (URL HTTPS pública do site) e `MERCADO_PAGO_MODE` (`test` ou `production`). `MERCADO_PAGO_COLLECTOR_ID` é opcional para validar também a conta recebedora. Use um Access Token de teste com o modo `test` ou um token de produção com `production`; nenhuma credencial do Mercado Pago deve ser incluída no frontend.
+
+Registre no Mercado Pago a URL `https://<project-ref>.supabase.co/functions/v1/mercado-pago-webhook` para notificações de pagamentos. O checkout cria preferências no servidor, e o webhook valida a assinatura e consulta o pagamento diretamente à API antes de confirmar a transação. Não habilite o fluxo de produção antes de configurar os secrets, executar a migration e implantar as duas funções. A liberação sem cobrança pelo administrador permanece independente do checkout.
+
 ## Verificação
 
 ```bash

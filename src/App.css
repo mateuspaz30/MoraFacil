@@ -1032,10 +1032,26 @@
   border: 1px solid #d8e2ed;
   border-radius: 11px;
   background: #f8fafc;
-  color: #526a82;
+  color: #0a3d74;
   text-align: left;
-  opacity: 0.72;
-  cursor: not-allowed;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.listing-payment-methods button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #0a3d74;
+  background: #f0f7ff;
+}
+
+.listing-payment-methods button:focus-visible {
+  outline: 3px solid rgba(10, 61, 116, 0.22);
+  outline-offset: 2px;
+}
+
+.listing-payment-methods button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .listing-payment-methods button span {
@@ -1057,6 +1073,18 @@
   color: #66798d;
   font-size: 0.78rem;
   line-height: 1.5;
+}
+
+.listing-payment-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #f0b8bd;
+  border-radius: 9px;
+  background: #fff3f3;
+  color: #9f2635;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .listing-payment-actions {
