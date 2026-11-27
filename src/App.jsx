@@ -2537,6 +2537,11 @@ function App() {
     }
   }
 
+  const openIndividualListingRenewalConfirmation = (listing) => {
+    setOpenListingActionId(null)
+    setListingRenewalConfirmation(listing)
+  }
+
   const saveFeaturedListing = async (event, listing, draft) => {
     event?.preventDefault()
     if (!isAdmin) return
@@ -4539,6 +4544,7 @@ function App() {
                     onReject={rejectListing}
                     onPause={pauseListing}
                     onReactivate={reactivateListing}
+                    onRequestReactivate={openIndividualListingRenewalConfirmation}
                     onReleaseWithoutCharge={releaseAdminListingWithoutCharge}
                     onComplete={completeListing}
                     onDelete={(listing) => removeUserListing(listing.id)}
@@ -4866,7 +4872,7 @@ function App() {
                                 {openListingActionId === item.id && (
                                   <div className="standard-listing-menu">
                                     {statusKey === 'published' && <button type="button" onClick={() => { setOpenListingActionId(null); completeListing(item) }}>Marcar concluído</button>}
-                                    {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => { setOpenListingActionId(null); setListingRenewalConfirmation(item) }}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
+                                    {canRenewIndividualListing && item.billing_status !== 'pendente_pagamento' && item.billing_status !== 'aguardando_confirmacao' && <button type="button" disabled={statusSavingId === item.id} onClick={() => openIndividualListingRenewalConfirmation(item)}>{statusSavingId === item.id ? 'Reativando…' : 'Reativar anúncio'}</button>}
                                     {canRenewIndividualListing && ['pendente_pagamento', 'aguardando_confirmacao'].includes(item.billing_status) && <span className="standard-listing-menu-status">Pagamento pendente</span>}
                                     <button type="button" className="delete" onClick={() => { setOpenListingActionId(null); removeUserListing(item.id) }}><Trash2 size={16} aria-hidden="true" />Excluir imóvel</button>
                                   </div>

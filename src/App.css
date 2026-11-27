@@ -810,6 +810,10 @@
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.32);
 }
 
+.listing-renewal-backdrop {
+  z-index: 1300;
+}
+
 .listing-renewal-dialog h2 {
   margin: 0;
   color: #0a2742;

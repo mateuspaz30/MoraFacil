@@ -83,7 +83,7 @@ function AdminListingCard({
   onEdit,
   onApprove,
   onReject,
-  onReactivate,
+  onRequestReactivate,
   onReleaseWithoutCharge,
   onToggleFeatured,
   validityNow,
@@ -141,7 +141,7 @@ function AdminListingCard({
             <Check size={16} aria-hidden="true" />Liberar sem cobrança
           </button>
         )}
-        {listingStatus === 'expired' && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => onReactivate(listing)}><Play size={16} aria-hidden="true" />{statusSaving ? 'Reativando…' : 'Reativar anúncio'}</button>}
+        {listingStatus === 'expired' && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => onRequestReactivate(listing)}><Play size={16} aria-hidden="true" />Reativar anúncio</button>}
         {canModerate && !paymentUnconfirmed && !rejecting && (
           <>
             <button type="button" className="approve-listing-button" disabled={saving} onClick={() => onApprove(listing)}><Check size={16} aria-hidden="true" />Aprovar</button>
@@ -161,7 +161,7 @@ function AdminListingCard({
   )
 }
 
-function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onReleaseWithoutCharge, onComplete, onDelete, moderationError, statusSaving, validityNow, saving }) {
+function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, onToggleFeatured, onPause, onReactivate, onRequestReactivate, onReleaseWithoutCharge, onComplete, onDelete, moderationError, statusSaving, validityNow, saving }) {
   const [reason, setReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [statusAction, setStatusAction] = useState(null)
@@ -221,7 +221,10 @@ function ListingPreview({ listing, owner, onClose, onApprove, onReject, onEdit, 
           <button type="button" className={listing.destaque_home ? 'is-featured' : ''} disabled={saving} onClick={() => onToggleFeatured(listing)}><Star size={16} />{listing.destaque_home ? 'Remover destaque' : 'Destacar'}</button>
           {owner?.userType === 'pessoa_fisica' && paymentUnconfirmed && <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={async () => { if (await onReleaseWithoutCharge(listing)) onClose() }}><Check size={16} />Liberar sem cobrança</button>}
           {['paused', 'expired'].includes(listingStatus)
-            ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => setStatusAction('reactivate')}><Play size={16} />Reativar anúncio</button>
+            ? <button type="button" className="approve-listing-button" disabled={saving || statusSaving} onClick={() => {
+              if (listing.individual_validity_started_at) onRequestReactivate(listing)
+              else setStatusAction('reactivate')
+            }}><Play size={16} />Reativar anúncio</button>
             : listingStatus === 'approved' && <button type="button" disabled={saving || statusSaving} onClick={() => setStatusAction('pause')}><Pause size={16} />Pausar anúncio</button>}
           {statusAction && (
             <div className="admin-status-confirmation" role="group" aria-label="Confirmar alteração de status">
@@ -276,6 +279,7 @@ export default function AdminPanel({
   onReject,
   onPause,
   onReactivate,
+  onRequestReactivate,
   onReleaseWithoutCharge,
   onComplete,
   onDelete,
@@ -355,7 +359,7 @@ export default function AdminPanel({
           onEdit={onEdit}
           onApprove={onApprove}
           onReject={onReject}
-          onReactivate={onReactivate}
+          onRequestReactivate={onRequestReactivate}
           onReleaseWithoutCharge={onReleaseWithoutCharge}
           onToggleFeatured={onToggleFeatured}
           validityNow={validityNow}
@@ -587,7 +591,7 @@ export default function AdminPanel({
         </section>
       )}
 
-      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onReleaseWithoutCharge={onReleaseWithoutCharge} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} validityNow={validityNow} saving={featuredSavingId === previewListing.id} />}
+      {previewListing && <ListingPreview listing={previewListing} owner={ownersById.get(previewListing.user_id)} onClose={() => setPreviewListing(null)} onApprove={onApprove} onReject={onReject} onPause={onPause} onReactivate={onReactivate} onRequestReactivate={onRequestReactivate} onReleaseWithoutCharge={onReleaseWithoutCharge} onComplete={onComplete} onDelete={onDelete} onEdit={(listing) => { setPreviewListing(null); onEdit(listing) }} onToggleFeatured={onToggleFeatured} moderationError={moderationError} statusSaving={statusSavingId === previewListing.id} validityNow={validityNow} saving={featuredSavingId === previewListing.id} />}
       {previewUser && (
         <div className="admin-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setPreviewUser(null)}>
           <section className="admin-user-preview" role="dialog" aria-modal="true" aria-labelledby="admin-user-preview-title">
