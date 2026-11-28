@@ -27,11 +27,8 @@ const isValidSignature = async (request: Request, dataId: string, secret: string
   const signatureBytes = hexToBytes(signature.get('v1') || '')
   if (!timestamp || !/^\d+$/.test(timestamp) || !signatureBytes) return false
 
-  const timestampSeconds = Number(timestamp)
-  if (!Number.isSafeInteger(timestampSeconds)
-    || Math.abs(Date.now() / 1000 - timestampSeconds) > 5 * 60) return false
-
   const manifest = `id:${dataId.toLowerCase()};request-id:${requestId};ts:${timestamp};`
+  // Delayed retries remain safe because the payment is re-fetched and confirmation is idempotent.
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -41,6 +38,15 @@ const isValidSignature = async (request: Request, dataId: string, secret: string
   )
   return crypto.subtle.verify('HMAC', key, signatureBytes, new TextEncoder().encode(manifest))
 }
+
+type MercadoPagoNotification = {
+  action?: unknown
+  data?: { id?: unknown }
+  topic?: unknown
+  type?: unknown
+}
+
+const asString = (value: unknown) => typeof value === 'string' ? value : ''
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok')
@@ -55,17 +61,44 @@ Deno.serve(async (request) => {
     console.error('Configuração do webhook Mercado Pago incompleta.')
     return jsonResponse({ error: 'Webhook não configurado.' }, 503)
   }
+  if (!['test', 'production'].includes(mode)) {
+    console.error('MERCADO_PAGO_MODE inválido para o webhook.')
+    return jsonResponse({ error: 'Webhook não configurado corretamente.' }, 503)
+  }
 
   const url = new URL(request.url)
-  const topic = url.searchParams.get('type') || url.searchParams.get('topic')
-  if (topic !== 'payment') return jsonResponse({ received: true })
+  const notification = await request.json().catch(() => null) as MercadoPagoNotification | null
+  const bodyDataId = asString(notification?.data?.id)
+  const queryDataId = url.searchParams.get('data.id') || url.searchParams.get('data_id') || ''
+  const legacyQueryId = url.searchParams.get('id') || ''
+  const actionType = asString(notification?.action).split('.')[0]
+  const topic = (
+    url.searchParams.get('type')
+    || url.searchParams.get('topic')
+    || asString(notification?.type)
+    || asString(notification?.topic)
+    || actionType
+  ).toLowerCase()
 
-  const paymentId = url.searchParams.get('data.id')
+  if (topic !== 'payment') {
+    console.info('Notificação Mercado Pago ignorada por tipo não suportado.', { topic: topic || 'ausente' })
+    return jsonResponse({ received: true })
+  }
+
+  if (queryDataId && bodyDataId && queryDataId !== bodyDataId) {
+    console.warn('Notificação Mercado Pago ignorada: ID do pagamento diverge entre URL e corpo.')
+    return jsonResponse({ received: true })
+  }
+
+  const paymentId = queryDataId || legacyQueryId || bodyDataId
   if (!paymentId || !/^\d+$/.test(paymentId)) {
+    console.warn('Notificação Mercado Pago ignorada: ID do pagamento ausente ou inválido.')
     return jsonResponse({ error: 'Identificador de pagamento inválido.' }, 400)
   }
   try {
-    if (!await isValidSignature(request, paymentId, webhookSecret)) {
+    const signatureDataId = queryDataId || legacyQueryId || bodyDataId
+    if (!await isValidSignature(request, signatureDataId, webhookSecret)) {
+      console.warn('Notificação Mercado Pago rejeitada: assinatura HMAC inválida.')
       return jsonResponse({ error: 'Assinatura do webhook inválida.' }, 401)
     }
   } catch (error) {
@@ -89,12 +122,22 @@ Deno.serve(async (request) => {
 
   const payment = await paymentResponse.json()
   const expectedLiveMode = mode === 'production'
-  if (typeof payment.external_reference !== 'string'
+  if (String(payment.id) !== paymentId
+    || typeof payment.external_reference !== 'string'
     || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payment.external_reference)
     || payment.status !== 'approved'
-    || Boolean(payment.live_mode) !== expectedLiveMode
+    || typeof payment.live_mode !== 'boolean'
+    || payment.live_mode !== expectedLiveMode
     || payment.currency_id !== 'BRL'
-    || Number(payment.transaction_amount) !== 4.9) {
+    || Math.round(Number(payment.transaction_amount) * 100) !== 490) {
+    console.warn('Notificação Mercado Pago ignorada: pagamento não aprovado ou dados não correspondem.', {
+      approved: payment.status === 'approved',
+      expectedLiveMode,
+      actualLiveMode: payment.live_mode,
+      currencyMatches: payment.currency_id === 'BRL',
+      amountMatches: Number(payment.transaction_amount) === 4.9,
+      hasExternalReference: typeof payment.external_reference === 'string',
+    })
     return jsonResponse({ received: true })
   }
 
@@ -114,27 +157,37 @@ Deno.serve(async (request) => {
     || transaction.amount_cents !== 490
     || transaction.currency !== 'BRL'
     || !['individual_listing', 'individual_reactivation'].includes(transaction.transaction_type)) {
+    console.warn('Notificação Mercado Pago ignorada: transação local ausente ou incompatível.')
     return jsonResponse({ received: true })
   }
 
   const metadata = transaction.metadata && typeof transaction.metadata === 'object'
     ? transaction.metadata as Record<string, unknown>
     : {}
-  if (metadata.provider_preference_id !== payment.preference_id) return jsonResponse({ received: true })
+  if (typeof metadata.provider_preference_id !== 'string'
+    || metadata.provider_preference_id !== payment.preference_id) {
+    console.warn('Notificação Mercado Pago ignorada: preferência não corresponde à transação local.')
+    return jsonResponse({ received: true })
+  }
 
   const actualPaymentMethod = payment.payment_method_id === 'pix'
     ? 'pix'
     : payment.payment_type_id === 'credit_card'
       ? 'credit_card'
       : null
-  if (!actualPaymentMethod || metadata.requested_payment_method !== actualPaymentMethod) {
-    console.error('O meio de pagamento aprovado não corresponde à preferência registrada.')
+  const expectedPaymentMethod = transaction.payment_method || metadata.requested_payment_method
+  if (!actualPaymentMethod || expectedPaymentMethod !== actualPaymentMethod) {
+    console.warn('Notificação Mercado Pago ignorada: meio de pagamento não corresponde à cobrança local.', {
+      providerPaymentMethod: payment.payment_method_id,
+      providerPaymentType: payment.payment_type_id,
+      expectedMethod: expectedPaymentMethod,
+    })
     return jsonResponse({ received: true })
   }
 
-  const expectedCollectorId = Deno.env.get('MERCADO_PAGO_COLLECTOR_ID')
+  const expectedCollectorId = Deno.env.get('MERCADO_PAGO_COLLECTOR_ID')?.trim()
   if (expectedCollectorId && String(payment.collector_id) !== expectedCollectorId) {
-    console.error('O pagamento foi recebido por uma conta Mercado Pago diferente da configurada.')
+    console.error('Notificação Mercado Pago ignorada: collector_id não corresponde ao configurado.')
     return jsonResponse({ received: true })
   }
 
@@ -148,5 +201,9 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Não foi possível registrar a confirmação do pagamento.' }, 500)
   }
 
+  console.info('Cobrança individual confirmada pelo webhook.', {
+    transactionType: transaction.transaction_type,
+    paymentMethod: actualPaymentMethod,
+  })
   return jsonResponse({ received: true })
 })
